@@ -3,6 +3,20 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.16.0] - 2025-07-17
+
+### Eklenenler
+- **GeminiService entegrasyon testleri** — xUnit test projesi (`MikroUpdate.Service.Tests`)
+  - 8 entegrasyon testi: basit versiyon, çoklu versiyon, V17 filtreleme, prompt injection, gerçek sayfa, script temizleme, geçersiz API key, versiyon bulunamama
+  - Rate limit toleransı: kota aşıldığında retry + açık bilgilendirme mesajı
+  - `[Trait("Category", "Integration")]` ile CI filtresi
+
+### Düzeltmeler
+- **ParseVersionFromResponse regex düzeltmesi** — Gemini markdown/bold/backtick formatlaması artık tolere ediliyor
+  - Eski: `Version.TryParse(line)` — tüm satırın versiyon olması gerekiyordu
+  - Yeni: Regex `(\d+\.\d+\.\d+\.\d+)` ile satır içinden çıkarma, birden fazla eşleşmede en yüksek seçim
+- **GeminiService dispose sahipliği** — `AiVersionService` artık sahip olmadığı `GeminiService`'i dispose etmiyor, double dispose önlendi
+
 ## [1.15.0] - 2025-07-17
 
 ### Eklenenler

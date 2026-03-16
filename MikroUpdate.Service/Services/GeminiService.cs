@@ -140,6 +140,7 @@ public sealed class GeminiService : IDisposable
 
     /// <summary>
     /// Gemini yanıtından versiyon numarasını parse eder.
+    /// Markdown formatlama (backtick, bold vb.) ve ek metin toleranslıdır.
     /// </summary>
     private Version? ParseVersionFromResponse(string responseText, string majorVersion)
     {
@@ -151,16 +152,32 @@ public sealed class GeminiService : IDisposable
             return null;
         }
 
-        // Versiyon numarasını satırlardan çıkar
-        foreach (string line in responseText.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-        {
-            if (Version.TryParse(line, out Version? version) && version.Major.ToString() ==
-                majorVersion.Replace("V", "", StringComparison.OrdinalIgnoreCase))
-            {
-                _logger.LogInformation("Gemini versiyon tespit etti: {Version}", version);
+        string majorNumber = majorVersion.Replace("V", "", StringComparison.OrdinalIgnoreCase);
 
-                return version;
+        // Regex ile versiyon numarasını çıkar (Gemini markdown/bold/backtick ekleyebilir)
+        System.Text.RegularExpressions.MatchCollection matches =
+            System.Text.RegularExpressions.Regex.Matches(
+                responseText, @"(\d+\.\d+\.\d+\.\d+)");
+
+        Version? bestVersion = null;
+
+        foreach (System.Text.RegularExpressions.Match match in matches)
+        {
+            if (Version.TryParse(match.Groups[1].Value, out Version? version) &&
+                version.Major.ToString() == majorNumber)
+            {
+                if (bestVersion is null || version > bestVersion)
+                {
+                    bestVersion = version;
+                }
             }
+        }
+
+        if (bestVersion is not null)
+        {
+            _logger.LogInformation("Gemini versiyon tespit etti: {Version}", bestVersion);
+
+            return bestVersion;
         }
 
         _logger.LogWarning("Gemini yanıtından versiyon parse edilemedi: {Response}", responseText);

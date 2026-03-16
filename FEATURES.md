@@ -1,5 +1,13 @@
 # Özellikler
 
+## v1.16.0
+
+### GeminiService Entegrasyon Testleri
+- **xUnit test projesi:** `MikroUpdate.Service.Tests` (.NET 10)
+- **8 entegrasyon testi:** API bağlantı, çoklu versiyon seçimi, V17 filtreleme, prompt injection koruması, gerçek mikro.com.tr sayfası, script temizleme, geçersiz API key, versiyon bulunamama
+- **Rate limit toleransı:** 429 durumunda 3 retry (5s/10s/15s bekleme), kota aşılmışsa açık mesaj
+- **ParseVersionFromResponse düzeltmesi:** Regex tabanlı versiyon çıkarma — markdown formatlama toleranslı
+
 ## v1.15.0
 
 ### Proxy/Timeout/Error Handling (Aşama 8)
