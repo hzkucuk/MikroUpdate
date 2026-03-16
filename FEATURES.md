@@ -1,5 +1,17 @@
 # Özellikler
 
+## v1.8.0
+
+### V16/V17 Yol Otomatik Güncelleme
+- **Sürüm geçişinde otomatik yol güncelleme:** Ana Sürüm (V16↔V17) değiştiğinde sunucu, terminal ve setup yolları otomatik güncellenir
+- **Ayarlar Formu:** `UpdateVersionPaths()` ile anlık yol dönüşümü (v16xx↔v17xx, MikroV16xx↔MikroV17xx)
+- **Installer:** Inno Setup özel sayfasında `OnMajorVersionChange` callback ile aynı davranış
+
+### Varsayılan Ayarlar Düğmesi
+- **"Varsayılan" butonu:** Tüm ayarları fabrika değerlerine sıfırlama (onay dialogu ile)
+- **Sürüme duyarlı varsayılanlar:** Seçili V16/V17'ye göre dinamik yol ve modül oluşturma
+- Ürün Jump'a, kontrol aralığı 30 dk'ya, otomatik başlat açık olarak sıfırlanır
+
 ## v1.7.0
 
 ### V16/V17 Çoklu Modül Desteği

@@ -3,6 +3,24 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.8.0] - 2025-07-14
+
+### Eklenenler
+- **V16/V17 yol otomatik güncelleme** — sürüm değiştirildiğinde tüm yol alanları (sunucu, terminal, setup) otomatik güncellenir
+- **Varsayılan ayarlar düğmesi** — ayarlar formunda "Varsayılan" butonu ile tüm alanları fabrika değerlerine sıfırlama
+- Varsayılan ayarlar seçili sürüme (V16/V17) göre dinamik yol oluşturma
+
+### Değişenler
+- SettingsForm: `UpdateVersionPaths()` metodu — V16↔V17 geçişinde yol alanlarını otomatik günceller
+- SettingsForm: `BtnDefaults_Click` — seçili MajorVersion'a göre dinamik varsayılan yollar
+- Inno Setup: `OnMajorVersionChange` callback — installer'da V16↔V17 geçişinde yolları günceller
+
+### Etkilenen Dosyalar
+- `MikroUpdate.Win/SettingsForm.cs` (değişti)
+- `MikroUpdate.Win/SettingsForm.Designer.cs` (değişti)
+- `Deployment/MikroUpdate.iss` (değişti)
+- `.github/copilot-instructions.md` (değişti)
+
 ## [1.7.0] - 2025-07-13
 
 ### Eklenenler
