@@ -3,6 +3,15 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.10.1] - 2025-07-15
+
+### Düzeltmeler
+- **Yanıltıcı "Güncel" durumu düzeltildi** — Sunucu erişilemez olduğunda durum artık "Güncel" yerine "Sunucu erişilemiyor" (turuncu) olarak gösteriliyor
+  - Servis modu (`CheckVersionsViaServiceAsync`) artık `ServerVersion` null olan modülleri doğru algılıyor
+
+### Etkilenen Dosyalar
+- `MikroUpdate.Win/Form1.cs` (değişti)
+
 ## [1.10.0] - 2025-07-15
 
 ### Eklenenler

@@ -292,6 +292,12 @@ public partial class Form1 : Form
             LogWarning($"{count} modülde güncelleme gerekli.");
             ShowTrayBalloon("Güncelleme Mevcut", $"{count} modülde güncelleme mevcut.", ToolTipIcon.Warning);
         }
+        else if (response.ModuleVersions.Exists(v => v.ServerVersion is null))
+        {
+            SetStatus("Sunucu erişilemiyor", Color.Orange);
+            LogWarning("Bazı modüllerin sunucu versiyonuna erişilemedi.");
+            ShowTrayBalloon("Bağlantı Sorunu", "Sunucu versiyonları okunamadı.", ToolTipIcon.Warning);
+        }
         else
         {
             SetStatus("Güncel", Color.LimeGreen);
