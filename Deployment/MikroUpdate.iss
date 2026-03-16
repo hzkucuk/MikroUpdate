@@ -108,6 +108,9 @@ var
   ServerPathEdit: TNewEdit;
   LocalPathEdit: TNewEdit;
   SetupFilesPathEdit: TNewEdit;
+  ChkClient: TNewCheckBox;
+  ChkEDefter: TNewCheckBox;
+  ChkBeyanname: TNewCheckBox;
 
 procedure OnMajorVersionChange(Sender: TObject);
 var
@@ -242,6 +245,52 @@ begin
   SetupFilesPathEdit.Left := 0;
   SetupFilesPathEdit.Width := ConfigPage.SurfaceWidth;
   SetupFilesPathEdit.Text := '\\SERVER\MikroV16xx\CLIENT';
+
+  TopPos := TopPos + 52;
+
+  { Modül Seçimi }
+  with TNewStaticText.Create(ConfigPage) do
+  begin
+    Parent := ConfigPage.Surface;
+    Caption := 'Güncellenecek Modüller:';
+    Top := TopPos;
+    Left := 0;
+  end;
+
+  TopPos := TopPos + 20;
+
+  ChkClient := TNewCheckBox.Create(ConfigPage);
+  ChkClient.Parent := ConfigPage.Surface;
+  ChkClient.Top := TopPos;
+  ChkClient.Left := 0;
+  ChkClient.Width := ConfigPage.SurfaceWidth div 3;
+  ChkClient.Caption := 'Client';
+  ChkClient.Checked := True;
+  ChkClient.Enabled := False;  { Client zorunlu modül }
+
+  ChkEDefter := TNewCheckBox.Create(ConfigPage);
+  ChkEDefter.Parent := ConfigPage.Surface;
+  ChkEDefter.Top := TopPos;
+  ChkEDefter.Left := ConfigPage.SurfaceWidth div 3;
+  ChkEDefter.Width := ConfigPage.SurfaceWidth div 3;
+  ChkEDefter.Caption := 'e-Defter';
+  ChkEDefter.Checked := False;
+
+  ChkBeyanname := TNewCheckBox.Create(ConfigPage);
+  ChkBeyanname.Parent := ConfigPage.Surface;
+  ChkBeyanname.Top := TopPos;
+  ChkBeyanname.Left := (ConfigPage.SurfaceWidth div 3) * 2;
+  ChkBeyanname.Width := ConfigPage.SurfaceWidth div 3;
+  ChkBeyanname.Caption := 'Beyanname';
+  ChkBeyanname.Checked := False;
+end;
+
+function BoolToStr(Value: Boolean): String;
+begin
+  if Value then
+    Result := 'true'
+  else
+    Result := 'false';
 end;
 
 function GetModulesJson: String;
@@ -283,13 +332,13 @@ begin
     '      "Name": "e-Defter",' + #13#10 +
     '      "SetupFileName": "' + Prefix + '_' + Ver + '_eDefter_Setupx064.exe",' + #13#10 +
     '      "ExeFileName": "' + EDeftExe + '",' + #13#10 +
-    '      "Enabled": true' + #13#10 +
+    '      "Enabled": ' + BoolToStr(ChkEDefter.Checked) + #13#10 +
     '    },' + #13#10 +
     '    {' + #13#10 +
     '      "Name": "Beyanname",' + #13#10 +
     '      "SetupFileName": "' + Ver + '_BEYANNAME_Setupx064.exe",' + #13#10 +
     '      "ExeFileName": "BEYANNAME.EXE",' + #13#10 +
-    '      "Enabled": true' + #13#10 +
+    '      "Enabled": ' + BoolToStr(ChkBeyanname.Checked) + #13#10 +
     '    }';
 end;
 
