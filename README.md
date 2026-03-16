@@ -1,6 +1,6 @@
 # MikroUpdate
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue)
+![Version](https://img.shields.io/badge/version-1.4.0-blue)
 ![.NET](https://img.shields.io/badge/.NET-10.0-purple)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 
@@ -65,10 +65,19 @@ Ayarlar `%ProgramData%\MikroUpdate\config.json` dosyasında saklanır:
   "ProductName": "Jump",
   "ServerSharePath": "\\\\SERVER\\MikroV16xx",
   "LocalInstallPath": "C:\\Mikro\\v16xx",
+  "SetupFilesPath": "\\\\SERVER\\MikroV16xx\\CLIENT",
   "SetupFileName": "Jump_v16xx_Client_Setupx064.exe",
-  "AutoLaunchAfterUpdate": true
+  "AutoLaunchAfterUpdate": true,
+  "CheckIntervalMinutes": 30
 }
 ```
+
+### Log Sistemi
+
+İşlem logları `%ProgramData%\MikroUpdate\logs\` dizinine günlük rotasyonlu olarak yazılır:
+- Dosya formatı: `MikroUpdate_YYYY-MM-DD.log`
+- Log seviyeleri: `INFO`, `OK`, `WARN`, `ERROR`
+- UI log paneli (RichTextBox) ve dosya log'u eş zamanlı çalışır
 
 ### Ürün / EXE Eşleşmeleri
 
@@ -93,4 +102,4 @@ Sonuç: 16.38.0.45000 < 16.39.5.46064       →  Güncelleme mevcut!
 
 ## Lisans
 
-Dahili kullanım.
+Bu proje [MIT Lisansı](LICENSE) ile lisanslanmıştır.
