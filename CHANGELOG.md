@@ -3,6 +3,26 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.11.0] - 2025-07-15
+
+### Eklenenler
+- **Güncelleme modu desteği** — `UpdateMode` enum: Local (varsayılan), Online, Hybrid, AI
+  - `config.json`'a `UpdateMode` ve `CdnBaseUrl` alanları eklendi
+  - Ayarlar formuna Güncelleme Modu ComboBox ve CDN URL TextBox eklendi
+  - CDN alanları sadece Online/Hybrid/AI modlarında görünür
+  - Installer'a Güncelleme Modu seçimi eklendi (varsayılan: Local)
+- **CDN versiyon kodlama yardımcısı** — `CdnHelper` sınıfı: encode/decode/URL oluşturma/probe aday üretici
+- **Ürün/modül dosya adı matrisi** — `MikroProductMatrix` sınıfı: V16/V17 Jump/Fly setup ve exe dosya adı lookup
+
+### Etkilenen Dosyalar
+- `MikroUpdate.Shared/Models/UpdateMode.cs` (yeni)
+- `MikroUpdate.Shared/Helpers/CdnHelper.cs` (yeni)
+- `MikroUpdate.Shared/Helpers/MikroProductMatrix.cs` (yeni)
+- `MikroUpdate.Shared/Models/UpdateConfig.cs` (değişti)
+- `MikroUpdate.Win/SettingsForm.cs` (değişti)
+- `MikroUpdate.Win/SettingsForm.Designer.cs` (değişti)
+- `Deployment/MikroUpdate.iss` (değişti)
+
 ## [1.10.1] - 2025-07-15
 
 ### Düzeltmeler

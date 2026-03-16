@@ -2,6 +2,7 @@ using System.ComponentModel;
 
 using MikroUpdate.Shared.Models;
 
+
 namespace MikroUpdate.Win;
 
 /// <summary>
@@ -36,6 +37,7 @@ public partial class SettingsForm : Form
 
         _cboMajorVersion.SelectedIndexChanged += OnProductOrVersionChanged;
         _cboProduct.SelectedIndexChanged += OnProductOrVersionChanged;
+        _cboUpdateMode.SelectedIndexChanged += OnUpdateModeChanged;
         _txtServerShare.TextChanged += OnSettingsChanged;
         _txtLocalPath.TextChanged += OnSettingsChanged;
         _txtSetupFilesPath.TextChanged += OnSettingsChanged;
@@ -52,11 +54,14 @@ public partial class SettingsForm : Form
         _txtSetupFilesPath.Text = _config.SetupFilesPath;
         _nudCheckInterval.Value = Math.Clamp(_config.CheckIntervalMinutes, 1, 1440);
         _chkAutoLaunch.Checked = _config.AutoLaunchAfterUpdate;
+        _cboUpdateMode.SelectedItem = _config.UpdateMode.ToString();
+        _txtCdnBaseUrl.Text = _config.CdnBaseUrl;
 
         _suppressModuleRefresh = false;
 
         RefreshModuleGrid(_config.Modules);
         UpdateComputedPaths();
+        UpdateOnlineFieldsVisibility();
     }
 
     private UpdateConfig ReadConfigFromUI()
@@ -70,6 +75,9 @@ public partial class SettingsForm : Form
             SetupFilesPath = _txtSetupFilesPath.Text.Trim(),
             CheckIntervalMinutes = (int)_nudCheckInterval.Value,
             AutoLaunchAfterUpdate = _chkAutoLaunch.Checked,
+            UpdateMode = Enum.TryParse<UpdateMode>(_cboUpdateMode.SelectedItem?.ToString(), out UpdateMode mode)
+                ? mode : UpdateMode.Local,
+            CdnBaseUrl = _txtCdnBaseUrl.Text.Trim(),
             Modules = ReadModulesFromGrid()
         };
     }
@@ -257,6 +265,26 @@ public partial class SettingsForm : Form
     }
 
     /// <summary>
+    /// Güncelleme modu değiştiğinde CDN alanlarının görünürlüğünü ayarlar.
+    /// </summary>
+    private void OnUpdateModeChanged(object? sender, EventArgs e)
+    {
+        UpdateOnlineFieldsVisibility();
+        UpdateComputedPaths();
+    }
+
+    /// <summary>
+    /// UpdateMode'a göre CDN URL alanının ve yerel yol alanlarının görünürlüğünü ayarlar.
+    /// </summary>
+    private void UpdateOnlineFieldsVisibility()
+    {
+        bool isOnlineCapable = _cboUpdateMode.SelectedItem?.ToString() is "Online" or "Hybrid" or "AI";
+
+        _lblCdnBaseUrl.Visible = isOnlineCapable;
+        _txtCdnBaseUrl.Visible = isOnlineCapable;
+    }
+
+    /// <summary>
     /// Tüm ayarları fabrika varsayılanlarına sıfırlar.
     /// Seçili sürüme (V16/V17) göre yollar ve modüller otomatik oluşturulur.
     /// </summary>
@@ -286,11 +314,14 @@ public partial class SettingsForm : Form
         _txtSetupFilesPath.Text = $@"\\SERVER\{mikro}\CLIENT";
         _nudCheckInterval.Value = 30;
         _chkAutoLaunch.Checked = true;
+        _cboUpdateMode.SelectedItem = "Local";
+        _txtCdnBaseUrl.Text = "https://cdn-mikro.atros.com.tr/mikro";
 
         _suppressModuleRefresh = false;
 
         List<UpdateModule> defaults = UpdateConfig.GetDefaultModules("Jump", version);
         RefreshModuleGrid(defaults);
         UpdateComputedPaths();
+        UpdateOnlineFieldsVisibility();
     }
 }

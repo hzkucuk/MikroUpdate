@@ -37,6 +37,10 @@ partial class SettingsForm
         _nudCheckInterval = new NumericUpDown();
         _lblCheckIntervalUnit = new Label();
         _chkAutoLaunch = new CheckBox();
+        _lblUpdateMode = new Label();
+        _cboUpdateMode = new ComboBox();
+        _lblCdnBaseUrl = new Label();
+        _txtCdnBaseUrl = new TextBox();
         _lblModulesCaption = new Label();
         _btnResetModules = new Button();
         _dgvModules = new DataGridView();
@@ -80,16 +84,22 @@ partial class SettingsForm
         _tlpMain.Controls.Add(_nudCheckInterval, 1, 5);
         _tlpMain.Controls.Add(_lblCheckIntervalUnit, 2, 5);
         _tlpMain.Controls.Add(_chkAutoLaunch, 0, 6);
-        _tlpMain.Controls.Add(_lblModulesCaption, 0, 7);
-        _tlpMain.Controls.Add(_btnResetModules, 2, 7);
-        _tlpMain.Controls.Add(_dgvModules, 0, 8);
-        _tlpMain.Controls.Add(_pnlComputed, 0, 9);
-        _tlpMain.Controls.Add(_flpButtons, 0, 10);
+        _tlpMain.Controls.Add(_lblUpdateMode, 0, 7);
+        _tlpMain.Controls.Add(_cboUpdateMode, 1, 7);
+        _tlpMain.Controls.Add(_lblCdnBaseUrl, 0, 8);
+        _tlpMain.Controls.Add(_txtCdnBaseUrl, 1, 8);
+        _tlpMain.Controls.Add(_lblModulesCaption, 0, 9);
+        _tlpMain.Controls.Add(_btnResetModules, 2, 9);
+        _tlpMain.Controls.Add(_dgvModules, 0, 10);
+        _tlpMain.Controls.Add(_pnlComputed, 0, 11);
+        _tlpMain.Controls.Add(_flpButtons, 0, 12);
         _tlpMain.Dock = DockStyle.Fill;
         _tlpMain.Location = new Point(0, 0);
         _tlpMain.Name = "_tlpMain";
         _tlpMain.Padding = new Padding(16, 16, 16, 12);
-        _tlpMain.RowCount = 11;
+        _tlpMain.RowCount = 13;
+        _tlpMain.RowStyles.Add(new RowStyle());
+        _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.RowStyles.Add(new RowStyle());
@@ -101,7 +111,7 @@ partial class SettingsForm
         _tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.RowStyles.Add(new RowStyle());
-        _tlpMain.Size = new Size(620, 560);
+        _tlpMain.Size = new Size(620, 620);
         _tlpMain.TabIndex = 0;
         // 
         // _lblMajorVersion
@@ -297,8 +307,56 @@ partial class SettingsForm
         _chkAutoLaunch.TabIndex = 9;
         _chkAutoLaunch.Text = "Güncelleme sonrası Mikro'yu otomatik başlat";
         // 
-        // _lblModulesCaption
+        // _lblUpdateMode
         // 
+        _lblUpdateMode.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _lblUpdateMode.AutoSize = true;
+        _lblUpdateMode.ForeColor = SystemColors.GrayText;
+        _lblUpdateMode.Location = new Point(19, 228);
+        _lblUpdateMode.Margin = new Padding(3, 8, 3, 3);
+        _lblUpdateMode.Name = "_lblUpdateMode";
+        _lblUpdateMode.Size = new Size(128, 15);
+        _lblUpdateMode.TabIndex = 14;
+        _lblUpdateMode.Text = "G\u00fcncelleme Modu";
+        // 
+        // _cboUpdateMode
+        // 
+        _cboUpdateMode.AccessibleName = "G\u00fcncelleme modu se\u00e7imi";
+        _cboUpdateMode.Anchor = AnchorStyles.Left;
+        _tlpMain.SetColumnSpan(_cboUpdateMode, 2);
+        _cboUpdateMode.DropDownStyle = ComboBoxStyle.DropDownList;
+        _cboUpdateMode.FlatStyle = FlatStyle.Flat;
+        _cboUpdateMode.Items.AddRange(new object[] { "Local", "Online", "Hybrid", "AI" });
+        _cboUpdateMode.Location = new Point(153, 224);
+        _cboUpdateMode.Name = "_cboUpdateMode";
+        _cboUpdateMode.Size = new Size(121, 23);
+        _cboUpdateMode.TabIndex = 14;
+        // 
+        // _lblCdnBaseUrl
+        // 
+        _lblCdnBaseUrl.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _lblCdnBaseUrl.AutoSize = true;
+        _lblCdnBaseUrl.ForeColor = SystemColors.GrayText;
+        _lblCdnBaseUrl.Location = new Point(19, 257);
+        _lblCdnBaseUrl.Name = "_lblCdnBaseUrl";
+        _lblCdnBaseUrl.Size = new Size(128, 15);
+        _lblCdnBaseUrl.TabIndex = 15;
+        _lblCdnBaseUrl.Text = "CDN URL";
+        _lblCdnBaseUrl.Visible = false;
+        // 
+        // _txtCdnBaseUrl
+        // 
+        _txtCdnBaseUrl.AccessibleName = "CDN temel URL";
+        _txtCdnBaseUrl.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _tlpMain.SetColumnSpan(_txtCdnBaseUrl, 2);
+        _txtCdnBaseUrl.Location = new Point(153, 253);
+        _txtCdnBaseUrl.Name = "_txtCdnBaseUrl";
+        _txtCdnBaseUrl.Size = new Size(448, 23);
+        _txtCdnBaseUrl.TabIndex = 15;
+        _txtCdnBaseUrl.Visible = false;
+        // 
+        // _lblModulesCaption
+        //
         _lblModulesCaption.Anchor = AnchorStyles.Left;
         _lblModulesCaption.AutoSize = true;
         _tlpMain.SetColumnSpan(_lblModulesCaption, 2);
@@ -486,7 +544,7 @@ partial class SettingsForm
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.FromArgb(30, 30, 30);
         CancelButton = _btnCancel;
-        ClientSize = new Size(620, 560);
+        ClientSize = new Size(620, 620);
         Controls.Add(_tlpMain);
         ForeColor = Color.FromArgb(230, 230, 230);
         FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -541,5 +599,9 @@ partial class SettingsForm
     private Button _btnOK;
     private Button _btnCancel;
     private Button _btnDefaults;
+    private Label _lblUpdateMode;
+    private ComboBox _cboUpdateMode;
+    private Label _lblCdnBaseUrl;
+    private TextBox _txtCdnBaseUrl;
 }
 

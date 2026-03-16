@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.10.1"
+#define MyAppVersion "1.11.0"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.Win.exe"
@@ -105,6 +105,7 @@ var
   ConfigPage: TWizardPage;
   MajorVersionCombo: TNewComboBox;
   ProductCombo: TNewComboBox;
+  UpdateModeCombo: TNewComboBox;
   ServerPathEdit: TNewEdit;
   LocalPathEdit: TNewEdit;
   SetupFilesPathEdit: TNewEdit;
@@ -197,6 +198,29 @@ begin
   ProductCombo.Items.Add('Jump');
   ProductCombo.Items.Add('Fly');
   ProductCombo.ItemIndex := 0;
+
+  TopPos := TopPos + 52;
+
+  { Güncelleme Modu Seçimi }
+  with TNewStaticText.Create(ConfigPage) do
+  begin
+    Parent := ConfigPage.Surface;
+    Caption := 'Güncelleme Modu:';
+    Top := TopPos;
+    Left := 0;
+  end;
+
+  UpdateModeCombo := TNewComboBox.Create(ConfigPage);
+  UpdateModeCombo.Parent := ConfigPage.Surface;
+  UpdateModeCombo.Top := TopPos + 20;
+  UpdateModeCombo.Left := 0;
+  UpdateModeCombo.Width := ConfigPage.SurfaceWidth;
+  UpdateModeCombo.Style := csDropDownList;
+  UpdateModeCombo.Items.Add('Local');
+  UpdateModeCombo.Items.Add('Online');
+  UpdateModeCombo.Items.Add('Hybrid');
+  UpdateModeCombo.Items.Add('AI');
+  UpdateModeCombo.ItemIndex := 0;  { Varsayılan: Local }
 
   TopPos := TopPos + 52;
 
@@ -343,7 +367,10 @@ begin
 end;
 
 function GenerateConfigJson: String;
+var
+  UpdateMode: String;
 begin
+  UpdateMode := UpdateModeCombo.Items[UpdateModeCombo.ItemIndex];
   Result :=
     '{' + #13#10 +
     '  "MajorVersion": "' + MajorVersionCombo.Items[MajorVersionCombo.ItemIndex] + '",' + #13#10 +
@@ -353,6 +380,8 @@ begin
     '  "SetupFilesPath": "' + SetupFilesPathEdit.Text + '",' + #13#10 +
     '  "AutoLaunchAfterUpdate": true,' + #13#10 +
     '  "CheckIntervalMinutes": 30,' + #13#10 +
+    '  "UpdateMode": "' + UpdateMode + '",' + #13#10 +
+    '  "CdnBaseUrl": "https://cdn-mikro.atros.com.tr/mikro",' + #13#10 +
     '  "Modules": [' + #13#10 +
     GetModulesJson + #13#10 +
     '  ]' + #13#10 +

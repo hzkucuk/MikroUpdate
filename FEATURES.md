@@ -1,5 +1,18 @@
 # Özellikler
 
+## v1.11.0
+
+### Güncelleme Modu Desteği (Aşama 1)
+- **4 güncelleme modu:** Local (yerel ağ, varsayılan), Online (CDN), Hybrid (yerel → CDN fallback), AI (Gemini ile sayfa analizi)
+- **Config entegrasyonu:** `UpdateMode` ve `CdnBaseUrl` alanları `config.json`'a eklendi
+- **Ayarlar formu:** Güncelleme Modu ComboBox ve CDN URL alanı (sadece online modlarda görünür)
+- **Installer:** Kurulum sırasında güncelleme modu seçimi
+
+### CDN Versiyon Kodlama Altyapısı
+- **CdnHelper:** Mikro ERP CDN versiyon kodu encode/decode (39f → 16.39.6), URL oluşturma, probe aday üretimi
+- **MikroProductMatrix:** V16/V17 Jump/Fly \u00fcr\u00fcn kombinasyonlarına göre setup ve exe dosya adı lookup tablosu
+- **Probe algoritması:** Minor başına a-j (10 patch) tarama, ardardık boş minor sonrası durma
+
 ## v1.10.0
 
 ### Hakkında (About) Dialog Penceresi

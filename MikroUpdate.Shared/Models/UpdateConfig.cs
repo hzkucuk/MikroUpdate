@@ -29,6 +29,12 @@ public sealed class UpdateConfig
     /// <summary>Periyodik versiyon kontrol aralığı (dakika). Varsayılan: 30.</summary>
     public int CheckIntervalMinutes { get; set; } = 30;
 
+    /// <summary>Güncelleme modu: Local (varsayılan), Online, Hybrid veya AI.</summary>
+    public UpdateMode UpdateMode { get; set; } = UpdateMode.Local;
+
+    /// <summary>CDN temel URL'si. Online/Hybrid/AI modlarında kullanılır.</summary>
+    public string CdnBaseUrl { get; set; } = "https://cdn-mikro.atros.com.tr/mikro";
+
     /// <summary>Güncelleme modülleri (Client, e-Defter, Beyanname).</summary>
     public List<UpdateModule> Modules { get; set; } = [];
 
