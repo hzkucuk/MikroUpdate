@@ -3,6 +3,15 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.13.0] - 2025-07-16
+
+### Eklenenler
+- **Hybrid mod desteği** — Yerel sunucu → CDN fallback mekanizması
+  - `HandleCheckVersionAsync`: Önce yerel sunucudan versiyon kontrolü, sunucu erişilemezse CDN probe
+  - `HandleDownloadUpdateAsync`: Her modül için önce yerel sunucudan kopyalama, başarısızsa CDN indirme
+  - Modül bazlı fallback — bazı modüller yerel, bazıları CDN'den alınabilir
+  - Hata mesajlarında kaynak bilgisi (yerel sunucu ve CDN)
+
 ## [1.12.0] - 2025-07-16
 
 ### Eklenenler

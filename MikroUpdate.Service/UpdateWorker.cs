@@ -154,7 +154,22 @@ public sealed class UpdateWorker : BackgroundService
         try
         {
             // Güncelleme moduna göre versiyon kontrolü
-            if (_config.UpdateMode is UpdateMode.Online or UpdateMode.Hybrid or UpdateMode.AI)
+            if (_config.UpdateMode == UpdateMode.Hybrid)
+            {
+                _logger.LogDebug("Hybrid versiyon kontrolü: önce yerel sunucu deneniyor...");
+                _moduleVersions = _versionService.GetModuleVersions(_config);
+
+                // Sunucu erişilemezse (tüm ServerVersion null) → CDN'e geç
+                bool serverReachable = _moduleVersions.Exists(v => v.ServerVersion is not null);
+
+                if (!serverReachable)
+                {
+                    _logger.LogInformation("Yerel sunucu erişilemedi, CDN probe'a geçiliyor...");
+                    _moduleVersions = await _onlineVersionService
+                        .GetOnlineModuleVersionsAsync(_config, stoppingToken).ConfigureAwait(false);
+                }
+            }
+            else if (_config.UpdateMode is UpdateMode.Online or UpdateMode.AI)
             {
                 _logger.LogDebug("Online versiyon kontrolü başlatılıyor (mod: {Mode})...", _config.UpdateMode);
                 _moduleVersions = await _onlineVersionService
@@ -432,28 +447,54 @@ public sealed class UpdateWorker : BackgroundService
 
             await Task.Delay(1500, stoppingToken).ConfigureAwait(false);
 
-            // 4. Her modül için CDN'den indir ve kur
+            // 4. Her modül için güncelleme al ve kur
             int successCount = 0;
             int failCount = 0;
+            bool isHybrid = _config.UpdateMode == UpdateMode.Hybrid;
 
             foreach (UpdateModule module in modulesToUpdate)
             {
-                // 4a. CDN'den indir (progress callback ile pipe'a yaz)
-                _currentStatus = ServiceStatus.Downloading;
-                _statusMessage = $"{module.Name} CDN'den indiriliyor...";
+                string? setupPath = null;
 
-                string? setupPath = await _downloadService.DownloadSetupAsync(
-                    _config,
-                    module,
-                    cdnCode,
-                    onProgress: progress => SendProgressSync(pipeServer, progress, stoppingToken),
-                    stoppingToken).ConfigureAwait(false);
+                // Hybrid: önce yerel sunucudan kopyala
+                if (isHybrid)
+                {
+                    string serverSetupPath = Path.Combine(_config.SetupFilesPath, module.SetupFileName);
+                    await SendProgressAsync(pipeServer,
+                        $"{module.Name} yerel sunucudan deneniyor...", stoppingToken);
+
+                    setupPath = _updateService.CopySetupFromServer(serverSetupPath);
+
+                    if (!string.IsNullOrEmpty(setupPath))
+                    {
+                        _logger.LogInformation("[Hybrid] {Module} yerel sunucudan kopyalandı.", module.Name);
+                    }
+                    else
+                    {
+                        _logger.LogInformation("[Hybrid] {Module} yerel sunucuda bulunamadı, CDN'e geçiliyor...", module.Name);
+                    }
+                }
+
+                // Online veya Hybrid fallback: CDN'den indir
+                if (string.IsNullOrEmpty(setupPath))
+                {
+                    _currentStatus = ServiceStatus.Downloading;
+                    _statusMessage = $"{module.Name} CDN'den indiriliyor...";
+
+                    setupPath = await _downloadService.DownloadSetupAsync(
+                        _config,
+                        module,
+                        cdnCode,
+                        onProgress: progress => SendProgressSync(pipeServer, progress, stoppingToken),
+                        stoppingToken).ConfigureAwait(false);
+                }
 
                 if (string.IsNullOrEmpty(setupPath))
                 {
-                    _logger.LogError("{Module} CDN'den indirilemedi.", module.Name);
+                    string source = isHybrid ? "yerel sunucu ve CDN" : "CDN";
+                    _logger.LogError("{Module} {Source}'den alınamadı.", module.Name, source);
                     await SendProgressAsync(pipeServer,
-                        $"{module.Name} indirme başarısız.", stoppingToken);
+                        $"{module.Name} indirme başarısız ({source}).", stoppingToken);
                     failCount++;
 
                     continue;

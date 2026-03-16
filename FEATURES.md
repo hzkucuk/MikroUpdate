@@ -1,5 +1,13 @@
 # Özellikler
 
+## v1.13.0
+
+### Hybrid Mod — Yerel → Online Fallback (Aşama 6)
+- **Versiyon kontrolü:** Önce yerel sunucudan kontrol, tüm `ServerVersion` null ise CDN probe’a otomatik geçiş
+- **Güncelleme akışı:** Her modül için önce yerel `CopySetupFromServer`, başarısız olursa CDN `DownloadSetupAsync`
+- **Modül bazlı fallback:** Bir modül yerel sunucudan, diğeri CDN’den alınabilir
+- **Loglama:** Hybrid adımları için `[Hybrid]` prefix ile ayrıntılı log
+
 ## v1.12.0
 
 ### Online Güncelleme Sistemi (Aşama 2-4)
