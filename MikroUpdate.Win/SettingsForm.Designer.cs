@@ -431,23 +431,6 @@ partial class SettingsForm
         _flpButtons.Size = new Size(582, 45);
         _flpButtons.TabIndex = 12;
         // 
-        // _btnDefaults
-        // 
-        _btnDefaults.AccessibleName = "Varsayılan ayarlara dön";
-        _btnDefaults.AccessibleDescription = "Tüm ayarları fabrika varsayılanlarına sıfırlar";
-        _btnDefaults.AutoSize = true;
-        _btnDefaults.FlatAppearance.BorderSize = 0;
-        _btnDefaults.FlatStyle = FlatStyle.Flat;
-        _btnDefaults.Font = new Font("Segoe UI", 8F);
-        _btnDefaults.ForeColor = Color.FromArgb(180, 180, 180);
-        _btnDefaults.Location = new Point(322, 7);
-        _btnDefaults.Name = "_btnDefaults";
-        _btnDefaults.Padding = new Padding(8, 4, 8, 4);
-        _btnDefaults.Size = new Size(85, 33);
-        _btnDefaults.TabIndex = 13;
-        _btnDefaults.Text = "Varsayılan";
-        _btnDefaults.Click += BtnDefaults_Click;
-        // 
         // _btnCancel
         // 
         _btnCancel.AccessibleName = "İptal";
@@ -478,6 +461,23 @@ partial class SettingsForm
         _btnOK.TabIndex = 11;
         _btnOK.Text = "Kaydet";
         _btnOK.UseVisualStyleBackColor = false;
+        // 
+        // _btnDefaults
+        // 
+        _btnDefaults.AccessibleDescription = "Tüm ayarları fabrika varsayılanlarına sıfırlar";
+        _btnDefaults.AccessibleName = "Varsayılan ayarlara dön";
+        _btnDefaults.AutoSize = true;
+        _btnDefaults.FlatAppearance.BorderSize = 0;
+        _btnDefaults.FlatStyle = FlatStyle.Flat;
+        _btnDefaults.Font = new Font("Segoe UI", 8F);
+        _btnDefaults.ForeColor = Color.FromArgb(180, 180, 180);
+        _btnDefaults.Location = new Point(322, 7);
+        _btnDefaults.Name = "_btnDefaults";
+        _btnDefaults.Padding = new Padding(8, 4, 8, 4);
+        _btnDefaults.Size = new Size(85, 33);
+        _btnDefaults.TabIndex = 13;
+        _btnDefaults.Text = "Varsayılan";
+        _btnDefaults.Click += BtnDefaults_Click;
         // 
         // SettingsForm
         // 
