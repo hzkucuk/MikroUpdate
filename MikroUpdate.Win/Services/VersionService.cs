@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-using MikroUpdate.Win.Models;
+using MikroUpdate.Shared.Models;
 
 namespace MikroUpdate.Win.Services;
 

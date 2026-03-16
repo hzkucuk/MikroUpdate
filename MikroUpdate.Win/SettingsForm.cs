@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-using MikroUpdate.Win.Models;
+using MikroUpdate.Shared.Models;
 
 namespace MikroUpdate.Win;
 
@@ -36,8 +36,7 @@ public partial class SettingsForm : Form
         _txtServerShare.TextChanged += OnSettingsChanged;
         _txtLocalPath.TextChanged += OnSettingsChanged;
         _txtSetupFile.TextChanged += OnSettingsChanged;
-        _txtCdnUrl.TextChanged += OnSettingsChanged;
-        _txtEDefterFile.TextChanged += OnSettingsChanged;
+        _txtSetupFilesPath.TextChanged += OnSettingsChanged;
     }
 
     private void ApplyConfigToUI()
@@ -46,10 +45,8 @@ public partial class SettingsForm : Form
         _txtServerShare.Text = _config.ServerSharePath;
         _txtLocalPath.Text = _config.LocalInstallPath;
         _txtSetupFile.Text = _config.SetupFileName;
-        _txtCdnUrl.Text = _config.CdnBaseUrl;
-        _txtEDefterFile.Text = _config.EDefterSetupFileName;
+        _txtSetupFilesPath.Text = _config.SetupFilesPath;
         _chkAutoLaunch.Checked = _config.AutoLaunchAfterUpdate;
-        _chkEDefter.Checked = _config.IncludeEDefter;
 
         UpdateComputedPaths();
     }
@@ -62,10 +59,8 @@ public partial class SettingsForm : Form
             ServerSharePath = _txtServerShare.Text.Trim(),
             LocalInstallPath = _txtLocalPath.Text.Trim(),
             SetupFileName = _txtSetupFile.Text.Trim(),
-            CdnBaseUrl = _txtCdnUrl.Text.Trim(),
-            EDefterSetupFileName = _txtEDefterFile.Text.Trim(),
-            AutoLaunchAfterUpdate = _chkAutoLaunch.Checked,
-            IncludeEDefter = _chkEDefter.Checked
+            SetupFilesPath = _txtSetupFilesPath.Text.Trim(),
+            AutoLaunchAfterUpdate = _chkAutoLaunch.Checked
         };
     }
 
@@ -85,7 +80,6 @@ public partial class SettingsForm : Form
         _lblServerExeValue.Text = current.ServerExePath;
         _lblLocalExeValue.Text = current.LocalExePath;
         _lblSetupPathValue.Text = current.ServerSetupFilePath;
-        _lblCdnSetupValue.Text = current.CdnSetupUrl;
     }
 
     private void BtnBrowseServer_Click(object? sender, EventArgs e)
@@ -125,6 +119,26 @@ public partial class SettingsForm : Form
         if (dialog.ShowDialog(this) == DialogResult.OK)
         {
             _txtLocalPath.Text = dialog.SelectedPath;
+        }
+    }
+
+    private void BtnBrowseSetup_Click(object? sender, EventArgs e)
+    {
+        using FolderBrowserDialog dialog = new()
+        {
+            Description = "Setup dosyalarının bulunduğu klasörü seçin",
+            UseDescriptionForTitle = true,
+            ShowNewFolderButton = false
+        };
+
+        if (!string.IsNullOrWhiteSpace(_txtSetupFilesPath.Text) && Directory.Exists(_txtSetupFilesPath.Text))
+        {
+            dialog.InitialDirectory = _txtSetupFilesPath.Text;
+        }
+
+        if (dialog.ShowDialog(this) == DialogResult.OK)
+        {
+            _txtSetupFilesPath.Text = dialog.SelectedPath;
         }
     }
 }

@@ -36,6 +36,14 @@ partial class Form1
         _btnUpdate = new Button();
         _btnCheck = new Button();
         _btnSettings = new Button();
+        _notifyIcon = new NotifyIcon(components);
+        _ctxTray = new ContextMenuStrip(components);
+        _tsmShow = new ToolStripMenuItem();
+        _tsmCheck = new ToolStripMenuItem();
+        _tsmUpdate = new ToolStripMenuItem();
+        _tsmSettings = new ToolStripMenuItem();
+        _tsmSeparator = new ToolStripSeparator();
+        _tsmExit = new ToolStripMenuItem();
 
         // 3. Suspend
         _tlpMain.SuspendLayout();
@@ -43,9 +51,45 @@ partial class Form1
         _tlpStatus.SuspendLayout();
         _grpLog.SuspendLayout();
         _flpButtons.SuspendLayout();
+        _ctxTray.SuspendLayout();
         SuspendLayout();
 
         // 4. Configure controls
+
+        // _ctxTray
+        _ctxTray.Items.AddRange(new ToolStripItem[] { _tsmShow, _tsmCheck, _tsmUpdate, _tsmSettings, _tsmSeparator, _tsmExit });
+        _ctxTray.Name = "_ctxTray";
+        _ctxTray.Size = new Size(180, 120);
+
+        _tsmShow.Text = "Göster";
+        _tsmShow.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        _tsmShow.Name = "_tsmShow";
+        _tsmShow.Click += TsmShow_Click;
+
+        _tsmCheck.Text = "Kontrol Et";
+        _tsmCheck.Name = "_tsmCheck";
+        _tsmCheck.Click += BtnCheck_Click;
+
+        _tsmUpdate.Text = "Güncelle";
+        _tsmUpdate.Name = "_tsmUpdate";
+        _tsmUpdate.Click += BtnUpdate_Click;
+
+        _tsmSettings.Text = "Ayarlar";
+        _tsmSettings.Name = "_tsmSettings";
+        _tsmSettings.Click += BtnSettings_Click;
+
+        _tsmSeparator.Name = "_tsmSeparator";
+
+        _tsmExit.Text = "Çıkış";
+        _tsmExit.Name = "_tsmExit";
+        _tsmExit.Click += TsmExit_Click;
+
+        // _notifyIcon
+        _notifyIcon.ContextMenuStrip = _ctxTray;
+        _notifyIcon.Icon = Icon;
+        _notifyIcon.Text = "MikroUpdate";
+        _notifyIcon.Visible = true;
+        _notifyIcon.DoubleClick += TsmShow_Click;
 
         // _tlpMain (4 rows: Status, Progress, Log, Buttons)
         _tlpMain.ColumnCount = 1;
@@ -198,6 +242,7 @@ partial class Form1
         Text = "MikroUpdate - Otomatik Güncelleme Sistemi";
 
         // 6. Resume
+        _ctxTray.ResumeLayout(false);
         _tlpStatus.ResumeLayout(false);
         _tlpStatus.PerformLayout();
         _grpStatus.ResumeLayout(false);
@@ -229,6 +274,14 @@ partial class Form1
     private Button _btnCheck;
     private Button _btnUpdate;
     private Button _btnLaunch;
+    private NotifyIcon _notifyIcon;
+    private ContextMenuStrip _ctxTray;
+    private ToolStripMenuItem _tsmShow;
+    private ToolStripMenuItem _tsmCheck;
+    private ToolStripMenuItem _tsmUpdate;
+    private ToolStripMenuItem _tsmSettings;
+    private ToolStripSeparator _tsmSeparator;
+    private ToolStripMenuItem _tsmExit;
 }
 
 

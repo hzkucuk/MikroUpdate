@@ -30,12 +30,10 @@ partial class SettingsForm
         _btnBrowseLocal = new Button();
         _lblSetupFile = new Label();
         _txtSetupFile = new TextBox();
-        _lblCdnUrl = new Label();
-        _txtCdnUrl = new TextBox();
-        _lblEDefterFile = new Label();
-        _txtEDefterFile = new TextBox();
+        _lblSetupFilesPath = new Label();
+        _txtSetupFilesPath = new TextBox();
+        _btnBrowseSetup = new Button();
         _chkAutoLaunch = new CheckBox();
-        _chkEDefter = new CheckBox();
         _grpComputedPaths = new GroupBox();
         _tlpComputed = new TableLayoutPanel();
         _lblExeFileCaption = new Label();
@@ -46,8 +44,6 @@ partial class SettingsForm
         _lblLocalExeValue = new Label();
         _lblSetupPathCaption = new Label();
         _lblSetupPathValue = new Label();
-        _lblCdnSetupCaption = new Label();
-        _lblCdnSetupValue = new Label();
         _flpButtons = new FlowLayoutPanel();
         _btnOK = new Button();
         _btnCancel = new Button();
@@ -61,14 +57,12 @@ partial class SettingsForm
 
         // 4. Configure controls
 
-        // _tlpMain
+        // _tlpMain (8 rows: Product, ServerShare, LocalPath, SetupFile, SetupFilesPath, AutoLaunch, ComputedPaths, Buttons)
         _tlpMain.ColumnCount = 3;
         _tlpMain.ColumnStyles.Add(new ColumnStyle());
         _tlpMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         _tlpMain.ColumnStyles.Add(new ColumnStyle());
-        _tlpMain.RowCount = 10;
-        _tlpMain.RowStyles.Add(new RowStyle());
-        _tlpMain.RowStyles.Add(new RowStyle());
+        _tlpMain.RowCount = 8;
         _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.RowStyles.Add(new RowStyle());
@@ -90,20 +84,15 @@ partial class SettingsForm
         _tlpMain.Controls.Add(_btnBrowseLocal, 2, 2);
         _tlpMain.Controls.Add(_lblSetupFile, 0, 3);
         _tlpMain.Controls.Add(_txtSetupFile, 1, 3);
-        _tlpMain.Controls.Add(_lblCdnUrl, 0, 4);
-        _tlpMain.Controls.Add(_txtCdnUrl, 1, 4);
-        _tlpMain.Controls.Add(_lblEDefterFile, 0, 5);
-        _tlpMain.Controls.Add(_txtEDefterFile, 1, 5);
-        _tlpMain.Controls.Add(_chkAutoLaunch, 0, 6);
-        _tlpMain.Controls.Add(_chkEDefter, 0, 7);
-        _tlpMain.Controls.Add(_grpComputedPaths, 0, 8);
-        _tlpMain.Controls.Add(_flpButtons, 0, 9);
+        _tlpMain.Controls.Add(_lblSetupFilesPath, 0, 4);
+        _tlpMain.Controls.Add(_txtSetupFilesPath, 1, 4);
+        _tlpMain.Controls.Add(_btnBrowseSetup, 2, 4);
+        _tlpMain.Controls.Add(_chkAutoLaunch, 0, 5);
+        _tlpMain.Controls.Add(_grpComputedPaths, 0, 6);
+        _tlpMain.Controls.Add(_flpButtons, 0, 7);
         _tlpMain.SetColumnSpan(_cboProduct, 2);
         _tlpMain.SetColumnSpan(_txtSetupFile, 2);
-        _tlpMain.SetColumnSpan(_txtCdnUrl, 2);
-        _tlpMain.SetColumnSpan(_txtEDefterFile, 2);
         _tlpMain.SetColumnSpan(_chkAutoLaunch, 3);
-        _tlpMain.SetColumnSpan(_chkEDefter, 3);
         _tlpMain.SetColumnSpan(_grpComputedPaths, 3);
         _tlpMain.SetColumnSpan(_flpButtons, 3);
 
@@ -168,29 +157,25 @@ partial class SettingsForm
         _txtSetupFile.AccessibleName = "Setup dosya adı";
         _txtSetupFile.TabIndex = 5;
 
-        // Row 4: CDN URL
-        _lblCdnUrl.Text = "CDN URL:";
-        _lblCdnUrl.AutoSize = true;
-        _lblCdnUrl.Anchor = AnchorStyles.Left | AnchorStyles.Right;
-        _lblCdnUrl.Name = "_lblCdnUrl";
+        // Row 4: Setup Dosyaları Yolu
+        _lblSetupFilesPath.Text = "Setup Dosyaları Yolu:";
+        _lblSetupFilesPath.AutoSize = true;
+        _lblSetupFilesPath.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _lblSetupFilesPath.Name = "_lblSetupFilesPath";
 
-        _txtCdnUrl.Anchor = AnchorStyles.Left | AnchorStyles.Right;
-        _txtCdnUrl.Name = "_txtCdnUrl";
-        _txtCdnUrl.AccessibleName = "CDN indirme adresi";
-        _txtCdnUrl.TabIndex = 6;
+        _txtSetupFilesPath.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _txtSetupFilesPath.Name = "_txtSetupFilesPath";
+        _txtSetupFilesPath.AccessibleName = "Setup dosyaları yolu";
+        _txtSetupFilesPath.TabIndex = 6;
 
-        // Row 5: e-Defter Setup
-        _lblEDefterFile.Text = "e-Defter Setup:";
-        _lblEDefterFile.AutoSize = true;
-        _lblEDefterFile.Anchor = AnchorStyles.Left | AnchorStyles.Right;
-        _lblEDefterFile.Name = "_lblEDefterFile";
+        _btnBrowseSetup.Text = "...";
+        _btnBrowseSetup.Size = new Size(30, 23);
+        _btnBrowseSetup.Name = "_btnBrowseSetup";
+        _btnBrowseSetup.AccessibleName = "Setup dosyaları yolu seç";
+        _btnBrowseSetup.TabIndex = 7;
+        _btnBrowseSetup.Click += BtnBrowseSetup_Click;
 
-        _txtEDefterFile.Anchor = AnchorStyles.Left | AnchorStyles.Right;
-        _txtEDefterFile.Name = "_txtEDefterFile";
-        _txtEDefterFile.AccessibleName = "e-Defter setup dosya adı";
-        _txtEDefterFile.TabIndex = 7;
-
-        // Row 6-7: Checkboxes
+        // Row 5: Auto Launch Checkbox
         _chkAutoLaunch.Text = "Güncelleme sonrası Mikro'yu otomatik başlat";
         _chkAutoLaunch.AutoSize = true;
         _chkAutoLaunch.Checked = true;
@@ -198,13 +183,7 @@ partial class SettingsForm
         _chkAutoLaunch.AccessibleName = "Otomatik başlatma";
         _chkAutoLaunch.TabIndex = 8;
 
-        _chkEDefter.Text = "e-Defter kurulumunu da yap";
-        _chkEDefter.AutoSize = true;
-        _chkEDefter.Name = "_chkEDefter";
-        _chkEDefter.AccessibleName = "e-Defter kurulumu";
-        _chkEDefter.TabIndex = 9;
-
-        // Row 8: Computed Paths GroupBox
+        // Row 6: Computed Paths GroupBox
         _grpComputedPaths.Text = "Hesaplanan Yollar (salt okunur)";
         _grpComputedPaths.AutoSize = true;
         _grpComputedPaths.AutoSizeMode = AutoSizeMode.GrowOnly;
@@ -216,8 +195,7 @@ partial class SettingsForm
         _tlpComputed.ColumnCount = 2;
         _tlpComputed.ColumnStyles.Add(new ColumnStyle());
         _tlpComputed.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        _tlpComputed.RowCount = 5;
-        _tlpComputed.RowStyles.Add(new RowStyle());
+        _tlpComputed.RowCount = 4;
         _tlpComputed.RowStyles.Add(new RowStyle());
         _tlpComputed.RowStyles.Add(new RowStyle());
         _tlpComputed.RowStyles.Add(new RowStyle());
@@ -232,8 +210,6 @@ partial class SettingsForm
         _tlpComputed.Controls.Add(_lblLocalExeValue, 1, 2);
         _tlpComputed.Controls.Add(_lblSetupPathCaption, 0, 3);
         _tlpComputed.Controls.Add(_lblSetupPathValue, 1, 3);
-        _tlpComputed.Controls.Add(_lblCdnSetupCaption, 0, 4);
-        _tlpComputed.Controls.Add(_lblCdnSetupValue, 1, 4);
 
         _lblExeFileCaption.Text = "EXE Dosyası:";
         _lblExeFileCaption.AutoSize = true;
@@ -283,19 +259,7 @@ partial class SettingsForm
         _lblSetupPathValue.ForeColor = SystemColors.GrayText;
         _lblSetupPathValue.Name = "_lblSetupPathValue";
 
-        _lblCdnSetupCaption.Text = "CDN Setup URL:";
-        _lblCdnSetupCaption.AutoSize = true;
-        _lblCdnSetupCaption.Font = new Font("Segoe UI", 8.25F);
-        _lblCdnSetupCaption.ForeColor = SystemColors.GrayText;
-        _lblCdnSetupCaption.Name = "_lblCdnSetupCaption";
-
-        _lblCdnSetupValue.Text = "---";
-        _lblCdnSetupValue.AutoSize = true;
-        _lblCdnSetupValue.Font = new Font("Segoe UI", 8.25F);
-        _lblCdnSetupValue.ForeColor = SystemColors.GrayText;
-        _lblCdnSetupValue.Name = "_lblCdnSetupValue";
-
-        // Row 9: Buttons
+        // Row 7: Buttons
         _flpButtons.FlowDirection = FlowDirection.RightToLeft;
         _flpButtons.AutoSize = true;
         _flpButtons.AutoSizeMode = AutoSizeMode.GrowOnly;
@@ -311,7 +275,7 @@ partial class SettingsForm
         _btnOK.DialogResult = DialogResult.OK;
         _btnOK.Name = "_btnOK";
         _btnOK.AccessibleName = "Kaydet ve kapat";
-        _btnOK.TabIndex = 10;
+        _btnOK.TabIndex = 9;
 
         _btnCancel.Text = "İptal";
         _btnCancel.AutoSize = true;
@@ -319,15 +283,15 @@ partial class SettingsForm
         _btnCancel.DialogResult = DialogResult.Cancel;
         _btnCancel.Name = "_btnCancel";
         _btnCancel.AccessibleName = "İptal";
-        _btnCancel.TabIndex = 11;
+        _btnCancel.TabIndex = 10;
 
         // 5. Configure Form
         AcceptButton = _btnOK;
         CancelButton = _btnCancel;
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(680, 530);
-        MinimumSize = new Size(550, 480);
+        ClientSize = new Size(620, 400);
+        MinimumSize = new Size(500, 350);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
@@ -362,12 +326,10 @@ partial class SettingsForm
     private Button _btnBrowseLocal;
     private Label _lblSetupFile;
     private TextBox _txtSetupFile;
-    private Label _lblCdnUrl;
-    private TextBox _txtCdnUrl;
-    private Label _lblEDefterFile;
-    private TextBox _txtEDefterFile;
+    private Label _lblSetupFilesPath;
+    private TextBox _txtSetupFilesPath;
+    private Button _btnBrowseSetup;
     private CheckBox _chkAutoLaunch;
-    private CheckBox _chkEDefter;
     private GroupBox _grpComputedPaths;
     private TableLayoutPanel _tlpComputed;
     private Label _lblExeFileCaption;
@@ -378,8 +340,6 @@ partial class SettingsForm
     private Label _lblLocalExeValue;
     private Label _lblSetupPathCaption;
     private Label _lblSetupPathValue;
-    private Label _lblCdnSetupCaption;
-    private Label _lblCdnSetupValue;
     private FlowLayoutPanel _flpButtons;
     private Button _btnOK;
     private Button _btnCancel;

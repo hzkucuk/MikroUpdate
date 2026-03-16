@@ -2,7 +2,7 @@ using System.Text.Json;
 
 using MikroUpdate.Shared.Models;
 
-namespace MikroUpdate.Win.Services;
+namespace MikroUpdate.Service.Services;
 
 /// <summary>
 /// Yapılandırma dosyasını okuma/yazma servisi.
@@ -35,21 +35,4 @@ public sealed class ConfigService
         string json = File.ReadAllText(ConfigFilePath);
         return JsonSerializer.Deserialize<UpdateConfig>(json, JsonOptions) ?? new UpdateConfig();
     }
-
-    /// <summary>
-    /// Yapılandırma dosyasını kaydeder.
-    /// </summary>
-    public void Save(UpdateConfig config)
-    {
-        ArgumentNullException.ThrowIfNull(config);
-
-        Directory.CreateDirectory(ConfigDirectory);
-        string json = JsonSerializer.Serialize(config, JsonOptions);
-        File.WriteAllText(ConfigFilePath, json);
-    }
-
-    /// <summary>
-    /// Yapılandırma dosyasının tam yolunu döner.
-    /// </summary>
-    public static string GetConfigFilePath() => ConfigFilePath;
 }

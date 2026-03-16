@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MikroUpdate.Win.Models;
+namespace MikroUpdate.Shared.Models;
 
 /// <summary>
 /// Mikro ERP güncelleme yapılandırma ayarları.
@@ -15,6 +15,9 @@ public sealed class UpdateConfig
 
     /// <summary>Terminal kurulum yolu (ör: C:\Mikro\v16xx).</summary>
     public string LocalInstallPath { get; set; } = @"C:\Mikro\v16xx";
+
+    /// <summary>Setup dosyalarının bulunduğu klasör yolu (ör: \\SERVER\MikroV16xx\CLIENT).</summary>
+    public string SetupFilesPath { get; set; } = @"\\SERVER\MikroV16xx\CLIENT";
 
     /// <summary>Client setup dosyası adı (ör: Jump_v16xx_Client_Setupx064.exe).</summary>
     public string SetupFileName { get; set; } = "Jump_v16xx_Client_Setupx064.exe";
@@ -36,11 +39,7 @@ public sealed class UpdateConfig
     [JsonIgnore]
     public string ServerExePath => Path.Combine(ServerSharePath, ExeFileName);
 
-    /// <summary>Sunucudaki CLIENT klasörü yolu.</summary>
-    [JsonIgnore]
-    public string ServerClientPath => Path.Combine(ServerSharePath, "CLIENT");
-
     /// <summary>Sunucudaki setup dosyasının tam yolu.</summary>
     [JsonIgnore]
-    public string ServerSetupFilePath => Path.Combine(ServerClientPath, SetupFileName);
+    public string ServerSetupFilePath => Path.Combine(SetupFilesPath, SetupFileName);
 }
