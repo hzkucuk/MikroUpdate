@@ -2,6 +2,12 @@
 
 ## v1.8.0
 
+### Kurulum Sırasında Modül Seçimi
+- **Installer modül seçimi:** Inno Setup sihirbazında Client, e-Defter, Beyanname checkbox'ları
+- **Client zorunlu modül:** Her zaman seçili, kullanıcı tarafından devre dışı bırakılamaz
+- **e-Defter ve Beyanname opsiyonel:** Varsayılan seçili değil, kullanıcı ihtiyacına göre işaretler
+- **config.json entegrasyonu:** Seçim durumu `Enabled: true/false` olarak yapılandırma dosyasına yazılır
+
 ### V16/V17 Yol Otomatik Güncelleme
 - **Sürüm geçişinde otomatik yol güncelleme:** Ana Sürüm (V16↔V17) değiştiğinde sunucu, terminal ve setup yolları otomatik güncellenir
 - **Ayarlar Formu:** `UpdateVersionPaths()` ile anlık yol dönüşümü (v16xx↔v17xx, MikroV16xx↔MikroV17xx)

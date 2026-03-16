@@ -41,12 +41,15 @@ Script otomatik olarak:
 Kurulum sihirbazı şunları yapar:
 - `C:\Program Files\MikroUpdate\Win\` — Tray uygulaması dosyaları
 - `C:\Program Files\MikroUpdate\Service\` — Windows servisi dosyaları
-- **Özel yapılandırma sayfası** — ürün seçimi (Jump/Fly), sunucu yolu, terminal yolu, setup dosyası
+- **Özel yapılandırma sayfası:**
+  - Ana sürüm (V16/V17) ve ürün seçimi (Jump/Fly)
+  - Sunucu yolu, terminal yolu, setup dosyaları yolu
+  - **Modül seçimi** — Client (zorunlu), e-Defter (opsiyonel), Beyanname (opsiyonel)
 - **MikroUpdateService** Windows servisini kaydeder ve başlatır (görev seçiliyse)
 - Başlat Menüsü kısayolu oluşturur
 - Windows Başlangıç kısayolu oluşturur (görev seçiliyse, `/auto` parametresi ile)
 - `%ProgramData%\MikroUpdate\` dizin yapısını oluşturur
-- `config.json` dosyasını özel sayfadaki değerlerle oluşturur
+- `config.json` dosyasını özel sayfadaki değerlerle oluşturur (modül seçimine göre `Enabled` ayarlanır)
 
 ## Manuel Kurulum (Alternatif)
 

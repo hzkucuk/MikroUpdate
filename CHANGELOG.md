@@ -6,6 +6,10 @@ Format: [Semantic Versioning](https://semver.org/lang/tr/)
 ## [1.8.0] - 2025-07-14
 
 ### Eklenenler
+- **Kurulum sırasında modül seçimi** — Inno Setup sihirbazında Client, e-Defter, Beyanname checkbox'ları ile modül seçimi
+  - Client zorunlu modül (her zaman seçili, devre dışı bırakılamaz)
+  - e-Defter ve Beyanname varsayılan seçili değil, kullanıcı isteğe bağlı işaretler
+  - Seçim `config.json`'a `Enabled: true/false` olarak yansır
 - **V16/V17 yol otomatik güncelleme** — sürüm değiştirildiğinde tüm yol alanları (sunucu, terminal, setup) otomatik güncellenir
 - **Varsayılan ayarlar düğmesi** — ayarlar formunda "Varsayılan" butonu ile tüm alanları fabrika değerlerine sıfırlama
 - Varsayılan ayarlar seçili sürüme (V16/V17) göre dinamik yol oluşturma
@@ -14,6 +18,8 @@ Format: [Semantic Versioning](https://semver.org/lang/tr/)
 - SettingsForm: `UpdateVersionPaths()` metodu — V16↔V17 geçişinde yol alanlarını otomatik günceller
 - SettingsForm: `BtnDefaults_Click` — seçili MajorVersion'a göre dinamik varsayılan yollar
 - Inno Setup: `OnMajorVersionChange` callback — installer'da V16↔V17 geçişinde yolları günceller
+- Inno Setup: Modül seçim checkbox'ları ve `BoolToStr` helper fonksiyonu eklendi
+- Inno Setup: `GetModulesJson` — checkbox durumlarına göre `Enabled` alanını dinamik üretir
 
 ### Etkilenen Dosyalar
 - `MikroUpdate.Win/SettingsForm.cs` (değişti)
