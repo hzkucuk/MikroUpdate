@@ -58,10 +58,11 @@ Kullanıcı "release derle", "release yap", "release oluştur" veya benzeri dedi
 1. **Versiyon güncelle** — Yukarıdaki 5 noktayı yeni versiyon numarasıyla senkronize et
 2. **Dokümantasyon güncelle** — CHANGELOG.md, README.md, FEATURES.md, INSTALL.md gerekli bölümlerini güncelle
 3. **Build doğrula** — `dotnet build MikroUpdate.slnx -c Release` çalıştır, hata olmadığından emin ol
-4. **Git commit** — Tüm değişiklikleri commit et: `git add -A && git commit -m "release: vX.Y.Z"`
-5. **Git tag** — Versiyon tag'i oluştur: `git tag vX.Y.Z`
-6. **Git push** — Tag ile birlikte push et: `git push origin master --tags`
-7. **Bilgilendir** — GitHub Actions `release.yml` otomatik tetiklenecek, installer oluşturulup GitHub Release'e eklenecek
+4. **Lokal Installer derle** — `Deployment\Build-Setup.ps1` çalıştır, `installer\MikroUpdate_Setup_X.Y.Z.exe` oluştuğunu doğrula
+5. **Git commit** — Tüm değişiklikleri commit et: `git add -A && git commit -m "release: vX.Y.Z"`
+6. **Git tag** — Versiyon tag'i oluştur: `git tag vX.Y.Z`
+7. **Git push** — Tag ile birlikte push et: `git push origin master --tags`
+8. **Bilgilendir** — GitHub Actions `release.yml` otomatik tetiklenecek, installer oluşturulup GitHub Release'e eklenecek
 
 > **Not:** Tag push edildiğinde `.github/workflows/release.yml` otomatik olarak:
 > - .NET 10 build + publish yapar
