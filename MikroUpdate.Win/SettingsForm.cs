@@ -75,7 +75,8 @@ public partial class SettingsForm : Form
     }
 
     /// <summary>
-    /// Ürün veya ana sürüm değiştiğinde modül listesini varsayılanlarla günceller.
+    /// Ürün veya ana sürüm değiştiğinde modül listesini ve yolları varsayılanlarla günceller.
+    /// Yollardaki sürüm kısımları (v16xx/v17xx, MikroV16xx/MikroV17xx) otomatik değiştirilir.
     /// </summary>
     private void OnProductOrVersionChanged(object? sender, EventArgs e)
     {
@@ -89,7 +90,31 @@ public partial class SettingsForm : Form
         List<UpdateModule> defaults = UpdateConfig.GetDefaultModules(product, version);
 
         RefreshModuleGrid(defaults);
+        UpdateVersionPaths(version);
         UpdateComputedPaths();
+    }
+
+    /// <summary>
+    /// V16/V17 geçişlerinde yol alanlarındaki sürüm kısımlarını günceller.
+    /// Örn: \\SERVER\MikroV16xx → \\SERVER\MikroV17xx, C:\Mikro\v16xx → C:\Mikro\v17xx
+    /// </summary>
+    private void UpdateVersionPaths(string newVersion)
+    {
+        string oldTag = newVersion == "V17" ? "v16xx" : "v17xx";
+        string newTag = newVersion == "V17" ? "v17xx" : "v16xx";
+        string oldMikroTag = newVersion == "V17" ? "MikroV16xx" : "MikroV17xx";
+        string newMikroTag = newVersion == "V17" ? "MikroV17xx" : "MikroV16xx";
+
+        _txtServerShare.Text = _txtServerShare.Text
+            .Replace(oldMikroTag, newMikroTag, StringComparison.OrdinalIgnoreCase)
+            .Replace(oldTag, newTag, StringComparison.OrdinalIgnoreCase);
+
+        _txtLocalPath.Text = _txtLocalPath.Text
+            .Replace(oldTag, newTag, StringComparison.OrdinalIgnoreCase);
+
+        _txtSetupFilesPath.Text = _txtSetupFilesPath.Text
+            .Replace(oldMikroTag, newMikroTag, StringComparison.OrdinalIgnoreCase)
+            .Replace(oldTag, newTag, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

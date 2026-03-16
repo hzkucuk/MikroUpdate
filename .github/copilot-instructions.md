@@ -73,3 +73,12 @@ Kullanıcı "release derle", "release yap", "release oluştur" veya benzeri dedi
 2. Sadece değişen kod bloğu
 3. Dokümantasyon güncellemeleri
 4. Onay noktası
+
+## Git (her değişiklik sonrası — otomatik)
+Her görev/özellik/düzeltme tamamlandıktan ve build doğrulandıktan sonra:
+1. `git add -A`
+2. `git commit -m "<tip>: <kısa açıklama>"`
+3. `git push origin master`
+
+**Commit tipleri:** `feat`, `fix`, `refactor`, `docs`, `chore`, `style`, `perf`
+**Kural:** Release commit'leri hariç tag oluşturma. Tag sadece "release derle" sürecinde atılır.

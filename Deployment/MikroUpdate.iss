@@ -109,6 +109,45 @@ var
   LocalPathEdit: TNewEdit;
   SetupFilesPathEdit: TNewEdit;
 
+procedure OnMajorVersionChange(Sender: TObject);
+var
+  Ver, OldTag, NewTag, OldMikro, NewMikro, Tmp: String;
+begin
+  Ver := MajorVersionCombo.Items[MajorVersionCombo.ItemIndex];
+
+  if Ver = 'V17' then
+  begin
+    OldTag := 'v16xx';
+    NewTag := 'v17xx';
+    OldMikro := 'MikroV16xx';
+    NewMikro := 'MikroV17xx';
+  end
+  else
+  begin
+    OldTag := 'v17xx';
+    NewTag := 'v16xx';
+    OldMikro := 'MikroV17xx';
+    NewMikro := 'MikroV16xx';
+  end;
+
+  { Sunucu yolunu güncelle }
+  Tmp := ServerPathEdit.Text;
+  StringChangeEx(Tmp, OldMikro, NewMikro, True);
+  StringChangeEx(Tmp, OldTag, NewTag, True);
+  ServerPathEdit.Text := Tmp;
+
+  { Terminal yolunu güncelle }
+  Tmp := LocalPathEdit.Text;
+  StringChangeEx(Tmp, OldTag, NewTag, True);
+  LocalPathEdit.Text := Tmp;
+
+  { Setup dosyaları yolunu güncelle }
+  Tmp := SetupFilesPathEdit.Text;
+  StringChangeEx(Tmp, OldMikro, NewMikro, True);
+  StringChangeEx(Tmp, OldTag, NewTag, True);
+  SetupFilesPathEdit.Text := Tmp;
+end;
+
 procedure InitializeWizard;
 var
   LabelMajorVersion, LabelProduct, LabelServer, LabelLocal, LabelSetupPath: TNewStaticText;
@@ -137,6 +176,7 @@ begin
   MajorVersionCombo.Items.Add('V16');
   MajorVersionCombo.Items.Add('V17');
   MajorVersionCombo.ItemIndex := 0;
+  MajorVersionCombo.OnChange := @OnMajorVersionChange;
 
   { Ürün Seçimi (sürüm yanında) }
   LabelProduct := TNewStaticText.Create(ConfigPage);
