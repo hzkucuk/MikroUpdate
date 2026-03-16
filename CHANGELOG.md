@@ -3,7 +3,7 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
-## [1.8.0] - 2025-07-14
+## [1.9.0] - 2025-07-15
 
 ### Eklenenler
 - **Kurulum sırasında modül seçimi** — Inno Setup sihirbazında Client, e-Defter, Beyanname checkbox'ları ile modül seçimi

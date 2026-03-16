@@ -83,3 +83,17 @@ Her görev/özellik/düzeltme tamamlandıktan ve build doğrulandıktan sonra:
 
 **Commit tipleri:** `feat`, `fix`, `refactor`, `docs`, `chore`, `style`, `perf`
 **Kural:** Release commit'leri hariç tag oluşturma. Tag sadece "release derle" sürecinde atılır.
+
+## Görev Sonrası Otomasyon (kritik — her görev tamamlandığında otomatik uygula)
+
+Her özellik/güncelleme/düzeltme tamamlandıktan sonra aşağıdaki adımlar **hatırlatma beklemeden otomatik** uygulanır:
+
+1. **Versiyon güncelle** — Semantic versioning'e göre (MAJOR/MINOR/PATCH) 5 noktayı senkronize et
+2. **Dökümanları güncelle** — CHANGELOG.md, FEATURES.md, INSTALL.md, README.md (gerekli olanlar)
+3. **Build doğrula** — `dotnet build` ile derleme hatası olmadığından emin ol
+4. **Git gönder** — `git add -A` → `git commit` → `git push origin master`
+
+> **Not:** Bu adımlar kullanıcı hatırlatmadan otomatik yapılır. Versiyon bump seviyesi:
+> - Yeni özellik → MINOR (1.8.0 → 1.9.0)
+> - Bug fix / küçük düzeltme → PATCH (1.8.0 → 1.8.1)
+> - Breaking change → MAJOR (1.8.0 → 2.0.0)

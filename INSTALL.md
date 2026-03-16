@@ -29,10 +29,10 @@ Script otomatik olarak:
 
 ```powershell
 # Standart kurulum (UI ile — özel yapılandırma sayfası dahil)
-.\installer\MikroUpdate_Setup_1.6.0.exe
+.\installer\MikroUpdate_Setup_1.9.0.exe
 
 # Sessiz kurulum
-.\installer\MikroUpdate_Setup_1.6.0.exe /VERYSILENT /SUPPRESSMSGBOXES
+.\installer\MikroUpdate_Setup_1.9.0.exe /VERYSILENT /SUPPRESSMSGBOXES
 
 # Sessiz kaldırma
 .\installer\unins000.exe /VERYSILENT

@@ -1,6 +1,6 @@
 # Özellikler
 
-## v1.8.0
+## v1.9.0
 
 ### Kurulum Sırasında Modül Seçimi
 - **Installer modül seçimi:** Inno Setup sihirbazında Client, e-Defter, Beyanname checkbox'ları
