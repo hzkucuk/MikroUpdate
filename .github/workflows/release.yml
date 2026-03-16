@@ -16,7 +16,7 @@ permissions:
 jobs:
   build-and-release:
     runs-on: windows-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,6 +25,10 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+          include-prerelease: true
+
+      - name: Verify .NET SDK
+        run: dotnet --version
 
       - name: Restore dependencies
         run: dotnet restore MikroUpdate.slnx
@@ -33,21 +37,25 @@ jobs:
         run: dotnet build MikroUpdate.slnx -c Release --no-restore
 
       - name: Publish Win (framework-dependent)
-        run: |
-          dotnet publish MikroUpdate.Win -c Release -o publish/win --no-self-contained
+        run: dotnet publish MikroUpdate.Win -c Release -o publish/win --no-self-contained
 
       - name: Publish Service (framework-dependent)
-        run: |
-          dotnet publish MikroUpdate.Service -c Release -o publish/service --no-self-contained
+        run: dotnet publish MikroUpdate.Service -c Release -o publish/service --no-self-contained
 
       - name: Install Inno Setup 6
-        run: |
-          choco install innosetup --yes --no-progress
+        run: choco install innosetup --yes --no-progress
         shell: pwsh
 
       - name: Compile Inno Setup installer
         run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" Deployment\MikroUpdate.iss
+          $isccPaths = @(
+            "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+            "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
+          )
+          $iscc = $isccPaths | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $iscc) { Write-Error "ISCC.exe bulunamadi!"; exit 1 }
+          Write-Host "ISCC: $iscc"
+          & $iscc Deployment\MikroUpdate.iss
         shell: pwsh
 
       - name: Extract version from tag

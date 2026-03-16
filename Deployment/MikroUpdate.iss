@@ -30,6 +30,7 @@ SetupIconFile=..\MikroUpdate.Win\app.ico
 UninstallDisplayIcon={app}\Win\{#MyAppExeName}
 
 [Languages]
+Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
 
 ; ============================================================
