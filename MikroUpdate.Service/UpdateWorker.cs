@@ -10,7 +10,7 @@ namespace MikroUpdate.Service;
 /// <summary>
 /// Ana Worker servisi.
 /// Named Pipe sunucusu ile tray uygulamasından komut alır ve güncelleme işlemlerini yönetir.
-/// Periyodik versiyon kontrolü yapar.
+/// Periyodik versiyon kontrolü yapar. Çoklu modül desteği (Client, e-Defter, Beyanname).
 /// </summary>
 public sealed class UpdateWorker : BackgroundService
 {
@@ -24,6 +24,7 @@ public sealed class UpdateWorker : BackgroundService
     private string? _lastServerVersion;
     private string? _lastLocalVersion;
     private bool _updateRequired;
+    private List<ModuleVersionInfo> _moduleVersions = [];
 
     public UpdateWorker(ILogger<UpdateWorker> logger)
     {
@@ -34,9 +35,12 @@ public sealed class UpdateWorker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _config = _configService.Load();
+        _config.EnsureModules();
         _logger.LogInformation(
-            "MikroUpdate Service başlatıldı. Ürün: {Product}, Sunucu: {Server}",
+            "MikroUpdate Service başlatıldı. Sürüm: {Version}, Ürün: {Product}, Modül: {Count}, Sunucu: {Server}",
+            _config.MajorVersion,
             _config.ProductName,
+            _config.Modules.Count,
             _config.ServerSharePath);
 
         // Pipe sunucusu ve periyodik kontrol paralel çalışır
@@ -129,24 +133,26 @@ public sealed class UpdateWorker : BackgroundService
 
         try
         {
-            Version? serverVersion = _versionService.GetVersion(_config.ServerExePath);
-            Version? localVersion = _versionService.GetVersion(_config.LocalExePath);
+            _moduleVersions = _versionService.GetModuleVersions(_config);
+            _updateRequired = _moduleVersions.Exists(v => v.UpdateRequired);
 
-            _lastServerVersion = serverVersion?.ToString();
-            _lastLocalVersion = localVersion?.ToString();
-            _updateRequired = serverVersion is not null
-                && (localVersion is null || localVersion < serverVersion);
+            // Ana modül (Client) bilgilerini geriye uyumluluk için sakla
+            ModuleVersionInfo? clientModule = _moduleVersions
+                .Find(v => v.ModuleName.Equals("Client", StringComparison.OrdinalIgnoreCase));
+            _lastServerVersion = clientModule?.ServerVersion;
+            _lastLocalVersion = clientModule?.LocalVersion;
 
             _currentStatus = ServiceStatus.Completed;
 
             if (_updateRequired)
             {
-                _statusMessage = $"Güncelleme mevcut: {_lastLocalVersion ?? "Kurulu değil"} → {_lastServerVersion}";
+                int count = _moduleVersions.Count(v => v.UpdateRequired);
+                _statusMessage = $"{count} modülde güncelleme mevcut.";
                 _logger.LogInformation("{Message}", _statusMessage);
             }
             else
             {
-                _statusMessage = $"Terminal güncel: {_lastLocalVersion}";
+                _statusMessage = "Tüm modüller güncel.";
                 _logger.LogInformation("{Message}", _statusMessage);
             }
 
@@ -180,58 +186,90 @@ public sealed class UpdateWorker : BackgroundService
                 {
                     Success = true,
                     Status = ServiceStatus.Completed,
-                    Message = "Terminal zaten güncel.",
+                    Message = "Tüm modüller güncel.",
                     ServerVersion = _lastServerVersion,
-                    LocalVersion = _lastLocalVersion
+                    LocalVersion = _lastLocalVersion,
+                    ModuleVersions = _moduleVersions
                 };
             }
 
-            // 2. Mikro sürecini kapat
+            // 2. Güncellenmesi gereken modüller
+            List<UpdateModule> modulesToUpdate = _config.EnabledModules
+                .Where(m => _moduleVersions.Exists(v =>
+                    v.ModuleName == m.Name && v.UpdateRequired))
+                .ToList();
+
+            // 3. İlgili süreçleri kapat
             _currentStatus = ServiceStatus.Installing;
-            _statusMessage = "Mikro süreci kapatılıyor...";
-            int killed = _updateService.KillMikroProcess(_config.ExeFileName);
-            _logger.LogInformation("{Killed} Mikro süreci kapatıldı.", killed);
+            _statusMessage = "Mikro süreçleri kapatılıyor...";
+            HashSet<string> killedProcesses = [];
+
+            foreach (UpdateModule module in modulesToUpdate)
+            {
+                if (killedProcesses.Add(module.ExeFileName))
+                {
+                    int killed = _updateService.KillMikroProcess(module.ExeFileName);
+                    _logger.LogInformation("{ExeFile}: {Killed} süreç kapatıldı.", module.ExeFileName, killed);
+                }
+            }
+
             await Task.Delay(1500, stoppingToken).ConfigureAwait(false);
 
-            // 3. Setup dosyasını kopyala
-            _currentStatus = ServiceStatus.CopyingSetup;
-            _statusMessage = "Setup dosyası kopyalanıyor...";
-            string? setupPath = _updateService.CopySetupFromServer(_config.ServerSetupFilePath);
+            // 4. Her modül için setup kopyala ve kur
+            int successCount = 0;
+            int failCount = 0;
 
-            if (string.IsNullOrEmpty(setupPath))
+            foreach (UpdateModule module in modulesToUpdate)
             {
-                _currentStatus = ServiceStatus.Error;
-                _statusMessage = "Setup dosyası sunucuda bulunamadı: " + _config.ServerSetupFilePath;
-                _logger.LogError("{Message}", _statusMessage);
+                string serverSetupPath = Path.Combine(_config.SetupFilesPath, module.SetupFileName);
 
-                return new ServiceResponse
+                _currentStatus = ServiceStatus.CopyingSetup;
+                _statusMessage = $"{module.Name} setup kopyalanıyor...";
+                string? setupPath = _updateService.CopySetupFromServer(serverSetupPath);
+
+                if (string.IsNullOrEmpty(setupPath))
                 {
-                    Success = false,
-                    Status = ServiceStatus.Error,
-                    Message = _statusMessage
-                };
+                    _logger.LogError("{Module} setup bulunamadı: {Path}", module.Name, serverSetupPath);
+                    failCount++;
+
+                    continue;
+                }
+
+                _logger.LogInformation("{Module} setup kopyalandı: {Path}", module.Name, setupPath);
+
+                _currentStatus = ServiceStatus.Installing;
+                _statusMessage = $"{module.Name} kurulumu yapılıyor...";
+                int exitCode = await _updateService.RunSilentInstallAsync(
+                    setupPath, _config.LocalInstallPath, stoppingToken).ConfigureAwait(false);
+
+                if (exitCode == 0)
+                {
+                    _logger.LogInformation("{Module} kurulumu başarılı.", module.Name);
+                    successCount++;
+                }
+                else
+                {
+                    _logger.LogError("{Module} kurulum hata kodu: {ExitCode}", module.Name, exitCode);
+                    failCount++;
+                }
             }
-
-            _logger.LogInformation("Setup kopyalandı: {Path}", setupPath);
-
-            // 4. Sessiz kurulum
-            _currentStatus = ServiceStatus.Installing;
-            _statusMessage = "Kurulum yapılıyor...";
-            int exitCode = await _updateService.RunSilentInstallAsync(
-                setupPath, _config.LocalInstallPath, stoppingToken).ConfigureAwait(false);
 
             // 5. Temizlik
             UpdateService.CleanupTempFiles();
 
-            // 6. Sonuç
-            Version? newVersion = _versionService.GetVersion(_config.LocalExePath);
-            _lastLocalVersion = newVersion?.ToString();
-            _updateRequired = false;
+            // 6. Güncel versiyon bilgileri
+            _moduleVersions = _versionService.GetModuleVersions(_config);
+            _updateRequired = _moduleVersions.Exists(v => v.UpdateRequired);
 
-            if (exitCode == 0)
+            ModuleVersionInfo? clientModule = _moduleVersions
+                .Find(v => v.ModuleName.Equals("Client", StringComparison.OrdinalIgnoreCase));
+            _lastLocalVersion = clientModule?.LocalVersion;
+
+            // 7. Sonuç
+            if (failCount == 0)
             {
                 _currentStatus = ServiceStatus.Completed;
-                _statusMessage = $"Kurulum tamamlandı. Yeni versiyon: {_lastLocalVersion}";
+                _statusMessage = $"{successCount} modül başarıyla güncellendi.";
                 _logger.LogInformation("{Message}", _statusMessage);
 
                 return new ServiceResponse
@@ -240,20 +278,24 @@ public sealed class UpdateWorker : BackgroundService
                     Status = ServiceStatus.Completed,
                     Message = _statusMessage,
                     ServerVersion = _lastServerVersion,
-                    LocalVersion = _lastLocalVersion
+                    LocalVersion = _lastLocalVersion,
+                    ModuleVersions = _moduleVersions
                 };
             }
             else
             {
                 _currentStatus = ServiceStatus.Error;
-                _statusMessage = $"Kurulum hata kodu: {exitCode}";
+                _statusMessage = $"{successCount} başarılı, {failCount} başarısız modül kurulumu.";
                 _logger.LogError("{Message}", _statusMessage);
 
                 return new ServiceResponse
                 {
                     Success = false,
                     Status = ServiceStatus.Error,
-                    Message = _statusMessage
+                    Message = _statusMessage,
+                    ServerVersion = _lastServerVersion,
+                    LocalVersion = _lastLocalVersion,
+                    ModuleVersions = _moduleVersions
                 };
             }
         }
@@ -275,14 +317,16 @@ public sealed class UpdateWorker : BackgroundService
     private ServiceResponse HandleReloadConfig()
     {
         _config = _configService.Load();
+        _config.EnsureModules();
         _logger.LogInformation(
-            "Yapılandırma yeniden yüklendi. Ürün: {Product}", _config.ProductName);
+            "Yapılandırma yeniden yüklendi. Ürün: {Product}, Sürüm: {Version}, Modül sayısı: {Count}",
+            _config.ProductName, _config.MajorVersion, _config.Modules.Count);
 
         return new ServiceResponse
         {
             Success = true,
             Status = _currentStatus,
-            Message = $"Yapılandırma yeniden yüklendi: {_config.ProductName}"
+            Message = $"Yapılandırma yeniden yüklendi: {_config.MajorVersion} {_config.ProductName}"
         };
     }
 
@@ -295,7 +339,8 @@ public sealed class UpdateWorker : BackgroundService
             Message = _statusMessage,
             ServerVersion = _lastServerVersion,
             LocalVersion = _lastLocalVersion,
-            UpdateRequired = _updateRequired
+            UpdateRequired = _updateRequired,
+            ModuleVersions = _moduleVersions
         };
     }
 

@@ -20,13 +20,15 @@ partial class Form1
         // 1. Instantiate
         components = new System.ComponentModel.Container();
         _tlpMain = new TableLayoutPanel();
-        _tlpStatus = new TableLayoutPanel();
-        _lblLocalVerCaption = new Label();
-        _lblLocalVersion = new Label();
-        _lblServerVerCaption = new Label();
-        _lblServerVersion = new Label();
+        _tlpHeader = new TableLayoutPanel();
+        _lblConfigInfo = new Label();
         _lblStatusCaption = new Label();
         _lblStatus = new Label();
+        _dgvModules = new DataGridView();
+        _colModuleName = new DataGridViewTextBoxColumn();
+        _colLocalVersion = new DataGridViewTextBoxColumn();
+        _colServerVersion = new DataGridViewTextBoxColumn();
+        _colStatus = new DataGridViewTextBoxColumn();
         _prgProgress = new ProgressBar();
         _rtbLog = new RichTextBox();
         _flpButtons = new FlowLayoutPanel();
@@ -45,7 +47,8 @@ partial class Form1
 
         // 3. Suspend
         _tlpMain.SuspendLayout();
-        _tlpStatus.SuspendLayout();
+        _tlpHeader.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)_dgvModules).BeginInit();
         _flpButtons.SuspendLayout();
         _ctxTray.SuspendLayout();
         SuspendLayout();
@@ -87,78 +90,108 @@ partial class Form1
         _notifyIcon.Visible = true;
         _notifyIcon.DoubleClick += TsmShow_Click;
 
-        // _tlpMain (4 rows: Status, Progress, Log, Buttons)
+        // _tlpMain (5 rows: Header, Modules, Progress, Log, Buttons)
         _tlpMain.ColumnCount = 1;
         _tlpMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        _tlpMain.RowCount = 4;
+        _tlpMain.RowCount = 5;
         _tlpMain.RowStyles.Add(new RowStyle());
+        _tlpMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 110F));
         _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.Dock = DockStyle.Fill;
         _tlpMain.Padding = new Padding(12, 12, 12, 8);
         _tlpMain.Name = "_tlpMain";
-        _tlpMain.Controls.Add(_tlpStatus, 0, 0);
-        _tlpMain.Controls.Add(_prgProgress, 0, 1);
-        _tlpMain.Controls.Add(_rtbLog, 0, 2);
-        _tlpMain.Controls.Add(_flpButtons, 0, 3);
+        _tlpMain.Controls.Add(_tlpHeader, 0, 0);
+        _tlpMain.Controls.Add(_dgvModules, 0, 1);
+        _tlpMain.Controls.Add(_prgProgress, 0, 2);
+        _tlpMain.Controls.Add(_rtbLog, 0, 3);
+        _tlpMain.Controls.Add(_flpButtons, 0, 4);
 
-        // _tlpStatus (3 columns — clean card-style, no GroupBox)
-        _tlpStatus.ColumnCount = 3;
-        _tlpStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
-        _tlpStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.34F));
-        _tlpStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
-        _tlpStatus.RowCount = 2;
-        _tlpStatus.RowStyles.Add(new RowStyle());
-        _tlpStatus.RowStyles.Add(new RowStyle());
-        _tlpStatus.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-        _tlpStatus.Margin = new Padding(0, 0, 0, 6);
-        _tlpStatus.Name = "_tlpStatus";
-        _tlpStatus.Controls.Add(_lblLocalVerCaption, 0, 0);
-        _tlpStatus.Controls.Add(_lblLocalVersion, 0, 1);
-        _tlpStatus.Controls.Add(_lblServerVerCaption, 1, 0);
-        _tlpStatus.Controls.Add(_lblServerVersion, 1, 1);
-        _tlpStatus.Controls.Add(_lblStatusCaption, 2, 0);
-        _tlpStatus.Controls.Add(_lblStatus, 2, 1);
+        // _tlpHeader (config info + status)
+        _tlpHeader.ColumnCount = 2;
+        _tlpHeader.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60F));
+        _tlpHeader.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40F));
+        _tlpHeader.RowCount = 2;
+        _tlpHeader.RowStyles.Add(new RowStyle());
+        _tlpHeader.RowStyles.Add(new RowStyle());
+        _tlpHeader.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+        _tlpHeader.Margin = new Padding(0, 0, 0, 4);
+        _tlpHeader.Name = "_tlpHeader";
+        _tlpHeader.Controls.Add(_lblConfigInfo, 0, 0);
+        _tlpHeader.Controls.Add(_lblStatusCaption, 1, 0);
+        _tlpHeader.Controls.Add(_lblStatus, 1, 1);
 
-        _lblLocalVerCaption.Text = "TERMINAL";
-        _lblLocalVerCaption.AutoSize = true;
-        _lblLocalVerCaption.Font = new Font("Segoe UI", 7.5F, FontStyle.Bold);
-        _lblLocalVerCaption.ForeColor = SystemColors.GrayText;
-        _lblLocalVerCaption.Margin = new Padding(0, 4, 0, 0);
-        _lblLocalVerCaption.Name = "_lblLocalVerCaption";
-
-        _lblLocalVersion.Text = "—";
-        _lblLocalVersion.AutoSize = true;
-        _lblLocalVersion.Font = new Font("Segoe UI Semibold", 12F);
-        _lblLocalVersion.Margin = new Padding(0, 0, 0, 4);
-        _lblLocalVersion.Name = "_lblLocalVersion";
-
-        _lblServerVerCaption.Text = "SUNUCU";
-        _lblServerVerCaption.AutoSize = true;
-        _lblServerVerCaption.Font = new Font("Segoe UI", 7.5F, FontStyle.Bold);
-        _lblServerVerCaption.ForeColor = SystemColors.GrayText;
-        _lblServerVerCaption.Margin = new Padding(0, 4, 0, 0);
-        _lblServerVerCaption.Name = "_lblServerVerCaption";
-
-        _lblServerVersion.Text = "—";
-        _lblServerVersion.AutoSize = true;
-        _lblServerVersion.Font = new Font("Segoe UI Semibold", 12F);
-        _lblServerVersion.Margin = new Padding(0, 0, 0, 4);
-        _lblServerVersion.Name = "_lblServerVersion";
+        _lblConfigInfo.Text = "—";
+        _lblConfigInfo.AutoSize = true;
+        _lblConfigInfo.Font = new Font("Segoe UI Semibold", 10F);
+        _lblConfigInfo.Margin = new Padding(0, 4, 0, 4);
+        _lblConfigInfo.Name = "_lblConfigInfo";
+        _tlpHeader.SetRowSpan(_lblConfigInfo, 2);
+        _lblConfigInfo.Anchor = AnchorStyles.Left;
 
         _lblStatusCaption.Text = "DURUM";
         _lblStatusCaption.AutoSize = true;
         _lblStatusCaption.Font = new Font("Segoe UI", 7.5F, FontStyle.Bold);
         _lblStatusCaption.ForeColor = SystemColors.GrayText;
         _lblStatusCaption.Margin = new Padding(0, 4, 0, 0);
+        _lblStatusCaption.Anchor = AnchorStyles.Right;
         _lblStatusCaption.Name = "_lblStatusCaption";
 
         _lblStatus.Text = "Kontrol edilmedi";
         _lblStatus.AutoSize = true;
         _lblStatus.Font = new Font("Segoe UI Semibold", 12F);
         _lblStatus.Margin = new Padding(0, 0, 0, 4);
+        _lblStatus.Anchor = AnchorStyles.Right;
         _lblStatus.Name = "_lblStatus";
+
+        // _dgvModules
+        _dgvModules.AllowUserToAddRows = false;
+        _dgvModules.AllowUserToDeleteRows = false;
+        _dgvModules.AllowUserToResizeRows = false;
+        _dgvModules.ReadOnly = true;
+        _dgvModules.RowHeadersVisible = false;
+        _dgvModules.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+        _dgvModules.MultiSelect = false;
+        _dgvModules.BackgroundColor = Color.FromArgb(35, 35, 35);
+        _dgvModules.GridColor = Color.FromArgb(50, 50, 50);
+        _dgvModules.BorderStyle = BorderStyle.None;
+        _dgvModules.DefaultCellStyle.BackColor = Color.FromArgb(35, 35, 35);
+        _dgvModules.DefaultCellStyle.ForeColor = Color.FromArgb(210, 210, 210);
+        _dgvModules.DefaultCellStyle.SelectionBackColor = Color.FromArgb(50, 50, 50);
+        _dgvModules.DefaultCellStyle.SelectionForeColor = Color.FromArgb(230, 230, 230);
+        _dgvModules.DefaultCellStyle.Font = new Font("Segoe UI", 9F);
+        _dgvModules.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(40, 40, 40);
+        _dgvModules.ColumnHeadersDefaultCellStyle.ForeColor = SystemColors.GrayText;
+        _dgvModules.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 7.5F, FontStyle.Bold);
+        _dgvModules.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.FromArgb(40, 40, 40);
+        _dgvModules.ColumnHeadersDefaultCellStyle.SelectionForeColor = SystemColors.GrayText;
+        _dgvModules.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+        _dgvModules.EnableHeadersVisualStyles = false;
+        _dgvModules.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+        _dgvModules.Margin = new Padding(0, 0, 0, 4);
+        _dgvModules.Name = "_dgvModules";
+        _dgvModules.Columns.AddRange(new DataGridViewColumn[] { _colModuleName, _colLocalVersion, _colServerVersion, _colStatus });
+
+        _colModuleName.HeaderText = "MODÜL";
+        _colModuleName.Name = "_colModuleName";
+        _colModuleName.Width = 110;
+        _colModuleName.SortMode = DataGridViewColumnSortMode.NotSortable;
+
+        _colLocalVersion.HeaderText = "TERMINAL";
+        _colLocalVersion.Name = "_colLocalVersion";
+        _colLocalVersion.Width = 130;
+        _colLocalVersion.SortMode = DataGridViewColumnSortMode.NotSortable;
+
+        _colServerVersion.HeaderText = "SUNUCU";
+        _colServerVersion.Name = "_colServerVersion";
+        _colServerVersion.Width = 130;
+        _colServerVersion.SortMode = DataGridViewColumnSortMode.NotSortable;
+
+        _colStatus.HeaderText = "DURUM";
+        _colStatus.Name = "_colStatus";
+        _colStatus.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        _colStatus.SortMode = DataGridViewColumnSortMode.NotSortable;
 
         // _prgProgress (slim)
         _prgProgress.Anchor = AnchorStyles.Left | AnchorStyles.Right;
@@ -241,16 +274,17 @@ partial class Form1
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.FromArgb(30, 30, 30);
         ForeColor = Color.FromArgb(230, 230, 230);
-        ClientSize = new Size(720, 440);
-        MinimumSize = new Size(580, 360);
+        ClientSize = new Size(720, 500);
+        MinimumSize = new Size(620, 420);
         Controls.Add(_tlpMain);
         Name = "Form1";
         Text = "MikroUpdate";
 
         // 6. Resume
         _ctxTray.ResumeLayout(false);
-        _tlpStatus.ResumeLayout(false);
-        _tlpStatus.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)_dgvModules).EndInit();
+        _tlpHeader.ResumeLayout(false);
+        _tlpHeader.PerformLayout();
         _flpButtons.ResumeLayout(false);
         _flpButtons.PerformLayout();
         _tlpMain.ResumeLayout(false);
@@ -261,13 +295,15 @@ partial class Form1
     #endregion
 
     private TableLayoutPanel _tlpMain;
-    private TableLayoutPanel _tlpStatus;
-    private Label _lblLocalVerCaption;
-    private Label _lblLocalVersion;
-    private Label _lblServerVerCaption;
-    private Label _lblServerVersion;
+    private TableLayoutPanel _tlpHeader;
+    private Label _lblConfigInfo;
     private Label _lblStatusCaption;
     private Label _lblStatus;
+    private DataGridView _dgvModules;
+    private DataGridViewTextBoxColumn _colModuleName;
+    private DataGridViewTextBoxColumn _colLocalVersion;
+    private DataGridViewTextBoxColumn _colServerVersion;
+    private DataGridViewTextBoxColumn _colStatus;
     private ProgressBar _prgProgress;
     private RichTextBox _rtbLog;
     private FlowLayoutPanel _flpButtons;

@@ -1,6 +1,6 @@
 # MikroUpdate
 
-![Version](https://img.shields.io/badge/version-1.6.0-blue)
+![Version](https://img.shields.io/badge/version-1.7.0-blue)
 ![.NET](https://img.shields.io/badge/.NET-10.0-purple)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 
@@ -76,13 +76,18 @@ Ayarlar `%ProgramData%\MikroUpdate\config.json` dosyasında saklanır:
 
 ```json
 {
+  "MajorVersion": "V16",
   "ProductName": "Jump",
   "ServerSharePath": "\\\\SERVER\\MikroV16xx",
   "LocalInstallPath": "C:\\Mikro\\v16xx",
   "SetupFilesPath": "\\\\SERVER\\MikroV16xx\\CLIENT",
-  "SetupFileName": "Jump_v16xx_Client_Setupx064.exe",
   "AutoLaunchAfterUpdate": true,
-  "CheckIntervalMinutes": 30
+  "CheckIntervalMinutes": 30,
+  "Modules": [
+    { "Name": "Client", "SetupFileName": "Jump_v16xx_Client_Setupx064.exe", "ExeFileName": "MikroJump.EXE", "Enabled": true },
+    { "Name": "e-Defter", "SetupFileName": "Jump_v16xx_eDefter_Setupx064.exe", "ExeFileName": "myEDefterStandart.exe", "Enabled": true },
+    { "Name": "Beyanname", "SetupFileName": "v16xx_BEYANNAME_Setupx064.exe", "ExeFileName": "BEYANNAME.EXE", "Enabled": true }
+  ]
 }
 ```
 
@@ -93,19 +98,25 @@ Ayarlar `%ProgramData%\MikroUpdate\config.json` dosyasında saklanır:
 - Log seviyeleri: `INFO`, `OK`, `WARN`, `ERROR`
 - UI log paneli (RichTextBox) ve dosya log'u eş zamanlı çalışır
 
-### Ürün / EXE Eşleşmeleri
+### Ürün / Modül / EXE Eşleşmeleri
 
-| Ürün | EXE | Tipik Sunucu Yolu |
-|------|-----|-------------------|
-| Jump (V16) | `MikroJump.EXE` | `\\SERVER\MikroV16xx` |
-| Fly (V17) | `MikroFly.EXE` | `\\SERVER\MikroV17xx` |
+| Sürüm | Ürün | Modül | EXE | Setup |
+|-------|------|-------|-----|-------|
+| V16 | Jump | Client | `MikroJump.EXE` | `Jump_v16xx_Client_Setupx064.exe` |
+| V16 | Jump | e-Defter | `myEDefterStandart.exe` | `Jump_v16xx_eDefter_Setupx064.exe` |
+| V16 | Jump | Beyanname | `BEYANNAME.EXE` | `v16xx_BEYANNAME_Setupx064.exe` |
+| V17 | Fly | Client | `MikroFly.EXE` | `Fly_v17xx_Client_Setupx064.exe` |
+| V17 | Fly | e-Defter | `MyeDefter.exe` | `Fly_v17xx_eDefter_Setupx064.exe` |
+| V17 | Fly | Beyanname | `BEYANNAME.EXE` | `v17xx_BEYANNAME_Setupx064.exe` |
 
 ### Versiyon Kontrol Akışı
 
+Her modül için sunucu ve terminal EXE dosyası karşılaştırılır:
+
 ```
-Sunucu: \\SERVER\MikroV16xx\MikroJump.EXE  →  FileVersionInfo  →  16.39.5.46064
-Terminal: C:\Mikro\v16xx\MikroJump.EXE      →  FileVersionInfo  →  16.38.0.45000
-Sonuç: 16.38.0.45000 < 16.39.5.46064       →  Güncelleme mevcut!
+Client:    Sunucu 16.39.5.46064 > Terminal 16.38.0.45000  →  ▲ Güncelle
+e-Defter:  Sunucu 16.39.5.46064 = Terminal 16.39.5.46064  →  ✔ Güncel
+Beyanname: Sunucu 16.40.0.00000 > Terminal 16.38.0.45000  →  ▲ Güncelle
 ```
 
 ## Gereksinimler

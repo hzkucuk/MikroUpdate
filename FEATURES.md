@@ -1,5 +1,27 @@
 # Özellikler
 
+## v1.7.0
+
+### V16/V17 Çoklu Modül Desteği
+- **Ana Sürüm Seçimi:** V16 ve V17 sürümleri ayrı yapılandırma ile desteklenir
+- **Çoklu Modül Mimarisi:** Her ürün+sürüm kombinasyonu için Client, e-Defter ve Beyanname modülleri
+- **Modül Bazlı Versiyon Kontrolü:** Her modülün terminal ve sunucu versiyonu ayrı kontrol edilir
+- **Sıralı Güncelleme:** Güncellenmesi gereken modüller için setup dosyaları sırayla kopyalanır ve kurulur
+- **Akıllı Varsayılanlar:** Ürün ve sürüm değiştiğinde modül listesi otomatik güncellenir
+- **DataGridView ile Versiyon Durumu:** Modül bazlı Terminal/Sunucu/Durum gösterimi
+- **Ayarlar Formu:** Ana Sürüm combo, modül düzenleme grid'i, Sıfırla butonu
+- **Installer Desteği:** Inno Setup özel sayfasında ana sürüm ve ürün seçimi ile otomatik modül yapılandırması
+- **Ayar Sonrası Otomatik Kontrol:** Ayarlar kaydedildikten sonra versiyon kontrolü otomatik tetiklenir
+- **.NET 10 Runtime Kontrolü:** Installer kurulum öncesi .NET 10 Desktop Runtime'ı kontrol eder, yoksa otomatik indirir ve sessiz kurar
+
+#### Modül Matrisi
+| Sürüm | Ürün | Client Setup | e-Defter Setup | Beyanname Setup |
+|-------|------|-------------|----------------|----------------|
+| V16 | Jump | Jump_v16xx_Client_Setupx064.exe | Jump_v16xx_eDefter_Setupx064.exe | v16xx_BEYANNAME_Setupx064.exe |
+| V16 | Fly | Fly_v16xx_Client_Setupx064.exe | Fly_v16xx_eDefter_Setupx064.exe | v16xx_BEYANNAME_Setupx064.exe |
+| V17 | Jump | Jump_v17xx_Client_Setupx064.exe | Jump_v17xx_eDefter_Setupx064.exe | v17xx_BEYANNAME_Setupx064.exe |
+| V17 | Fly | Fly_v17xx_Client_Setupx064.exe | Fly_v17xx_eDefter_Setupx064.exe | v17xx_BEYANNAME_Setupx064.exe |
+
 ## v1.6.0
 
 ### Inno Setup Kurulum Paketi

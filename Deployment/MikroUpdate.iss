@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.6.0"
+#define MyAppVersion "1.7.0"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.Win.exe"
@@ -103,36 +103,53 @@ Root: HKLM; Subkey: "Software\MikroUpdate"; ValueType: string; ValueName: "Insta
 
 var
   ConfigPage: TWizardPage;
+  MajorVersionCombo: TNewComboBox;
   ProductCombo: TNewComboBox;
   ServerPathEdit: TNewEdit;
   LocalPathEdit: TNewEdit;
   SetupFilesPathEdit: TNewEdit;
-  SetupFileNameEdit: TNewEdit;
 
 procedure InitializeWizard;
 var
-  LabelProduct, LabelServer, LabelLocal, LabelSetupPath, LabelSetupFile: TNewStaticText;
+  LabelMajorVersion, LabelProduct, LabelServer, LabelLocal, LabelSetupPath: TNewStaticText;
   TopPos: Integer;
 begin
   ConfigPage := CreateCustomPage(
     wpSelectTasks,
     'Mikro ERP Yapılandırması',
-    'Güncelleme için ürün ve sunucu bilgilerini girin.');
+    'Güncelleme için sürüm, ürün ve sunucu bilgilerini girin.');
 
   TopPos := 8;
 
-  { Ürün Seçimi }
+  { Ana Sürüm Seçimi }
+  LabelMajorVersion := TNewStaticText.Create(ConfigPage);
+  LabelMajorVersion.Parent := ConfigPage.Surface;
+  LabelMajorVersion.Caption := 'Ana Sürüm:';
+  LabelMajorVersion.Top := TopPos;
+  LabelMajorVersion.Left := 0;
+
+  MajorVersionCombo := TNewComboBox.Create(ConfigPage);
+  MajorVersionCombo.Parent := ConfigPage.Surface;
+  MajorVersionCombo.Top := TopPos + 20;
+  MajorVersionCombo.Left := 0;
+  MajorVersionCombo.Width := ConfigPage.SurfaceWidth div 2;
+  MajorVersionCombo.Style := csDropDownList;
+  MajorVersionCombo.Items.Add('V16');
+  MajorVersionCombo.Items.Add('V17');
+  MajorVersionCombo.ItemIndex := 0;
+
+  { Ürün Seçimi (sürüm yanında) }
   LabelProduct := TNewStaticText.Create(ConfigPage);
   LabelProduct.Parent := ConfigPage.Surface;
   LabelProduct.Caption := 'Ürün:';
   LabelProduct.Top := TopPos;
-  LabelProduct.Left := 0;
+  LabelProduct.Left := (ConfigPage.SurfaceWidth div 2) + 12;
 
   ProductCombo := TNewComboBox.Create(ConfigPage);
   ProductCombo.Parent := ConfigPage.Surface;
   ProductCombo.Top := TopPos + 20;
-  ProductCombo.Left := 0;
-  ProductCombo.Width := ConfigPage.SurfaceWidth;
+  ProductCombo.Left := (ConfigPage.SurfaceWidth div 2) + 12;
+  ProductCombo.Width := (ConfigPage.SurfaceWidth div 2) - 12;
   ProductCombo.Style := csDropDownList;
   ProductCombo.Items.Add('Jump');
   ProductCombo.Items.Add('Fly');
@@ -185,35 +202,71 @@ begin
   SetupFilesPathEdit.Left := 0;
   SetupFilesPathEdit.Width := ConfigPage.SurfaceWidth;
   SetupFilesPathEdit.Text := '\\SERVER\MikroV16xx\CLIENT';
+end;
 
-  TopPos := TopPos + 52;
+function GetModulesJson: String;
+var
+  MajorVer, Product, Prefix, Ver: String;
+  IsFly: Boolean;
+  ClientExe, EDeftExe: String;
+begin
+  MajorVer := MajorVersionCombo.Items[MajorVersionCombo.ItemIndex];
+  Product := ProductCombo.Items[ProductCombo.ItemIndex];
+  IsFly := (Product = 'Fly');
 
-  { Setup Dosya Adı }
-  LabelSetupFile := TNewStaticText.Create(ConfigPage);
-  LabelSetupFile.Parent := ConfigPage.Surface;
-  LabelSetupFile.Caption := 'Setup Dosya Adı (ör: Jump_v16xx_Client_Setupx064.exe):';
-  LabelSetupFile.Top := TopPos;
-  LabelSetupFile.Left := 0;
+  if MajorVer = 'V17' then
+    Ver := 'v17xx'
+  else
+    Ver := 'v16xx';
 
-  SetupFileNameEdit := TNewEdit.Create(ConfigPage);
-  SetupFileNameEdit.Parent := ConfigPage.Surface;
-  SetupFileNameEdit.Top := TopPos + 20;
-  SetupFileNameEdit.Left := 0;
-  SetupFileNameEdit.Width := ConfigPage.SurfaceWidth;
-  SetupFileNameEdit.Text := 'Jump_v16xx_Client_Setupx064.exe';
+  if IsFly then
+  begin
+    Prefix := 'Fly';
+    ClientExe := 'MikroFly.EXE';
+    EDeftExe := 'MyeDefter.exe';
+  end
+  else
+  begin
+    Prefix := 'Jump';
+    ClientExe := 'MikroJump.EXE';
+    EDeftExe := 'myEDefterStandart.exe';
+  end;
+
+  Result :=
+    '    {' + #13#10 +
+    '      "Name": "Client",' + #13#10 +
+    '      "SetupFileName": "' + Prefix + '_' + Ver + '_Client_Setupx064.exe",' + #13#10 +
+    '      "ExeFileName": "' + ClientExe + '",' + #13#10 +
+    '      "Enabled": true' + #13#10 +
+    '    },' + #13#10 +
+    '    {' + #13#10 +
+    '      "Name": "e-Defter",' + #13#10 +
+    '      "SetupFileName": "' + Prefix + '_' + Ver + '_eDefter_Setupx064.exe",' + #13#10 +
+    '      "ExeFileName": "' + EDeftExe + '",' + #13#10 +
+    '      "Enabled": true' + #13#10 +
+    '    },' + #13#10 +
+    '    {' + #13#10 +
+    '      "Name": "Beyanname",' + #13#10 +
+    '      "SetupFileName": "' + Ver + '_BEYANNAME_Setupx064.exe",' + #13#10 +
+    '      "ExeFileName": "BEYANNAME.EXE",' + #13#10 +
+    '      "Enabled": true' + #13#10 +
+    '    }';
 end;
 
 function GenerateConfigJson: String;
 begin
   Result :=
     '{' + #13#10 +
+    '  "MajorVersion": "' + MajorVersionCombo.Items[MajorVersionCombo.ItemIndex] + '",' + #13#10 +
     '  "ProductName": "' + ProductCombo.Items[ProductCombo.ItemIndex] + '",' + #13#10 +
     '  "ServerSharePath": "' + ServerPathEdit.Text + '",' + #13#10 +
     '  "LocalInstallPath": "' + LocalPathEdit.Text + '",' + #13#10 +
     '  "SetupFilesPath": "' + SetupFilesPathEdit.Text + '",' + #13#10 +
-    '  "SetupFileName": "' + SetupFileNameEdit.Text + '",' + #13#10 +
     '  "AutoLaunchAfterUpdate": true,' + #13#10 +
-    '  "CheckIntervalMinutes": 30' + #13#10 +
+    '  "CheckIntervalMinutes": 30,' + #13#10 +
+    '  "Modules": [' + #13#10 +
+    GetModulesJson + #13#10 +
+    '  ]' + #13#10 +
     '}';
 end;
 
@@ -241,6 +294,108 @@ begin
   if CurStep = ssPostInstall then
   begin
     WriteConfigFile;
+  end;
+end;
+
+{ ============================================================ }
+{  .NET 10 Desktop Runtime Kontrolü ve Otomatik Kurulumu        }
+{ ============================================================ }
+
+function IsDotNet10DesktopInstalled: Boolean;
+var
+  BasePath: String;
+  FindRec: TFindRec;
+begin
+  Result := False;
+  BasePath := ExpandConstant('{commonpf64}\dotnet\shared\Microsoft.WindowsDesktop.App');
+  if FindFirst(BasePath + '\10.*', FindRec) then
+  begin
+    try
+      repeat
+        if FindRec.Attributes and FILE_ATTRIBUTE_DIRECTORY <> 0 then
+        begin
+          Result := True;
+          Break;
+        end;
+      until not FindNext(FindRec);
+    finally
+      FindClose(FindRec);
+    end;
+  end;
+end;
+
+function OnDownloadProgress(const Url, FileName: String; const Progress, ProgressMax: Int64): Boolean;
+begin
+  if ProgressMax <> 0 then
+    Log(Format('  %s — %d / %d bayt (%d%%)', [FileName, Progress, ProgressMax, Progress * 100 div ProgressMax]))
+  else
+    Log(Format('  %s — %d bayt indiriliyor...', [FileName, Progress]));
+  Result := True;
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  DownloadPage: TDownloadWizardPage;
+  ResultCode: Integer;
+begin
+  Result := '';
+
+  if IsDotNet10DesktopInstalled then
+  begin
+    Log('.NET 10 Desktop Runtime zaten yüklü.');
+    Exit;
+  end;
+
+  Log('.NET 10 Desktop Runtime bulunamadı — indirme başlatılıyor...');
+
+  DownloadPage := CreateDownloadPage(
+    '.NET 10 Desktop Runtime Gerekli',
+    '.NET 10 Desktop Runtime indiriliyor, lütfen bekleyin...',
+    @OnDownloadProgress);
+  DownloadPage.Clear;
+  DownloadPage.Add(
+    'https://aka.ms/dotnet/10.0/windowsdesktop-runtime-win-x64.exe',
+    'windowsdesktop-runtime-win-x64.exe',
+    '');
+  DownloadPage.Show;
+  try
+    try
+      DownloadPage.Download;
+    except
+      Result := '.NET 10 Desktop Runtime indirilemedi: ' + GetExceptionMessage + #13#10 +
+                'Lütfen internet bağlantınızı kontrol edip tekrar deneyin veya ' +
+                'runtime''ı elle kurun: https://dotnet.microsoft.com/download/dotnet/10.0';
+      Exit;
+    end;
+  finally
+    DownloadPage.Hide;
+  end;
+
+  Log('.NET 10 Desktop Runtime sessiz kurulumu başlatılıyor...');
+
+  if not Exec(
+    ExpandConstant('{tmp}\windowsdesktop-runtime-win-x64.exe'),
+    '/install /quiet /norestart', '',
+    SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  begin
+    Result := '.NET 10 Desktop Runtime başlatılamadı. Lütfen elle kurun: ' +
+              'https://dotnet.microsoft.com/download/dotnet/10.0';
+  end
+  else if (ResultCode <> 0) and (ResultCode <> 3010) then
+  begin
+    Result := '.NET 10 Desktop Runtime kurulumu başarısız oldu (çıkış kodu: ' +
+              IntToStr(ResultCode) + '). Lütfen elle kurun: ' +
+              'https://dotnet.microsoft.com/download/dotnet/10.0';
+  end
+  else
+  begin
+    if ResultCode = 3010 then
+    begin
+      NeedsRestart := True;
+      Log('.NET 10 Desktop Runtime kuruldu — yeniden başlatma gerekiyor.');
+    end
+    else
+      Log('.NET 10 Desktop Runtime başarıyla kuruldu.');
   end;
 end;
 

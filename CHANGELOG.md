@@ -3,6 +3,44 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.7.0] - 2025-07-13
+
+### Eklenenler
+- **V16/V17 çoklu modül desteği** — ana sürüm (V16/V17) ve ürün (Jump/Fly) bazlı yapılandırma
+- `UpdateModule` model sınıfı — her modül kendi setup dosyası ve EXE dosyasını tanımlar
+- `ModuleVersionInfo` — modül bazlı versiyon bilgisi (terminal/sunucu/güncelleme durumu)
+- Modül matrisi: Client, e-Defter, Beyanname modülleri her ürün+sürüm kombinasyonu için otomatik oluşturulur
+- Form1: DataGridView ile modül bazlı versiyon durumu gösterimi (MODÜL/TERMINAL/SUNUCU/DURUM)
+- SettingsForm: Ana Sürüm (V16/V17) combo, modül DataGridView (aktif/pasif, setup/exe düzenleme), Sıfırla butonu
+- Sıralı çoklu modül güncelleme — her modül için ayrı setup kopyalama ve sessiz kurulum
+- Inno Setup: Ana sürüm ve ürün seçimine göre otomatik modül listesi oluşturma
+- `UpdateConfig.EnsureModules()` — boş modül listesi için varsayılan modülleri otomatik doldurur
+- `UpdateConfig.GetDefaultModules()` — ürün+sürüm bazlı fabrika metodu
+
+### Değişenler
+- `UpdateConfig`: `SetupFileName` → `List<UpdateModule> Modules`, `MajorVersion` eklendi
+- `ServiceResponse`: `List<ModuleVersionInfo> ModuleVersions` eklendi
+- `VersionService` (Win+Service): çoklu modül versiyon kontrolü (`GetModuleVersions`)
+- `UpdateWorker`: sıralı çoklu modül güncelleme, modül bazlı süreç kapatma
+- Form1.Designer: 3 sütunlu status paneli → DataGridView + başlık paneli
+- SettingsForm.Designer: tekli setup alanı → modül grid + ana sürüm combo
+- Inno Setup: `SetupFileName` alanı kaldırıldı, `MajorVersion` combo eklendi, modül JSON üretimi
+- Ayarlar kaydedildikten sonra otomatik versiyon kontrolü başlatılır
+- Inno Setup: .NET 10 Desktop Runtime yüklü değilse otomatik indirme ve sessiz kurulum (`PrepareToInstall`)
+
+### Etkilenen Dosyalar
+- `MikroUpdate.Shared/Models/UpdateModule.cs` (yeni)
+- `MikroUpdate.Shared/Models/UpdateConfig.cs` (değişti)
+- `MikroUpdate.Shared/Messages/ServiceResponse.cs` (değişti)
+- `MikroUpdate.Win/Services/VersionService.cs` (değişti)
+- `MikroUpdate.Win/Form1.cs` (değişti)
+- `MikroUpdate.Win/Form1.Designer.cs` (değişti)
+- `MikroUpdate.Win/SettingsForm.cs` (değişti)
+- `MikroUpdate.Win/SettingsForm.Designer.cs` (değişti)
+- `MikroUpdate.Service/Services/VersionService.cs` (değişti)
+- `MikroUpdate.Service/UpdateWorker.cs` (değişti)
+- `Deployment/MikroUpdate.iss` (değişti)
+
 ## [1.6.0] - 2025-07-12
 
 ### Eklenenler

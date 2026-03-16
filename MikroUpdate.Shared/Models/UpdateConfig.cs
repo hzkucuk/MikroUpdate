@@ -4,9 +4,13 @@ namespace MikroUpdate.Shared.Models;
 
 /// <summary>
 /// Mikro ERP güncelleme yapılandırma ayarları.
+/// V16/V17 ana sürüm ve Jump/Fly ürün kombinasyonuna göre çoklu modül desteği sağlar.
 /// </summary>
 public sealed class UpdateConfig
 {
+    /// <summary>Ana sürüm: V16 veya V17.</summary>
+    public string MajorVersion { get; set; } = "V16";
+
     /// <summary>Ürün adı: Jump veya Fly.</summary>
     public string ProductName { get; set; } = "Jump";
 
@@ -19,30 +23,81 @@ public sealed class UpdateConfig
     /// <summary>Setup dosyalarının bulunduğu klasör yolu (ör: \\SERVER\MikroV16xx\CLIENT).</summary>
     public string SetupFilesPath { get; set; } = @"\\SERVER\MikroV16xx\CLIENT";
 
-    /// <summary>Client setup dosyası adı (ör: Jump_v16xx_Client_Setupx064.exe).</summary>
-    public string SetupFileName { get; set; } = "Jump_v16xx_Client_Setupx064.exe";
-
     /// <summary>Güncelleme sonrası Mikro'yu otomatik başlat.</summary>
     public bool AutoLaunchAfterUpdate { get; set; } = true;
 
     /// <summary>Periyodik versiyon kontrol aralığı (dakika). Varsayılan: 30.</summary>
     public int CheckIntervalMinutes { get; set; } = 30;
 
-    /// <summary>Mikro ana EXE dosyası adı (ürüne göre otomatik belirlenir).</summary>
-    [JsonIgnore]
-    public string ExeFileName => ProductName.Equals("Fly", StringComparison.OrdinalIgnoreCase)
-        ? "MikroFly.EXE"
-        : "MikroJump.EXE";
+    /// <summary>Güncelleme modülleri (Client, e-Defter, Beyanname).</summary>
+    public List<UpdateModule> Modules { get; set; } = [];
 
-    /// <summary>Terminal'deki EXE tam yolu.</summary>
+    /// <summary>Aktif modül listesi (Enabled = true olanlar).</summary>
+    [JsonIgnore]
+    public IReadOnlyList<UpdateModule> EnabledModules =>
+        Modules.Where(m => m.Enabled).ToList();
+
+    /// <summary>Ana ürün EXE dosyası adı (Client modülünden alınır).</summary>
+    [JsonIgnore]
+    public string ExeFileName =>
+        Modules.FirstOrDefault(m => m.Name.Equals("Client", StringComparison.OrdinalIgnoreCase))?.ExeFileName
+        ?? (ProductName.Equals("Fly", StringComparison.OrdinalIgnoreCase) ? "MikroFly.EXE" : "MikroJump.EXE");
+
+    /// <summary>Terminal'deki ana EXE tam yolu.</summary>
     [JsonIgnore]
     public string LocalExePath => Path.Combine(LocalInstallPath, ExeFileName);
 
-    /// <summary>Sunucudaki EXE tam yolu (versiyon referansı için).</summary>
+    /// <summary>Sunucudaki ana EXE tam yolu (versiyon referansı için).</summary>
     [JsonIgnore]
     public string ServerExePath => Path.Combine(ServerSharePath, ExeFileName);
 
-    /// <summary>Sunucudaki setup dosyasının tam yolu.</summary>
-    [JsonIgnore]
-    public string ServerSetupFilePath => Path.Combine(SetupFilesPath, SetupFileName);
+    /// <summary>
+    /// Modül listesi boşsa varsayılan modüllerle doldurur.
+    /// ConfigService.Load() sonrası çağrılmalıdır.
+    /// </summary>
+    public void EnsureModules()
+    {
+        if (Modules.Count == 0)
+        {
+            Modules = GetDefaultModules(ProductName, MajorVersion);
+        }
+    }
+
+    /// <summary>
+    /// Ürün ve ana sürüme göre varsayılan modül listesi oluşturur.
+    /// </summary>
+    public static List<UpdateModule> GetDefaultModules(string productName, string majorVersion)
+    {
+        ArgumentNullException.ThrowIfNull(productName);
+        ArgumentNullException.ThrowIfNull(majorVersion);
+
+        bool isFly = productName.Equals("Fly", StringComparison.OrdinalIgnoreCase);
+        string ver = majorVersion.Equals("V17", StringComparison.OrdinalIgnoreCase) ? "v17xx" : "v16xx";
+        string productPrefix = isFly ? "Fly" : "Jump";
+
+        return
+        [
+            new UpdateModule
+            {
+                Name = "Client",
+                SetupFileName = $"{productPrefix}_{ver}_Client_Setupx064.exe",
+                ExeFileName = isFly ? "MikroFly.EXE" : "MikroJump.EXE",
+                Enabled = true
+            },
+            new UpdateModule
+            {
+                Name = "e-Defter",
+                SetupFileName = $"{productPrefix}_{ver}_eDefter_Setupx064.exe",
+                ExeFileName = isFly ? "MyeDefter.exe" : "myEDefterStandart.exe",
+                Enabled = true
+            },
+            new UpdateModule
+            {
+                Name = "Beyanname",
+                SetupFileName = $"{ver}_BEYANNAME_Setupx064.exe",
+                ExeFileName = "BEYANNAME.EXE",
+                Enabled = true
+            }
+        ];
+    }
 }

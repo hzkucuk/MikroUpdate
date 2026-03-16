@@ -105,7 +105,9 @@ public partial class Form1 : Form
         try
         {
             _config = _configService.Load();
-            LogInfo($"Ayarlar yüklendi: {_config.ProductName} | {_config.ServerSharePath}");
+            _config.EnsureModules();
+            _lblConfigInfo.Text = $"{_config.MajorVersion} {_config.ProductName}  •  {_config.Modules.Count} modül";
+            LogInfo($"Ayarlar yüklendi: {_config.MajorVersion} {_config.ProductName} | {_config.Modules.Count} modül");
             LogInfo("Yapılandırma dosyası: " + ConfigService.GetConfigFilePath());
             LogInfo("Log dizini: " + FileLogService.GetLogDirectory());
         }
@@ -145,8 +147,10 @@ public partial class Form1 : Form
             try
             {
                 _config = settingsForm.Config;
+                _config.EnsureModules();
                 _configService.Save(_config);
-                LogSuccess($"Ayarlar kaydedildi: {_config.ProductName} | {_config.ServerSharePath}");
+                _lblConfigInfo.Text = $"{_config.MajorVersion} {_config.ProductName}  •  {_config.Modules.Count} modül";
+                LogSuccess($"Ayarlar kaydedildi: {_config.MajorVersion} {_config.ProductName} | {_config.Modules.Count} modül");
 
                 // Servis çalışıyorsa yapılandırmayı yeniden yüklemesini iste
                 if (_serviceAvailable)
@@ -162,6 +166,10 @@ public partial class Form1 : Form
                         LogWarning("Servis yapılandırma yeniden yüklemesine yanıt vermedi.");
                     }
                 }
+
+                // Yeni ayarlarla otomatik versiyon kontrolü başlat
+                LogInfo("Ayarlar değişti — versiyon kontrolü başlatılıyor...");
+                await CheckVersionsAsync();
             }
             catch (Exception ex)
             {
@@ -259,77 +267,131 @@ public partial class Form1 : Form
             return;
         }
 
-        _lblLocalVersion.Text = response.LocalVersion ?? "Kurulu değil";
-        _lblServerVersion.Text = response.ServerVersion ?? "Erişilemiyor";
-
         if (!response.Success)
         {
             SetStatus("Hata", Color.OrangeRed);
             LogError(response.Message ?? "Versiyon kontrol hatası.");
             ShowTrayBalloon("Kontrol Hatası", response.Message ?? "Versiyon kontrol hatası.", ToolTipIcon.Error);
+
+            return;
         }
-        else if (response.UpdateRequired)
+
+        // Modül versiyon bilgilerini göster
+        DisplayModuleVersions(response.ModuleVersions);
+
+        if (response.UpdateRequired)
         {
-            SetStatus("Güncelleme mevcut!", Color.Red);
-            LogWarning(response.Message ?? "Güncelleme gerekli.");
-            ShowTrayBalloon("Güncelleme Mevcut", $"Yeni sürüm: {response.ServerVersion}", ToolTipIcon.Warning);
+            int count = response.ModuleVersions.Count(v => v.UpdateRequired);
+            SetStatus($"{count} modülde güncelleme mevcut!", Color.Red);
+            LogWarning($"{count} modülde güncelleme gerekli.");
+            ShowTrayBalloon("Güncelleme Mevcut", $"{count} modülde güncelleme mevcut.", ToolTipIcon.Warning);
         }
         else
         {
             SetStatus("Güncel", Color.LimeGreen);
-            LogSuccess(response.Message ?? "Terminal güncel.");
+            LogSuccess("Tüm modüller güncel.");
         }
     }
 
     private void CheckVersionsDirect()
     {
-        Version? localVersion = null;
-        Version? serverVersion = null;
+        List<ModuleVersionInfo> moduleVersions = [];
 
-        try
+        foreach (UpdateModule module in _config.EnabledModules)
         {
-            localVersion = _versionService.GetVersion(_config.LocalExePath);
-        }
-        catch (Exception ex)
-        {
-            LogError($"Yerel versiyon okunamadı: {ex.Message}");
-            _fileLog.Error($"Yerel versiyon okuma hatası: {_config.LocalExePath}", ex);
+            string localPath = Path.Combine(_config.LocalInstallPath, module.ExeFileName);
+            string serverPath = Path.Combine(_config.ServerSharePath, module.ExeFileName);
+            Version? localVersion = null;
+            Version? serverVersion = null;
+
+            try
+            {
+                localVersion = _versionService.GetVersion(localPath);
+            }
+            catch (Exception ex)
+            {
+                LogError($"[{module.Name}] Yerel versiyon okunamadı: {ex.Message}");
+                _fileLog.Error($"Yerel versiyon okuma hatası: {localPath}", ex);
+            }
+
+            try
+            {
+                serverVersion = _versionService.GetVersion(serverPath);
+            }
+            catch (Exception ex)
+            {
+                LogError($"[{module.Name}] Sunucu versiyonu okunamadı: {ex.Message}");
+                _fileLog.Error($"Sunucu versiyon okuma hatası: {serverPath}", ex);
+            }
+
+            bool updateRequired = serverVersion is not null
+                && (localVersion is null || localVersion < serverVersion);
+
+            moduleVersions.Add(new ModuleVersionInfo
+            {
+                ModuleName = module.Name,
+                LocalVersion = localVersion?.ToString(),
+                ServerVersion = serverVersion?.ToString(),
+                UpdateRequired = updateRequired
+            });
         }
 
-        try
-        {
-            serverVersion = _versionService.GetVersion(_config.ServerExePath);
-        }
-        catch (Exception ex)
-        {
-            LogError($"Sunucu versiyonu okunamadı: {ex.Message}");
-            _fileLog.Error($"Sunucu versiyon okuma hatası: {_config.ServerExePath}", ex);
-        }
+        DisplayModuleVersions(moduleVersions);
 
-        _lblLocalVersion.Text = localVersion?.ToString() ?? "Kurulu değil";
-        _lblServerVersion.Text = serverVersion?.ToString() ?? "Erişilemiyor";
+        bool anyUpdate = moduleVersions.Exists(v => v.UpdateRequired);
+        bool anyServerUnavailable = moduleVersions.Exists(v => v.ServerVersion is null);
+        bool allLocal = moduleVersions.TrueForAll(v => v.LocalVersion is not null);
 
-        if (serverVersion is null)
+        if (anyServerUnavailable && !anyUpdate)
         {
             SetStatus("Sunucu erişilemiyor", Color.Orange);
-            LogWarning("Sunucu EXE dosyasına erişilemedi: " + _config.ServerExePath);
-            ShowTrayBalloon("Bağlantı Sorunu", "Sunucu EXE dosyasına erişilemiyor.", ToolTipIcon.Warning);
+            LogWarning("Bazı modüllerin sunucu EXE dosyasına erişilemedi.");
+            ShowTrayBalloon("Bağlantı Sorunu", "Sunucu EXE dosyalarına erişilemiyor.", ToolTipIcon.Warning);
         }
-        else if (localVersion is null)
+        else if (!allLocal && !anyUpdate)
         {
             SetStatus("Kurulum gerekli", Color.Red);
-            LogWarning("Yerel Mikro kurulumu bulunamadı: " + _config.LocalExePath);
+            LogWarning("Bazı modüller yerel kurulumda bulunamadı.");
         }
-        else if (localVersion < serverVersion)
+        else if (anyUpdate)
         {
-            SetStatus("Güncelleme mevcut!", Color.Red);
-            LogWarning($"Güncelleme gerekli: {localVersion} → {serverVersion}");
-            ShowTrayBalloon("Güncelleme Mevcut", $"Yeni sürüm: {serverVersion}", ToolTipIcon.Warning);
+            int count = moduleVersions.Count(v => v.UpdateRequired);
+            SetStatus($"{count} modülde güncelleme mevcut!", Color.Red);
+            LogWarning($"{count} modülde güncelleme gerekli.");
+            ShowTrayBalloon("Güncelleme Mevcut", $"{count} modülde güncelleme mevcut.", ToolTipIcon.Warning);
         }
         else
         {
             SetStatus("Güncel", Color.LimeGreen);
-            LogSuccess($"Terminal güncel: {localVersion}");
+            LogSuccess("Tüm modüller güncel.");
+        }
+    }
+
+    /// <summary>
+    /// Modül versiyon bilgilerini DataGridView'da ve log'da gösterir.
+    /// </summary>
+    private void DisplayModuleVersions(List<ModuleVersionInfo> moduleVersions)
+    {
+        _dgvModules.Rows.Clear();
+
+        foreach (ModuleVersionInfo info in moduleVersions)
+        {
+            string status = info.UpdateRequired ? "▲ Güncelle"
+                : info.ServerVersion is null ? "— Erişilemiyor"
+                : "✔ Güncel";
+
+            int rowIndex = _dgvModules.Rows.Add(
+                info.ModuleName,
+                info.LocalVersion ?? "Kurulu değil",
+                info.ServerVersion ?? "Erişilemiyor",
+                status);
+
+            DataGridViewRow row = _dgvModules.Rows[rowIndex];
+            row.Cells[3].Style.ForeColor = info.UpdateRequired ? Color.Red
+                : info.ServerVersion is null ? Color.Orange
+                : Color.LimeGreen;
+
+            LogInfo($"  {info.ModuleName}: {info.LocalVersion ?? "-"} → {info.ServerVersion ?? "-"} [{status}]");
         }
     }
 
@@ -376,15 +438,18 @@ public partial class Form1 : Form
             return;
         }
 
-        _lblLocalVersion.Text = response.LocalVersion ?? _lblLocalVersion.Text;
-        _lblServerVersion.Text = response.ServerVersion ?? _lblServerVersion.Text;
+        // Modül versiyon bilgilerini göster
+        if (response.ModuleVersions.Count > 0)
+        {
+            DisplayModuleVersions(response.ModuleVersions);
+        }
 
         if (response.Success)
         {
             _prgProgress.Value = 100;
             SetStatus("Güncelleme tamamlandı", Color.LimeGreen);
             LogSuccess(response.Message ?? "Güncelleme başarıyla tamamlandı.");
-            ShowTrayBalloon("Güncelleme Tamamlandı", $"Yeni sürüm: {response.LocalVersion}", ToolTipIcon.Info);
+            ShowTrayBalloon("Güncelleme Tamamlandı", response.Message ?? "Tüm modüller güncellendi.", ToolTipIcon.Info);
 
             if (_config.AutoLaunchAfterUpdate)
             {
@@ -406,120 +471,159 @@ public partial class Form1 : Form
         LogInfo("Versiyon kontrol ediliyor (doğrudan mod)...");
         CheckVersionsDirect();
 
-        Version? localVersion = null;
-        Version? serverVersion = null;
+        // Güncellemesi gereken modülleri belirle
+        List<UpdateModule> modulesToUpdate = [];
 
-        try
+        foreach (UpdateModule module in _config.EnabledModules)
         {
-            localVersion = _versionService.GetVersion(_config.LocalExePath);
-            serverVersion = _versionService.GetVersion(_config.ServerExePath);
-        }
-        catch (Exception ex)
-        {
-            LogError($"Versiyon okuma hatası: {ex.Message}");
-            _fileLog.Error("Doğrudan güncelleme versiyon okuma hatası", ex);
+            string localPath = Path.Combine(_config.LocalInstallPath, module.ExeFileName);
+            string serverPath = Path.Combine(_config.ServerSharePath, module.ExeFileName);
+
+            try
+            {
+                Version? localVer = _versionService.GetVersion(localPath);
+                Version? serverVer = _versionService.GetVersion(serverPath);
+
+                if (serverVer is not null && (localVer is null || localVer < serverVer))
+                {
+                    modulesToUpdate.Add(module);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError($"[{module.Name}] Versiyon okuma hatası: {ex.Message}");
+                _fileLog.Error($"Doğrudan güncelleme versiyon okuma hatası: {module.Name}", ex);
+            }
         }
 
-        if (serverVersion is not null && localVersion is not null && localVersion >= serverVersion)
+        if (modulesToUpdate.Count == 0)
         {
-            LogSuccess("Terminal zaten güncel, güncelleme gerekmiyor.");
+            LogSuccess("Tüm modüller güncel, güncelleme gerekmiyor.");
 
             return;
         }
 
-        // 2. Mikro sürecini kapat
-        try
+        LogWarning($"{modulesToUpdate.Count} modül güncellenecek.");
+
+        // 2. İlgili süreçleri kapat
+        HashSet<string> killedProcesses = [];
+
+        foreach (UpdateModule module in modulesToUpdate)
         {
-            LogInfo($"{_config.ExeFileName} süreci kapatılıyor...");
-            int killed = _updateService.KillMikroProcess(_config.ExeFileName);
-            LogInfo(killed > 0 ? $"{killed} süreç kapatıldı." : "Çalışan süreç bulunamadı.");
-        }
-        catch (Exception ex)
-        {
-            LogError($"Süreç kapatma hatası: {ex.Message}");
-            _fileLog.Error("Mikro süreç kapatma hatası", ex);
+            if (killedProcesses.Add(module.ExeFileName))
+            {
+                try
+                {
+                    LogInfo($"{module.ExeFileName} süreci kapatılıyor...");
+                    int killed = _updateService.KillMikroProcess(module.ExeFileName);
+                    LogInfo(killed > 0 ? $"{killed} süreç kapatıldı." : "Çalışan süreç bulunamadı.");
+                }
+                catch (Exception ex)
+                {
+                    LogError($"Süreç kapatma hatası: {ex.Message}");
+                    _fileLog.Error($"Süreç kapatma hatası: {module.ExeFileName}", ex);
+                }
+            }
         }
 
         await Task.Delay(1500, cancellationToken);
 
-        // 3. Setup dosyasını sunucudan al
-        LogInfo("Setup dosyası sunucuda aranıyor: " + _config.ServerSetupFilePath);
-        string? setupPath;
+        // 3. Her modül için setup kopyala ve kur
+        int successCount = 0;
+        int failCount = 0;
+        int totalModules = modulesToUpdate.Count;
 
-        try
+        foreach (UpdateModule module in modulesToUpdate)
         {
-            setupPath = _updateService.CopySetupFromServer(_config.ServerSetupFilePath);
-        }
-        catch (Exception ex)
-        {
-            LogError($"Setup kopyalama hatası: {ex.Message}");
-            _fileLog.Error("Setup dosyası sunucudan kopyalanamadı", ex);
-            ShowTrayBalloon("Güncelleme Hatası", "Setup dosyası sunucudan kopyalanamadı.", ToolTipIcon.Error);
+            string serverSetupPath = Path.Combine(_config.SetupFilesPath, module.SetupFileName);
 
-            return;
-        }
+            // Setup kopyala
+            LogInfo($"[{module.Name}] Setup dosyası sunucuda aranıyor: {serverSetupPath}");
+            string? setupPath;
 
-        if (string.IsNullOrEmpty(setupPath))
-        {
-            LogError("Setup dosyası sunucuda bulunamadı: " + _config.ServerSetupFilePath);
-            LogError("Güncelleme iptal edildi.");
-            _fileLog.Error($"Setup dosyası bulunamadı: {_config.ServerSetupFilePath}");
-            ShowTrayBalloon("Güncelleme Hatası", "Setup dosyası sunucuda bulunamadı.", ToolTipIcon.Error);
+            try
+            {
+                setupPath = _updateService.CopySetupFromServer(serverSetupPath);
+            }
+            catch (Exception ex)
+            {
+                LogError($"[{module.Name}] Setup kopyalama hatası: {ex.Message}");
+                _fileLog.Error($"Setup dosyası sunucudan kopyalanamadı: {module.Name}", ex);
+                failCount++;
 
-            return;
-        }
+                continue;
+            }
 
-        LogSuccess("Setup dosyası sunucudan kopyalandı.");
+            if (string.IsNullOrEmpty(setupPath))
+            {
+                LogError($"[{module.Name}] Setup dosyası sunucuda bulunamadı: {serverSetupPath}");
+                _fileLog.Error($"Setup dosyası bulunamadı: {serverSetupPath}");
+                failCount++;
 
-        // 4. Sessiz kurulum
-        LogInfo($"Sessiz kurulum başlatılıyor: {Path.GetFileName(setupPath)}");
-        LogInfo($"Hedef dizin: {_config.LocalInstallPath}");
-        _prgProgress.Style = ProgressBarStyle.Marquee;
+                continue;
+            }
 
-        int exitCode;
+            LogSuccess($"[{module.Name}] Setup dosyası kopyalandı.");
 
-        try
-        {
-            exitCode = await _updateService.RunSilentInstallAsync(
-                setupPath, _config.LocalInstallPath, cancellationToken);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
+            // Sessiz kurulum
+            LogInfo($"[{module.Name}] Sessiz kurulum başlatılıyor: {Path.GetFileName(setupPath)}");
+            _prgProgress.Style = ProgressBarStyle.Marquee;
+
+            int exitCode;
+
+            try
+            {
+                exitCode = await _updateService.RunSilentInstallAsync(
+                    setupPath, _config.LocalInstallPath, cancellationToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _prgProgress.Style = ProgressBarStyle.Blocks;
+                LogError($"[{module.Name}] Kurulum çalıştırma hatası: {ex.Message}");
+                _fileLog.Error($"Sessiz kurulum hatası: {module.Name}", ex);
+                failCount++;
+
+                continue;
+            }
+
             _prgProgress.Style = ProgressBarStyle.Blocks;
-            LogError($"Kurulum çalıştırma hatası: {ex.Message}");
-            _fileLog.Error("Sessiz kurulum çalıştırma hatası", ex);
-            ShowTrayBalloon("Kurulum Hatası", "Kurulum işlemi başarısız oldu.", ToolTipIcon.Error);
 
-            return;
+            if (exitCode == 0)
+            {
+                LogSuccess($"[{module.Name}] Kurulum başarıyla tamamlandı.");
+                successCount++;
+            }
+            else
+            {
+                LogError($"[{module.Name}] Kurulum hata kodu: {exitCode}");
+                _fileLog.Error($"{module.Name} sessiz kurulum hata kodu: {exitCode}");
+                failCount++;
+            }
+
+            // İlerleme
+            _prgProgress.Value = (int)((successCount + failCount) * 100.0 / totalModules);
         }
 
-        _prgProgress.Style = ProgressBarStyle.Blocks;
         _prgProgress.Value = 100;
 
-        if (exitCode == 0)
+        // 4. Sonuç
+        if (failCount == 0)
         {
             SetStatus("Güncelleme tamamlandı", Color.LimeGreen);
-            LogSuccess("Client kurulumu başarıyla tamamlandı.");
-            ShowTrayBalloon("Güncelleme Tamamlandı", "Kurulum başarıyla tamamlandı.", ToolTipIcon.Info);
+            LogSuccess($"{successCount} modül başarıyla güncellendi.");
+            ShowTrayBalloon("Güncelleme Tamamlandı", $"{successCount} modül güncellendi.", ToolTipIcon.Info);
         }
         else
         {
-            SetStatus("Kurulum hatası", Color.OrangeRed);
-            LogError($"Kurulum hata kodu ile tamamlandı: {exitCode}");
-            _fileLog.Error($"Sessiz kurulum hata kodu: {exitCode}");
-            ShowTrayBalloon("Kurulum Hatası", $"Kurulum hata kodu: {exitCode}", ToolTipIcon.Error);
+            SetStatus("Kısmi güncelleme", Color.OrangeRed);
+            LogError($"{successCount} başarılı, {failCount} başarısız modül kurulumu.");
+            ShowTrayBalloon("Güncelleme Kısmi", $"{failCount} modül kurulamadı.", ToolTipIcon.Warning);
         }
 
         // 5. Kurulum sonrası versiyon kontrol
         try
         {
-            Version? newVersion = _versionService.GetVersion(_config.LocalExePath);
-
-            if (newVersion is not null)
-            {
-                _lblLocalVersion.Text = newVersion.ToString();
-                LogSuccess($"Yeni versiyon: {newVersion}");
-            }
+            CheckVersionsDirect();
         }
         catch (Exception ex)
         {
@@ -540,7 +644,7 @@ public partial class Form1 : Form
         }
 
         // 7. Otomatik başlatma
-        if (_config.AutoLaunchAfterUpdate && exitCode == 0)
+        if (_config.AutoLaunchAfterUpdate && failCount == 0)
         {
             LaunchMikro();
         }
@@ -590,7 +694,7 @@ public partial class Form1 : Form
             return;
         }
 
-        LogInfo($"Ürün: {_config.ProductName} | EXE: {_config.ExeFileName}");
+        LogInfo($"Ürün: {_config.MajorVersion} {_config.ProductName} | Modül: {_config.Modules.Count}");
         LogInfo($"Sunucu: {_config.ServerSharePath}");
         LogInfo($"Terminal: {_config.LocalInstallPath}");
         LogInfo(_serviceAvailable ? "Mod: Servis" : "Mod: Doğrudan");

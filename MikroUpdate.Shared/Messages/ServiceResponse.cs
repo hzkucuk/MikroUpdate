@@ -25,6 +25,24 @@ public enum ServiceStatus
 }
 
 /// <summary>
+/// Modül bazlı versiyon bilgisi.
+/// </summary>
+public sealed class ModuleVersionInfo
+{
+    /// <summary>Modül adı (ör: Client, e-Defter, Beyanname).</summary>
+    public string ModuleName { get; set; } = string.Empty;
+
+    /// <summary>Terminal versiyonu.</summary>
+    public string? LocalVersion { get; set; }
+
+    /// <summary>Sunucu versiyonu.</summary>
+    public string? ServerVersion { get; set; }
+
+    /// <summary>Bu modül için güncelleme gerekli mi.</summary>
+    public bool UpdateRequired { get; set; }
+}
+
+/// <summary>
 /// Servisten tray uygulamasına dönen yanıt mesajı.
 /// </summary>
 public sealed class ServiceResponse
@@ -38,12 +56,15 @@ public sealed class ServiceResponse
     /// <summary>Durum veya hata mesajı.</summary>
     public string Message { get; set; } = string.Empty;
 
-    /// <summary>Sunucu versiyonu (varsa).</summary>
+    /// <summary>Sunucu versiyonu (ana modül — geriye uyumluluk).</summary>
     public string? ServerVersion { get; set; }
 
-    /// <summary>Terminal versiyonu (varsa).</summary>
+    /// <summary>Terminal versiyonu (ana modül — geriye uyumluluk).</summary>
     public string? LocalVersion { get; set; }
 
-    /// <summary>Güncelleme gerekli mi.</summary>
+    /// <summary>Güncelleme gerekli mi (herhangi bir modülde).</summary>
     public bool UpdateRequired { get; set; }
+
+    /// <summary>Modül bazlı versiyon bilgileri.</summary>
+    public List<ModuleVersionInfo> ModuleVersions { get; set; } = [];
 }
