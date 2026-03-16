@@ -36,12 +36,14 @@ partial class Form1
         _btnUpdate = new Button();
         _btnCheck = new Button();
         _btnSettings = new Button();
+        _btnAbout = new Button();
         _notifyIcon = new NotifyIcon(components);
         _ctxTray = new ContextMenuStrip(components);
         _tsmShow = new ToolStripMenuItem();
         _tsmCheck = new ToolStripMenuItem();
         _tsmUpdate = new ToolStripMenuItem();
         _tsmSettings = new ToolStripMenuItem();
+        _tsmAbout = new ToolStripMenuItem();
         _tsmSeparator = new ToolStripSeparator();
         _tsmExit = new ToolStripMenuItem();
 
@@ -56,7 +58,7 @@ partial class Form1
         // 4. Configure controls
 
         // _ctxTray
-        _ctxTray.Items.AddRange(new ToolStripItem[] { _tsmShow, _tsmCheck, _tsmUpdate, _tsmSettings, _tsmSeparator, _tsmExit });
+        _ctxTray.Items.AddRange(new ToolStripItem[] { _tsmShow, _tsmCheck, _tsmUpdate, _tsmSettings, _tsmAbout, _tsmSeparator, _tsmExit });
         _ctxTray.Name = "_ctxTray";
         _ctxTray.Size = new Size(180, 120);
 
@@ -76,6 +78,10 @@ partial class Form1
         _tsmSettings.Text = "Ayarlar";
         _tsmSettings.Name = "_tsmSettings";
         _tsmSettings.Click += BtnSettings_Click;
+
+        _tsmAbout.Text = "Hakkında";
+        _tsmAbout.Name = "_tsmAbout";
+        _tsmAbout.Click += BtnAbout_Click;
 
         _tsmSeparator.Name = "_tsmSeparator";
 
@@ -224,6 +230,7 @@ partial class Form1
         _flpButtons.Controls.Add(_btnUpdate);
         _flpButtons.Controls.Add(_btnCheck);
         _flpButtons.Controls.Add(_btnSettings);
+        _flpButtons.Controls.Add(_btnAbout);
 
         _btnLaunch.AccessibleName = "Mikro'yu Başlat";
         _btnLaunch.AutoSize = true;
@@ -268,6 +275,17 @@ partial class Form1
         _btnSettings.TabIndex = 4;
         _btnSettings.Text = "⚙  Ayarlar";
         _btnSettings.Click += BtnSettings_Click;
+
+        _btnAbout.AccessibleName = "Hakkında";
+        _btnAbout.AutoSize = true;
+        _btnAbout.FlatStyle = FlatStyle.Flat;
+        _btnAbout.FlatAppearance.BorderSize = 0;
+        _btnAbout.ForeColor = SystemColors.GrayText;
+        _btnAbout.Name = "_btnAbout";
+        _btnAbout.Padding = new Padding(6, 4, 6, 4);
+        _btnAbout.TabIndex = 8;
+        _btnAbout.Text = "ℹ  Hakkında";
+        _btnAbout.Click += BtnAbout_Click;
 
         // 5. Configure Form
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -317,6 +335,8 @@ partial class Form1
     private ToolStripMenuItem _tsmCheck;
     private ToolStripMenuItem _tsmUpdate;
     private ToolStripMenuItem _tsmSettings;
+    private ToolStripMenuItem _tsmAbout;
     private ToolStripSeparator _tsmSeparator;
     private ToolStripMenuItem _tsmExit;
+    private Button _btnAbout;
 }

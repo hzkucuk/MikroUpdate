@@ -3,6 +3,20 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.10.0] - 2025-07-15
+
+### Eklenenler
+- **Hakkında (About) dialog penceresi** — program bilgisi, versiyon, geliştirici, lisans, teknolojiler ve bağlantılar
+  - Versiyon bilgisi assembly'den otomatik okunur
+  - GitHub ve e-posta linkleri tıklanabilir
+  - Ana form buton barına ve tray menüsüne "Hakkında" öğesi eklendi
+
+### Etkilenen Dosyalar
+- `MikroUpdate.Win/AboutForm.cs` (yeni)
+- `MikroUpdate.Win/AboutForm.Designer.cs` (yeni)
+- `MikroUpdate.Win/Form1.cs` (değişti)
+- `MikroUpdate.Win/Form1.Designer.cs` (değişti)
+
 ## [1.9.0] - 2025-07-15
 
 ### Eklenenler

@@ -1,5 +1,15 @@
 # Özellikler
 
+## v1.10.0
+
+### Hakkında (About) Dialog Penceresi
+- **Program bilgisi:** Uygulama adı, versiyon (assembly'den otomatik), açıklama
+- **Geliştirici:** Hüseyin Küçük
+- **Lisans:** MIT Lisansı
+- **Teknolojiler:** .NET 10, WinForms, Worker Service, Named Pipes (IPC), Inno Setup
+- **Bağlantılar:** GitHub repo ve e-posta linkleri (tıklanabilir)
+- **Erişim:** Ana form buton barı + tray menüsü "Hakkında" öğesi
+
 ## v1.9.0
 
 ### Kurulum Sırasında Modül Seçimi

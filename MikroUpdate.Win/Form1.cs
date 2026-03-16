@@ -231,6 +231,12 @@ public partial class Form1 : Form
         LaunchMikro();
     }
 
+    private void BtnAbout_Click(object? sender, EventArgs e)
+    {
+        using AboutForm aboutForm = new();
+        aboutForm.ShowDialog(this);
+    }
+
     #endregion
 
     #region Version Check
@@ -776,6 +782,7 @@ public partial class Form1 : Form
         _btnUpdate.Enabled = !busy;
         _btnSettings.Enabled = !busy;
         _btnLaunch.Enabled = !busy;
+        _btnAbout.Enabled = !busy;
         _tsmCheck.Enabled = !busy;
         _tsmUpdate.Enabled = !busy;
         _tsmSettings.Enabled = !busy;
