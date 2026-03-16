@@ -3,6 +3,23 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.15.0] - 2025-07-17
+
+### Eklenenler
+- **Proxy ve timeout desteği** — Tüm HTTP servislerinde merkezi yapılandırma (Aşama 8)
+  - `HttpClientFactory`: Merkezi HttpClient oluşturucu — proxy, timeout, SocketsHttpHandler tek noktada
+  - `UpdateConfig`: `ProxyAddress` ve `HttpTimeoutSeconds` alanları
+  - `SettingsForm`: Proxy adresi ve HTTP zaman aşımı UI alanları (Online/Hybrid/AI modlarında görünür)
+  - `UpdateWorker`: Config reload'da HTTP servisleri yeniden oluşturulur (`InitializeHttpServices`)
+- **İndirme retry mekanizması** — Exponential backoff ile otomatik tekrar deneme
+  - 3 deneme, 2s/4s/8s bekleme süreleri
+  - 4xx hatalarında (kalıcı) tekrar deneme atlanır
+  - İlerleme bildiriminde deneme durumu gösterilir
+
+### Değiştirilenler
+- Tüm HTTP servisleri (`OnlineVersionService`, `DownloadService`, `GeminiService`, `AiVersionService`) `HttpClientFactory` üzerinden oluşturulur
+- `UpdateWorker` servisleri lazy başlatır: config yüklenince `InitializeHttpServices()` çağrılır
+
 ## [1.14.0] - 2025-07-17
 
 ### Eklenenler

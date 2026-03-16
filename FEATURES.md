@@ -1,5 +1,23 @@
 # Özellikler
 
+## v1.15.0
+
+### Proxy/Timeout/Error Handling (Aşama 8)
+- **HttpClientFactory:** Merkezi HttpClient oluşturucu
+  - Proxy desteği (`WebProxy`, `BypassProxyOnLocal=true`)
+  - Yapılandırılabilir timeout (saniye), varsayılan değerler servis tipine göre
+  - `Create()` genel amaçlı, `CreateForDownload()` uzun timeout'lu indirme için
+- **UpdateConfig:** `ProxyAddress` ve `HttpTimeoutSeconds` alanları
+- **SettingsForm:** Proxy ve timeout UI alanları (Online/Hybrid/AI modlarında görünür)
+  - Proxy: PlaceholderText ile örnek format
+  - Timeout: NumericUpDown (0-3600 sn, 0=varsayılan)
+- **DownloadService retry:** Exponential backoff ile 3 deneme (2s, 4s, 8s)
+  - 4xx hatalarında (kalıcı) retry atlanır
+  - Deneme durumu progress mesajına yansır
+- **UpdateWorker:** `InitializeHttpServices()` ile config'e bağlı servis oluşturma
+  - Config reload'da (`HandleReloadConfig`) servisler yeniden başlatılır
+  - Proxy ve timeout değişikliği servis yeniden başlatma gerektirir
+
 ## v1.14.0
 
 ### Gemini AI Modu — Yapay Zeka Destekli Versiyon Tespiti (Aşama 7)

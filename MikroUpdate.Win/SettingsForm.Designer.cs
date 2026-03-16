@@ -45,6 +45,11 @@ partial class SettingsForm
         _txtGeminiApiKey = new TextBox();
         _lblUpdatePageUrl = new Label();
         _txtUpdatePageUrl = new TextBox();
+        _lblProxyAddress = new Label();
+        _txtProxyAddress = new TextBox();
+        _lblHttpTimeout = new Label();
+        _nudHttpTimeout = new NumericUpDown();
+        _lblHttpTimeoutUnit = new Label();
         _lblModulesCaption = new Label();
         _btnResetModules = new Button();
         _dgvModules = new DataGridView();
@@ -60,6 +65,7 @@ partial class SettingsForm
         _btnDefaults = new Button();
         _tlpMain.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)_nudCheckInterval).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)_nudHttpTimeout).BeginInit();
         ((System.ComponentModel.ISupportInitialize)_dgvModules).BeginInit();
         _pnlComputed.SuspendLayout();
         _flpButtons.SuspendLayout();
@@ -96,16 +102,23 @@ partial class SettingsForm
         _tlpMain.Controls.Add(_txtGeminiApiKey, 1, 9);
         _tlpMain.Controls.Add(_lblUpdatePageUrl, 0, 10);
         _tlpMain.Controls.Add(_txtUpdatePageUrl, 1, 10);
-        _tlpMain.Controls.Add(_lblModulesCaption, 0, 11);
-        _tlpMain.Controls.Add(_btnResetModules, 2, 11);
-        _tlpMain.Controls.Add(_dgvModules, 0, 12);
-        _tlpMain.Controls.Add(_pnlComputed, 0, 13);
-        _tlpMain.Controls.Add(_flpButtons, 0, 14);
+        _tlpMain.Controls.Add(_lblProxyAddress, 0, 11);
+        _tlpMain.Controls.Add(_txtProxyAddress, 1, 11);
+        _tlpMain.Controls.Add(_lblHttpTimeout, 0, 12);
+        _tlpMain.Controls.Add(_nudHttpTimeout, 1, 12);
+        _tlpMain.Controls.Add(_lblHttpTimeoutUnit, 2, 12);
+        _tlpMain.Controls.Add(_lblModulesCaption, 0, 13);
+        _tlpMain.Controls.Add(_btnResetModules, 2, 13);
+        _tlpMain.Controls.Add(_dgvModules, 0, 14);
+        _tlpMain.Controls.Add(_pnlComputed, 0, 15);
+        _tlpMain.Controls.Add(_flpButtons, 0, 16);
         _tlpMain.Dock = DockStyle.Fill;
         _tlpMain.Location = new Point(0, 0);
         _tlpMain.Name = "_tlpMain";
         _tlpMain.Padding = new Padding(16, 16, 16, 12);
-        _tlpMain.RowCount = 15;
+        _tlpMain.RowCount = 17;
+        _tlpMain.RowStyles.Add(new RowStyle());
+        _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.RowStyles.Add(new RowStyle());
@@ -412,6 +425,64 @@ partial class SettingsForm
         _txtUpdatePageUrl.TabIndex = 17;
         _txtUpdatePageUrl.Visible = false;
         // 
+        // _lblProxyAddress
+        // 
+        _lblProxyAddress.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _lblProxyAddress.AutoSize = true;
+        _lblProxyAddress.ForeColor = SystemColors.GrayText;
+        _lblProxyAddress.Location = new Point(19, 340);
+        _lblProxyAddress.Name = "_lblProxyAddress";
+        _lblProxyAddress.Size = new Size(128, 15);
+        _lblProxyAddress.TabIndex = 18;
+        _lblProxyAddress.Text = "Proxy Adresi";
+        _lblProxyAddress.Visible = false;
+        // 
+        // _txtProxyAddress
+        // 
+        _txtProxyAddress.AccessibleName = "Proxy adresi";
+        _txtProxyAddress.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _tlpMain.SetColumnSpan(_txtProxyAddress, 2);
+        _txtProxyAddress.Location = new Point(153, 336);
+        _txtProxyAddress.Name = "_txtProxyAddress";
+        _txtProxyAddress.PlaceholderText = "http://proxy:8080";
+        _txtProxyAddress.Size = new Size(448, 23);
+        _txtProxyAddress.TabIndex = 18;
+        _txtProxyAddress.Visible = false;
+        // 
+        // _lblHttpTimeout
+        // 
+        _lblHttpTimeout.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _lblHttpTimeout.AutoSize = true;
+        _lblHttpTimeout.ForeColor = SystemColors.GrayText;
+        _lblHttpTimeout.Location = new Point(19, 369);
+        _lblHttpTimeout.Name = "_lblHttpTimeout";
+        _lblHttpTimeout.Size = new Size(128, 15);
+        _lblHttpTimeout.TabIndex = 19;
+        _lblHttpTimeout.Text = "HTTP Zaman A\u015F\u0131m\u0131";
+        _lblHttpTimeout.Visible = false;
+        // 
+        // _nudHttpTimeout
+        // 
+        _nudHttpTimeout.Anchor = AnchorStyles.Left;
+        _nudHttpTimeout.Location = new Point(153, 365);
+        _nudHttpTimeout.Maximum = new decimal(new int[] { 3600, 0, 0, 0 });
+        _nudHttpTimeout.Name = "_nudHttpTimeout";
+        _nudHttpTimeout.Size = new Size(80, 23);
+        _nudHttpTimeout.TabIndex = 19;
+        _nudHttpTimeout.Visible = false;
+        // 
+        // _lblHttpTimeoutUnit
+        // 
+        _lblHttpTimeoutUnit.Anchor = AnchorStyles.Left;
+        _lblHttpTimeoutUnit.AutoSize = true;
+        _lblHttpTimeoutUnit.ForeColor = SystemColors.GrayText;
+        _lblHttpTimeoutUnit.Location = new Point(239, 369);
+        _lblHttpTimeoutUnit.Name = "_lblHttpTimeoutUnit";
+        _lblHttpTimeoutUnit.Size = new Size(95, 15);
+        _lblHttpTimeoutUnit.TabIndex = 19;
+        _lblHttpTimeoutUnit.Text = "sn (0 = varsay\u0131lan)";
+        _lblHttpTimeoutUnit.Visible = false;
+        // 
         // _lblModulesCaption
         //
         _lblModulesCaption.Anchor = AnchorStyles.Left;
@@ -615,6 +686,7 @@ partial class SettingsForm
         _tlpMain.ResumeLayout(false);
         _tlpMain.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)_nudCheckInterval).EndInit();
+        ((System.ComponentModel.ISupportInitialize)_nudHttpTimeout).EndInit();
         ((System.ComponentModel.ISupportInitialize)_dgvModules).EndInit();
         _pnlComputed.ResumeLayout(false);
         _pnlComputed.PerformLayout();
@@ -664,5 +736,10 @@ partial class SettingsForm
     private TextBox _txtGeminiApiKey;
     private Label _lblUpdatePageUrl;
     private TextBox _txtUpdatePageUrl;
+    private Label _lblProxyAddress;
+    private TextBox _txtProxyAddress;
+    private Label _lblHttpTimeout;
+    private NumericUpDown _nudHttpTimeout;
+    private Label _lblHttpTimeoutUnit;
 }
 

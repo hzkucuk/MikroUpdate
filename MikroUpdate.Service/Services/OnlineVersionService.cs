@@ -25,21 +25,16 @@ public sealed class OnlineVersionService : IDisposable
     /// </summary>
     public string? LatestCdnCode { get; private set; }
 
-    public OnlineVersionService(ILogger logger)
+    public OnlineVersionService(ILogger logger, string? proxyAddress = null, int timeoutSeconds = 0)
     {
         ArgumentNullException.ThrowIfNull(logger);
         _logger = logger;
 
-        _httpClient = new HttpClient(new SocketsHttpHandler
-        {
-            ConnectTimeout = TimeSpan.FromSeconds(10),
-            PooledConnectionLifetime = TimeSpan.FromMinutes(5)
-        })
-        {
-            Timeout = TimeSpan.FromSeconds(15)
-        };
-
-        _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("MikroUpdate/1.0");
+        _httpClient = HttpClientFactory.Create(
+            proxyAddress,
+            timeoutSeconds,
+            defaultTimeoutSeconds: 15,
+            connectTimeoutSeconds: 10);
     }
 
     /// <summary>

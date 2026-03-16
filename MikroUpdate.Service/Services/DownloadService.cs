@@ -23,21 +23,15 @@ public sealed class DownloadService : IDisposable
     private readonly HttpClient _httpClient;
     private readonly ILogger _logger;
 
-    public DownloadService(ILogger logger)
+    /// <summary>Başarısız indirmede tekrar deneme sayısı.</summary>
+    private const int MaxRetryCount = 3;
+
+    public DownloadService(ILogger logger, string? proxyAddress = null, int timeoutSeconds = 0)
     {
         ArgumentNullException.ThrowIfNull(logger);
         _logger = logger;
 
-        _httpClient = new HttpClient(new SocketsHttpHandler
-        {
-            ConnectTimeout = TimeSpan.FromSeconds(15),
-            PooledConnectionLifetime = TimeSpan.FromMinutes(5)
-        })
-        {
-            Timeout = TimeSpan.FromMinutes(30)
-        };
-
-        _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("MikroUpdate/1.0");
+        _httpClient = HttpClientFactory.CreateForDownload(proxyAddress, timeoutSeconds);
     }
 
     /// <summary>
@@ -63,9 +57,52 @@ public sealed class DownloadService : IDisposable
         string url = CdnHelper.BuildDownloadUrl(
             config.CdnBaseUrl, config.MajorVersion, cdnCode, module.SetupFileName);
 
-        _logger.LogInformation("[{Module}] CDN indirme başlıyor: {Url}", module.Name, url);
+        for (int attempt = 1; attempt <= MaxRetryCount; attempt++)
+        {
+            string? result = await TryDownloadAsync(
+                url, module, onProgress, attempt, cancellationToken).ConfigureAwait(false);
 
-        ReportProgress(onProgress, module.Name, 0, 0, -1, "İndirme başlatılıyor...");
+            if (result is not null)
+            {
+                return result;
+            }
+
+            // Son denemeyse tekrar deneme yok
+            if (attempt >= MaxRetryCount)
+            {
+                break;
+            }
+
+            // Exponential backoff: 2s, 4s, 8s...
+            int delaySeconds = (int)Math.Pow(2, attempt);
+            _logger.LogWarning(
+                "[{Module}] İndirme denemesi {Attempt}/{Max} başarısız. {Delay}s sonra tekrar denenecek...",
+                module.Name, attempt, MaxRetryCount, delaySeconds);
+
+            ReportProgress(onProgress, module.Name, 0, 0, -1,
+                $"{module.Name} tekrar deneniyor ({attempt}/{MaxRetryCount})... {delaySeconds}s bekleniyor");
+
+            await Task.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken).ConfigureAwait(false);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Tek bir indirme denemesi gerçekleştirir.
+    /// </summary>
+    private async Task<string?> TryDownloadAsync(
+        string url,
+        UpdateModule module,
+        Action<DownloadProgressInfo>? onProgress,
+        int attempt,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("[{Module}] CDN indirme başlıyor (deneme {Attempt}/{Max}): {Url}",
+            module.Name, attempt, MaxRetryCount, url);
+
+        ReportProgress(onProgress, module.Name, 0, 0, -1,
+            attempt > 1 ? $"{module.Name} tekrar deneniyor ({attempt}/{MaxRetryCount})..." : "İndirme başlatılıyor...");
 
         try
         {
@@ -80,6 +117,12 @@ public sealed class DownloadService : IDisposable
 
                 ReportProgress(onProgress, module.Name, 0, 0, -1,
                     $"İndirme hatası: HTTP {(int)response.StatusCode}");
+
+                // 4xx hataları kalıcı — tekrar deneme anlamsız
+                if ((int)response.StatusCode >= 400 && (int)response.StatusCode < 500)
+                {
+                    return null;
+                }
 
                 return null;
             }
@@ -143,7 +186,8 @@ public sealed class DownloadService : IDisposable
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "[{Module}] CDN bağlantı hatası: {Url}", module.Name, url);
+            _logger.LogError(ex, "[{Module}] CDN bağlantı hatası (deneme {Attempt}): {Url}",
+                module.Name, attempt, url);
 
             ReportProgress(onProgress, module.Name, 0, 0, -1,
                 $"{module.Name} bağlantı hatası: {ex.Message}");
@@ -152,7 +196,8 @@ public sealed class DownloadService : IDisposable
         }
         catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            _logger.LogError("[{Module}] CDN indirme zaman aşımı: {Url}", module.Name, url);
+            _logger.LogError("[{Module}] CDN indirme zaman aşımı (deneme {Attempt}): {Url}",
+                module.Name, attempt, url);
 
             ReportProgress(onProgress, module.Name, 0, 0, -1,
                 $"{module.Name} indirme zaman aşımı.");

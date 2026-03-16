@@ -2,6 +2,8 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
+using MikroUpdate.Shared.Helpers;
+
 namespace MikroUpdate.Service.Services;
 
 /// <summary>
@@ -17,19 +19,16 @@ public sealed class GeminiService : IDisposable
     private readonly HttpClient _httpClient;
     private readonly ILogger _logger;
 
-    public GeminiService(ILogger logger)
+    public GeminiService(ILogger logger, string? proxyAddress = null, int timeoutSeconds = 0)
     {
         ArgumentNullException.ThrowIfNull(logger);
         _logger = logger;
 
-        _httpClient = new HttpClient(new SocketsHttpHandler
-        {
-            ConnectTimeout = TimeSpan.FromSeconds(15),
-            PooledConnectionLifetime = TimeSpan.FromMinutes(5)
-        })
-        {
-            Timeout = TimeSpan.FromSeconds(30)
-        };
+        _httpClient = HttpClientFactory.Create(
+            proxyAddress,
+            timeoutSeconds,
+            defaultTimeoutSeconds: 30,
+            connectTimeoutSeconds: 15);
     }
 
     /// <summary>

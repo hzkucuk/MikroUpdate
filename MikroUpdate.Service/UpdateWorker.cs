@@ -18,10 +18,10 @@ public sealed class UpdateWorker : BackgroundService
     private readonly ConfigService _configService = new();
     private readonly VersionService _versionService = new();
     private readonly UpdateService _updateService = new();
-    private readonly OnlineVersionService _onlineVersionService;
-    private readonly DownloadService _downloadService;
-    private readonly GeminiService _geminiService;
-    private readonly AiVersionService _aiVersionService;
+    private OnlineVersionService? _onlineVersionService;
+    private DownloadService? _downloadService;
+    private GeminiService? _geminiService;
+    private AiVersionService? _aiVersionService;
     private UpdateConfig _config = new();
     private ServiceStatus _currentStatus = ServiceStatus.Idle;
     private string _statusMessage = "Servis başlatıldı.";
@@ -34,17 +34,43 @@ public sealed class UpdateWorker : BackgroundService
     {
         ArgumentNullException.ThrowIfNull(logger);
         _logger = logger;
-        _onlineVersionService = new OnlineVersionService(logger);
-        _downloadService = new DownloadService(logger);
-        _geminiService = new GeminiService(logger);
-        _aiVersionService = new AiVersionService(_geminiService, logger);
+    }
+
+    /// <summary>
+    /// Yapılandırmaya göre HTTP servislerini (yeniden) oluşturur.
+    /// Proxy/timeout ayarları config'den okunur.
+    /// </summary>
+    private void InitializeHttpServices()
+    {
+        // Mevcut servisleri temizle
+        _onlineVersionService?.Dispose();
+        _downloadService?.Dispose();
+        _aiVersionService?.Dispose();
+
+        string? proxy = string.IsNullOrWhiteSpace(_config.ProxyAddress) ? null : _config.ProxyAddress;
+        int timeout = _config.HttpTimeoutSeconds;
+
+        _onlineVersionService = new OnlineVersionService(_logger, proxy, timeout);
+        _downloadService = new DownloadService(_logger, proxy, timeout);
+        _geminiService = new GeminiService(_logger, proxy, timeout);
+        _aiVersionService = new AiVersionService(_geminiService, _logger, proxy, timeout);
+
+        if (proxy is not null)
+        {
+            _logger.LogInformation("HTTP proxy yapılandırıldı: {Proxy}", proxy);
+        }
+
+        if (timeout > 0)
+        {
+            _logger.LogInformation("HTTP zaman aşımı: {Timeout} saniye", timeout);
+        }
     }
 
     public override void Dispose()
     {
-        _onlineVersionService.Dispose();
-        _downloadService.Dispose();
-        _aiVersionService.Dispose();
+        _onlineVersionService?.Dispose();
+        _downloadService?.Dispose();
+        _aiVersionService?.Dispose();
         base.Dispose();
     }
 
@@ -52,6 +78,7 @@ public sealed class UpdateWorker : BackgroundService
     {
         _config = _configService.Load();
         _config.EnsureModules();
+        InitializeHttpServices();
         _logger.LogInformation(
             "MikroUpdate Service başlatıldı. Sürüm: {Version}, Ürün: {Product}, Modül: {Count}, Mod: {Mode}, Sunucu: {Server}",
             _config.MajorVersion,
@@ -375,6 +402,7 @@ public sealed class UpdateWorker : BackgroundService
     {
         _config = _configService.Load();
         _config.EnsureModules();
+        InitializeHttpServices();
         _logger.LogInformation(
             "Yapılandırma yeniden yüklendi. Ürün: {Product}, Sürüm: {Version}, Modül sayısı: {Count}",
             _config.ProductName, _config.MajorVersion, _config.Modules.Count);

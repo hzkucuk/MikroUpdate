@@ -41,6 +41,12 @@ public sealed class UpdateConfig
     /// <summary>Mikro güncelleme sayfası URL'si. AI modu bu sayfayı tarayarak sürüm bilgisi çıkarır.</summary>
     public string MikroUpdatePageUrl { get; set; } = "https://www.mikro.com.tr/modulGuncellworkleri";
 
+    /// <summary>HTTP proxy adresi (ör: "http://proxy:8080"). Boş ise proxy kullanılmaz.</summary>
+    public string ProxyAddress { get; set; } = string.Empty;
+
+    /// <summary>HTTP istek zaman aşımı (saniye). 0 ise varsayılan değerler kullanılır.</summary>
+    public int HttpTimeoutSeconds { get; set; }
+
     /// <summary>Güncelleme modülleri (Client, e-Defter, Beyanname).</summary>
     public List<UpdateModule> Modules { get; set; } = [];
 

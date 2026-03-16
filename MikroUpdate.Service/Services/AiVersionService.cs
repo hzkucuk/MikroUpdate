@@ -21,7 +21,7 @@ public sealed class AiVersionService : IDisposable
     /// </summary>
     public string? LatestCdnCode { get; private set; }
 
-    public AiVersionService(GeminiService geminiService, ILogger logger)
+    public AiVersionService(GeminiService geminiService, ILogger logger, string? proxyAddress = null, int timeoutSeconds = 0)
     {
         ArgumentNullException.ThrowIfNull(geminiService);
         ArgumentNullException.ThrowIfNull(logger);
@@ -29,16 +29,11 @@ public sealed class AiVersionService : IDisposable
         _geminiService = geminiService;
         _logger = logger;
 
-        _httpClient = new HttpClient(new SocketsHttpHandler
-        {
-            ConnectTimeout = TimeSpan.FromSeconds(15),
-            PooledConnectionLifetime = TimeSpan.FromMinutes(5)
-        })
-        {
-            Timeout = TimeSpan.FromSeconds(30)
-        };
-
-        _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("MikroUpdate/1.0");
+        _httpClient = HttpClientFactory.Create(
+            proxyAddress,
+            timeoutSeconds,
+            defaultTimeoutSeconds: 30,
+            connectTimeoutSeconds: 15);
     }
 
     /// <summary>
