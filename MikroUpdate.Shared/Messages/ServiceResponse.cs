@@ -14,6 +14,9 @@ public enum ServiceStatus
     /// <summary>Setup dosyası kopyalanıyor.</summary>
     CopyingSetup,
 
+    /// <summary>CDN'den indiriliyor.</summary>
+    Downloading,
+
     /// <summary>Kurulum çalışıyor.</summary>
     Installing,
 
@@ -67,4 +70,41 @@ public sealed class ServiceResponse
 
     /// <summary>Modül bazlı versiyon bilgileri.</summary>
     public List<ModuleVersionInfo> ModuleVersions { get; set; } = [];
+
+    /// <summary>
+    /// İndirme ilerleme bilgisi.
+    /// Status == Downloading olduğunda dolu gelir.
+    /// </summary>
+    public DownloadProgressInfo? DownloadProgress { get; set; }
+
+    /// <summary>
+    /// Ara ilerleme mesajı mı? true ise bağlantı açık kalır ve sonraki mesaj beklenir.
+    /// false ise bu son yanıttır (terminal).
+    /// </summary>
+    public bool IsProgressMessage { get; set; }
+}
+
+/// <summary>
+/// CDN indirme ilerleme bilgisi.
+/// Pipe üzerinden ara mesaj (progress stream) olarak gönderilir.
+/// </summary>
+public sealed class DownloadProgressInfo
+{
+    /// <summary>İndirilen modül adı (ör: Client, e-Defter).</summary>
+    public string ModuleName { get; set; } = string.Empty;
+
+    /// <summary>İndirilen byte miktarı.</summary>
+    public long BytesReceived { get; set; }
+
+    /// <summary>Toplam dosya boyutu (biliniyorsa, yoksa -1).</summary>
+    public long TotalBytes { get; set; } = -1;
+
+    /// <summary>Yüzdesel ilerleme (0-100). TotalBytes bilinmiyorsa -1.</summary>
+    public int Percentage { get; set; } = -1;
+
+    /// <summary>Kullanıcıya gösterilecek durum metni.</summary>
+    public string StatusText { get; set; } = string.Empty;
+
+    /// <summary>İndirme hızı (byte/sn). Hesaplanamıyorsa -1.</summary>
+    public long SpeedBytesPerSecond { get; set; } = -1;
 }

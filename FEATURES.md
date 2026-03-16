@@ -1,5 +1,25 @@
 # Özellikler
 
+## v1.12.0
+
+### Online Güncelleme Sistemi (Aşama 2-4)
+- **OnlineVersionService:** CDN HTTP HEAD probe ile Mikro ERP en güncel versiyon tespiti
+  - Client modülü üzerinden probe başlatma, tüm modüllere uygulama
+  - Boş minor streak algılama (ardışık 2 boş minor sonrası durma)
+  - `LatestCdnCode` property ile son bulunan CDN kodunu saklama
+- **DownloadService:** CDN'den HTTP ile setup dosyası indirme
+  - 64 KB buffer ile stream indirme, ilerleme callback'i
+  - Hız hesaplama (byte/sn), yüzde ve boyut formatlama
+  - Geçici dizin yönetimi (`%TEMP%\MikroUpdate`)
+- **Pipe Progress Streaming:** `DownloadUpdate` komutu ile çoklu mesaj akışı
+  - `IsProgressMessage=true` ara mesajlar + terminal yanıt
+  - `DownloadProgressInfo`: ModuleName, BytesReceived, TotalBytes, Percentage, SpeedBytesPerSecond, StatusText
+- **UpdateWorker entegrasyonu:** Mod-farkındalıklı versiyon kontrolü (Local vs Online/Hybrid/AI)
+  - `HandleDownloadUpdateAsync`: CDN probe → indirme → kurulum tam akışı
+  - Progress callback → pipe streaming ile canlı UI bildirimi
+- **PipeClient genişletmesi:** `SendCommandWithProgressAsync` — döngüsel mesaj okuma
+- **Form1 online UI:** ProgressBar yüzde modu, durum etiketi, tray bildirimi, mod yönlendirme
+
 ## v1.11.0
 
 ### Güncelleme Modu Desteği (Aşama 1)

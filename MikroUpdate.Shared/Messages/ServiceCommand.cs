@@ -15,7 +15,10 @@ public enum CommandType
     GetStatus,
 
     /// <summary>Yapılandırmayı yeniden yükle.</summary>
-    ReloadConfig
+    ReloadConfig,
+
+    /// <summary>CDN'den güncelleme indir ve kur (online mod).</summary>
+    DownloadUpdate
 }
 
 /// <summary>

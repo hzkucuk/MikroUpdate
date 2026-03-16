@@ -3,6 +3,17 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.12.0] - 2025-07-16
+
+### Eklenenler
+- **Online versiyon kontrolü** — `OnlineVersionService`: CDN HTTP HEAD probe ile en güncel Mikro versiyonunu tespit eder
+- **CDN indirme servisi** — `DownloadService`: HTTP ile setup dosyası indirme, ilerleme callback'i, hız hesaplama, geçici dosya yönetimi
+- **Pipe progress streaming** — `DownloadUpdate` komutu ile canlı ilerleme bilgisi (yüzde, hız, durum metni) pipe üzerinden akış
+- **Online güncelleme UI** — Form1'de CDN indirme ilerlemesi (ProgressBar yüzde, durum etiketi, tray bildirimi)
+- **Mod yönlendirme** — `RunUpdateAsync` güncelleme moduna göre otomatik yönlendirme (Local → servis/doğrudan, Online → CDN, Hybrid/AI → CDN)
+- **Mesaj tipleri** — `ServiceStatus.Downloading`, `DownloadProgressInfo`, `CommandType.DownloadUpdate`, `ServiceResponse.IsProgressMessage`
+- **PipeClient progress** — `SendCommandWithProgressAsync` ile çoklu mesaj okuma (ara ilerleme + terminal yanıt)
+
 ## [1.11.0] - 2025-07-15
 
 ### Eklenenler

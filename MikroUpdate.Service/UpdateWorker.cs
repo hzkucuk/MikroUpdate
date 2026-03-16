@@ -18,6 +18,8 @@ public sealed class UpdateWorker : BackgroundService
     private readonly ConfigService _configService = new();
     private readonly VersionService _versionService = new();
     private readonly UpdateService _updateService = new();
+    private readonly OnlineVersionService _onlineVersionService;
+    private readonly DownloadService _downloadService;
     private UpdateConfig _config = new();
     private ServiceStatus _currentStatus = ServiceStatus.Idle;
     private string _statusMessage = "Servis başlatıldı.";
@@ -30,6 +32,15 @@ public sealed class UpdateWorker : BackgroundService
     {
         ArgumentNullException.ThrowIfNull(logger);
         _logger = logger;
+        _onlineVersionService = new OnlineVersionService(logger);
+        _downloadService = new DownloadService(logger);
+    }
+
+    public override void Dispose()
+    {
+        _onlineVersionService.Dispose();
+        _downloadService.Dispose();
+        base.Dispose();
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -37,11 +48,12 @@ public sealed class UpdateWorker : BackgroundService
         _config = _configService.Load();
         _config.EnsureModules();
         _logger.LogInformation(
-            "MikroUpdate Service başlatıldı. Sürüm: {Version}, Ürün: {Product}, Modül: {Count}, Sunucu: {Server}",
+            "MikroUpdate Service başlatıldı. Sürüm: {Version}, Ürün: {Product}, Modül: {Count}, Mod: {Mode}, Sunucu: {Server}",
             _config.MajorVersion,
             _config.ProductName,
             _config.Modules.Count,
-            _config.ServerSharePath);
+            _config.UpdateMode,
+            _config.UpdateMode == UpdateMode.Local ? _config.ServerSharePath : _config.CdnBaseUrl);
 
         // Pipe sunucusu ve periyodik kontrol paralel çalışır
         Task pipeTask = RunPipeServerAsync(stoppingToken);
@@ -102,7 +114,15 @@ public sealed class UpdateWorker : BackgroundService
 
             _logger.LogInformation("Komut alındı: {Command}", command.Command);
 
-            // Komutu işle
+            // DownloadUpdate özel: progress streaming gerektirir
+            if (command.Command == CommandType.DownloadUpdate)
+            {
+                await HandleDownloadUpdateAsync(pipeServer, stoppingToken).ConfigureAwait(false);
+
+                return;
+            }
+
+            // Diğer komutları işle (tek yanıt)
             ServiceResponse response = command.Command switch
             {
                 CommandType.CheckVersion => await HandleCheckVersionAsync(stoppingToken).ConfigureAwait(false),
@@ -133,7 +153,18 @@ public sealed class UpdateWorker : BackgroundService
 
         try
         {
-            _moduleVersions = _versionService.GetModuleVersions(_config);
+            // Güncelleme moduna göre versiyon kontrolü
+            if (_config.UpdateMode is UpdateMode.Online or UpdateMode.Hybrid or UpdateMode.AI)
+            {
+                _logger.LogDebug("Online versiyon kontrolü başlatılıyor (mod: {Mode})...", _config.UpdateMode);
+                _moduleVersions = await _onlineVersionService
+                    .GetOnlineModuleVersionsAsync(_config, stoppingToken).ConfigureAwait(false);
+            }
+            else
+            {
+                _moduleVersions = _versionService.GetModuleVersions(_config);
+            }
+
             _updateRequired = _moduleVersions.Exists(v => v.UpdateRequired);
 
             // Ana modül (Client) bilgilerini geriye uyumluluk için sakla
@@ -342,6 +373,217 @@ public sealed class UpdateWorker : BackgroundService
             UpdateRequired = _updateRequired,
             ModuleVersions = _moduleVersions
         };
+    }
+
+    /// <summary>
+    /// CDN'den güncelleme indirir ve kurar. Pipe üzerinden ilerleme bilgisi gönderir.
+    /// Her ara mesaj IsProgressMessage=true ile gönderilir, son mesaj false ile.
+    /// </summary>
+    private async Task HandleDownloadUpdateAsync(
+        NamedPipeServerStream pipeServer,
+        CancellationToken stoppingToken)
+    {
+        try
+        {
+            // 1. Online versiyon kontrolü
+            await SendProgressAsync(pipeServer, "CDN'de güncel versiyon aranıyor...", stoppingToken);
+
+            ServiceResponse checkResponse = await HandleCheckVersionAsync(stoppingToken).ConfigureAwait(false);
+
+            if (!checkResponse.UpdateRequired)
+            {
+                checkResponse.IsProgressMessage = false;
+                await PipeProtocol.WriteMessageAsync(pipeServer, checkResponse, stoppingToken)
+                    .ConfigureAwait(false);
+
+                return;
+            }
+
+            string? cdnCode = _onlineVersionService.LatestCdnCode;
+
+            if (string.IsNullOrEmpty(cdnCode))
+            {
+                await SendFinalResponseAsync(pipeServer, false, ServiceStatus.Error,
+                    "CDN versiyon kodu tespit edilemedi.", stoppingToken);
+
+                return;
+            }
+
+            _logger.LogInformation("CDN versiyon kodu: {CdnCode}", cdnCode);
+
+            // 2. Güncellenmesi gereken modüller
+            List<UpdateModule> modulesToUpdate = _config.EnabledModules
+                .Where(m => _moduleVersions.Exists(v =>
+                    v.ModuleName == m.Name && v.UpdateRequired))
+                .ToList();
+
+            // 3. İlgili süreçleri kapat
+            await SendProgressAsync(pipeServer, "Mikro süreçleri kapatılıyor...", stoppingToken);
+            HashSet<string> killedProcesses = [];
+
+            foreach (UpdateModule module in modulesToUpdate)
+            {
+                if (killedProcesses.Add(module.ExeFileName))
+                {
+                    int killed = _updateService.KillMikroProcess(module.ExeFileName);
+                    _logger.LogInformation("{ExeFile}: {Killed} süreç kapatıldı.", module.ExeFileName, killed);
+                }
+            }
+
+            await Task.Delay(1500, stoppingToken).ConfigureAwait(false);
+
+            // 4. Her modül için CDN'den indir ve kur
+            int successCount = 0;
+            int failCount = 0;
+
+            foreach (UpdateModule module in modulesToUpdate)
+            {
+                // 4a. CDN'den indir (progress callback ile pipe'a yaz)
+                _currentStatus = ServiceStatus.Downloading;
+                _statusMessage = $"{module.Name} CDN'den indiriliyor...";
+
+                string? setupPath = await _downloadService.DownloadSetupAsync(
+                    _config,
+                    module,
+                    cdnCode,
+                    onProgress: progress => SendProgressSync(pipeServer, progress, stoppingToken),
+                    stoppingToken).ConfigureAwait(false);
+
+                if (string.IsNullOrEmpty(setupPath))
+                {
+                    _logger.LogError("{Module} CDN'den indirilemedi.", module.Name);
+                    await SendProgressAsync(pipeServer,
+                        $"{module.Name} indirme başarısız.", stoppingToken);
+                    failCount++;
+
+                    continue;
+                }
+
+                // 4b. Sessiz kurulum
+                _currentStatus = ServiceStatus.Installing;
+                _statusMessage = $"{module.Name} kurulumu yapılıyor...";
+                await SendProgressAsync(pipeServer, _statusMessage, stoppingToken);
+
+                int exitCode = await _updateService.RunSilentInstallAsync(
+                    setupPath, _config.LocalInstallPath, stoppingToken).ConfigureAwait(false);
+
+                if (exitCode == 0)
+                {
+                    _logger.LogInformation("{Module} kurulumu başarılı.", module.Name);
+                    await SendProgressAsync(pipeServer,
+                        $"{module.Name} kurulumu tamamlandı.", stoppingToken);
+                    successCount++;
+                }
+                else
+                {
+                    _logger.LogError("{Module} kurulum hata kodu: {ExitCode}", module.Name, exitCode);
+                    failCount++;
+                }
+            }
+
+            // 5. Temizlik
+            DownloadService.CleanupTempFiles();
+
+            // 6. Güncel versiyon bilgileri
+            _moduleVersions = _versionService.GetModuleVersions(_config);
+            _updateRequired = _moduleVersions.Exists(v => v.UpdateRequired);
+
+            ModuleVersionInfo? clientModule = _moduleVersions
+                .Find(v => v.ModuleName.Equals("Client", StringComparison.OrdinalIgnoreCase));
+            _lastLocalVersion = clientModule?.LocalVersion;
+
+            // 7. Son yanıt
+            bool success = failCount == 0;
+            string message = success
+                ? $"{successCount} modül başarıyla güncellendi."
+                : $"{successCount} başarılı, {failCount} başarısız modül kurulumu.";
+
+            _currentStatus = success ? ServiceStatus.Completed : ServiceStatus.Error;
+            _statusMessage = message;
+            _logger.LogInformation("{Message}", _statusMessage);
+
+            await SendFinalResponseAsync(pipeServer, success,
+                _currentStatus, message, stoppingToken,
+                moduleVersions: _moduleVersions);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _currentStatus = ServiceStatus.Error;
+            _statusMessage = $"Online güncelleme hatası: {ex.Message}";
+            _logger.LogError(ex, "Online güncelleme hatası.");
+
+            await SendFinalResponseAsync(pipeServer, false,
+                ServiceStatus.Error, _statusMessage, stoppingToken);
+        }
+    }
+
+    /// <summary>
+    /// Pipe üzerinden ara ilerleme mesajı gönderir (IsProgressMessage=true).
+    /// </summary>
+    private async Task SendProgressAsync(
+        NamedPipeServerStream pipeServer,
+        string statusText,
+        CancellationToken cancellationToken)
+    {
+        ServiceResponse progress = new()
+        {
+            Success = true,
+            Status = _currentStatus,
+            Message = statusText,
+            IsProgressMessage = true
+        };
+
+        await PipeProtocol.WriteMessageAsync(pipeServer, progress, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// DownloadService callback'inden pipe'a ilerleme bilgisi gönderir (senkron wrapper).
+    /// </summary>
+    private void SendProgressSync(
+        NamedPipeServerStream pipeServer,
+        DownloadProgressInfo downloadProgress,
+        CancellationToken cancellationToken)
+    {
+        ServiceResponse progress = new()
+        {
+            Success = true,
+            Status = ServiceStatus.Downloading,
+            Message = downloadProgress.StatusText,
+            IsProgressMessage = true,
+            DownloadProgress = downloadProgress
+        };
+
+        // DownloadService callback'i senkron; pipe yazımını senkron bekle
+        PipeProtocol.WriteMessageAsync(pipeServer, progress, cancellationToken)
+            .GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// Pipe üzerinden son (terminal) yanıt gönderir (IsProgressMessage=false).
+    /// </summary>
+    private async Task SendFinalResponseAsync(
+        NamedPipeServerStream pipeServer,
+        bool success,
+        ServiceStatus status,
+        string message,
+        CancellationToken cancellationToken,
+        List<ModuleVersionInfo>? moduleVersions = null)
+    {
+        ServiceResponse response = new()
+        {
+            Success = success,
+            Status = status,
+            Message = message,
+            IsProgressMessage = false,
+            ServerVersion = _lastServerVersion,
+            LocalVersion = _lastLocalVersion,
+            UpdateRequired = _updateRequired,
+            ModuleVersions = moduleVersions ?? _moduleVersions
+        };
+
+        await PipeProtocol.WriteMessageAsync(pipeServer, response, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     #endregion

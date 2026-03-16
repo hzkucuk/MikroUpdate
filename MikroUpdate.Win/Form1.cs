@@ -422,10 +422,27 @@ public partial class Form1 : Form
     {
         if (_serviceAvailable)
         {
-            await RunUpdateViaServiceAsync(cancellationToken);
+            if (_config.UpdateMode is UpdateMode.Online or UpdateMode.Hybrid or UpdateMode.AI)
+            {
+                await RunOnlineUpdateViaServiceAsync(cancellationToken);
+            }
+            else
+            {
+                await RunUpdateViaServiceAsync(cancellationToken);
+            }
         }
         else
         {
+            if (_config.UpdateMode is UpdateMode.Online or UpdateMode.AI)
+            {
+                LogError("Online güncelleme için MikroUpdate servisi çalışıyor olmalıdır.");
+                SetStatus("Servis gerekli", Color.OrangeRed);
+                ShowTrayBalloon("Servis Gerekli",
+                    "Online güncelleme modunda servis çalışıyor olmalıdır.", ToolTipIcon.Error);
+
+                return;
+            }
+
             await RunUpdateDirectAsync(cancellationToken);
         }
     }
@@ -474,6 +491,103 @@ public partial class Form1 : Form
             LogError(response.Message ?? "Güncelleme sırasında hata oluştu.");
             _fileLog.Error($"Servis güncelleme hatası: {response.Message}");
             ShowTrayBalloon("Güncelleme Hatası", response.Message ?? "Güncelleme başarısız.", ToolTipIcon.Error);
+        }
+    }
+
+    /// <summary>
+    /// Online güncelleme — servis üzerinden CDN'den indirir ve kurar.
+    /// Pipe progress streaming ile canlı ilerleme bilgisi alır.
+    /// </summary>
+    private async Task RunOnlineUpdateViaServiceAsync(CancellationToken cancellationToken)
+    {
+        LogInfo("Online güncelleme başlatılıyor (servis üzerinden)...");
+        _fileLog.Info("Online güncelleme başlatılıyor — pipe progress streaming.");
+        SetStatus("CDN güncelleme başlatılıyor...", Color.Cyan);
+        _prgProgress.Style = ProgressBarStyle.Marquee;
+
+        ServiceResponse? response = await _pipeClient.SendCommandWithProgressAsync(
+            CommandType.DownloadUpdate,
+            onProgress: progress =>
+            {
+                if (InvokeRequired)
+                {
+                    BeginInvoke(() => HandleDownloadProgress(progress));
+                }
+                else
+                {
+                    HandleDownloadProgress(progress);
+                }
+            },
+            cancellationToken);
+
+        _prgProgress.Style = ProgressBarStyle.Blocks;
+
+        if (response is null)
+        {
+            LogWarning("Servis yanıt vermedi, online güncelleme tamamlanamadı.");
+            _fileLog.Warning("Online güncelleme pipe yanıt vermedi.");
+            SetStatus("Bağlantı hatası", Color.OrangeRed);
+            ShowTrayBalloon("Bağlantı Hatası", "Servis ile iletişim kurulamadı.", ToolTipIcon.Error);
+
+            return;
+        }
+
+        // Modül versiyon bilgilerini göster
+        if (response.ModuleVersions.Count > 0)
+        {
+            DisplayModuleVersions(response.ModuleVersions);
+        }
+
+        if (response.Success)
+        {
+            _prgProgress.Value = 100;
+            SetStatus("Güncelleme tamamlandı", Color.LimeGreen);
+            LogSuccess(response.Message ?? "Online güncelleme tamamlandı.");
+            ShowTrayBalloon("Güncelleme Tamamlandı",
+                response.Message ?? "Tüm modüller CDN'den güncellendi.", ToolTipIcon.Info);
+
+            if (_config.AutoLaunchAfterUpdate)
+            {
+                LaunchMikro();
+            }
+        }
+        else
+        {
+            SetStatus("Hata", Color.OrangeRed);
+            LogError(response.Message ?? "Online güncelleme sırasında hata oluştu.");
+            _fileLog.Error($"Online güncelleme hatası: {response.Message}");
+            ShowTrayBalloon("Güncelleme Hatası",
+                response.Message ?? "Online güncelleme başarısız.", ToolTipIcon.Error);
+        }
+    }
+
+    /// <summary>
+    /// Pipe üzerinden gelen indirme ilerleme mesajını UI'da gösterir.
+    /// ProgressBar ve durum etiketini günceller.
+    /// </summary>
+    private void HandleDownloadProgress(ServiceResponse progress)
+    {
+        if (progress.DownloadProgress is { } dp)
+        {
+            // ProgressBar güncelle
+            if (dp.Percentage >= 0)
+            {
+                _prgProgress.Style = ProgressBarStyle.Blocks;
+                _prgProgress.Value = Math.Min(dp.Percentage, 100);
+            }
+            else
+            {
+                _prgProgress.Style = ProgressBarStyle.Marquee;
+            }
+
+            // Durum etiketini güncelle (her tick'de log spam yapmadan)
+            SetStatus(dp.StatusText, Color.Cyan);
+        }
+        else
+        {
+            // Metin bazlı durum mesajı — log'a yaz
+            LogInfo(progress.Message);
+            SetStatus(progress.Message, Color.Cyan);
         }
     }
 
