@@ -35,6 +35,12 @@ public sealed class UpdateConfig
     /// <summary>CDN temel URL'si. Online/Hybrid/AI modlarında kullanılır.</summary>
     public string CdnBaseUrl { get; set; } = "https://cdn-mikro.atros.com.tr/mikro";
 
+    /// <summary>Gemini API anahtarı (DPAPI ile şifrelenmiş Base64). Yalnızca AI modunda kullanılır.</summary>
+    public string GeminiApiKey { get; set; } = string.Empty;
+
+    /// <summary>Mikro güncelleme sayfası URL'si. AI modu bu sayfayı tarayarak sürüm bilgisi çıkarır.</summary>
+    public string MikroUpdatePageUrl { get; set; } = "https://www.mikro.com.tr/modulGuncellworkleri";
+
     /// <summary>Güncelleme modülleri (Client, e-Defter, Beyanname).</summary>
     public List<UpdateModule> Modules { get; set; } = [];
 

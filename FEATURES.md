@@ -1,5 +1,25 @@
 # Özellikler
 
+## v1.14.0
+
+### Gemini AI Modu — Yapay Zeka Destekli Versiyon Tespiti (Aşama 7)
+- **GeminiService:** Google Gemini API (gemini-2.0-flash, free tier 15 req/dk) istemcisi
+  - HTML içerikten versiyon çıkarma, prompt injection korumalı yapılandırılmış prompt
+  - Script/style temizleme, HTML etiket kaldırma, entity decode
+- **AiVersionService:** Güncelleme sayfası indirme → Gemini → versiyon → CDN kodu → ModuleVersionInfo
+  - `LatestCdnCode` property (DownloadService için)
+  - Hata durumunda modül bazlı boş sonuç döndürme
+- **AiKeyManager:** DPAPI ile API anahtarı şifreleme/çözme
+  - `DataProtectionScope.LocalMachine` (service + app ortak erişim)
+  - Base64 encoding ile config.json'da güvenli saklama
+- **UpdateConfig:** `GeminiApiKey` (şifreli) ve `MikroUpdatePageUrl` alanları
+- **SettingsForm:** AI modu UI alanları
+  - Gemini API anahtarı (maskelenmiş TextBox), güncelleme sayfası URL
+  - Yalnızca AI modunda görünür (UpdateMode=AI)
+- **UpdateWorker:** AI modu ayrı rota
+  - `HandleCheckVersionAsync`: AI → AiVersionService, Online → OnlineVersionService
+  - `HandleDownloadUpdateAsync`: Moda göre CDN kodu seçimi (AI vs Online/Hybrid)
+
 ## v1.13.0
 
 ### Hybrid Mod — Yerel → Online Fallback (Aşama 6)

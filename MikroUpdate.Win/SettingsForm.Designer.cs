@@ -41,6 +41,10 @@ partial class SettingsForm
         _cboUpdateMode = new ComboBox();
         _lblCdnBaseUrl = new Label();
         _txtCdnBaseUrl = new TextBox();
+        _lblGeminiApiKey = new Label();
+        _txtGeminiApiKey = new TextBox();
+        _lblUpdatePageUrl = new Label();
+        _txtUpdatePageUrl = new TextBox();
         _lblModulesCaption = new Label();
         _btnResetModules = new Button();
         _dgvModules = new DataGridView();
@@ -88,16 +92,22 @@ partial class SettingsForm
         _tlpMain.Controls.Add(_cboUpdateMode, 1, 7);
         _tlpMain.Controls.Add(_lblCdnBaseUrl, 0, 8);
         _tlpMain.Controls.Add(_txtCdnBaseUrl, 1, 8);
-        _tlpMain.Controls.Add(_lblModulesCaption, 0, 9);
-        _tlpMain.Controls.Add(_btnResetModules, 2, 9);
-        _tlpMain.Controls.Add(_dgvModules, 0, 10);
-        _tlpMain.Controls.Add(_pnlComputed, 0, 11);
-        _tlpMain.Controls.Add(_flpButtons, 0, 12);
+        _tlpMain.Controls.Add(_lblGeminiApiKey, 0, 9);
+        _tlpMain.Controls.Add(_txtGeminiApiKey, 1, 9);
+        _tlpMain.Controls.Add(_lblUpdatePageUrl, 0, 10);
+        _tlpMain.Controls.Add(_txtUpdatePageUrl, 1, 10);
+        _tlpMain.Controls.Add(_lblModulesCaption, 0, 11);
+        _tlpMain.Controls.Add(_btnResetModules, 2, 11);
+        _tlpMain.Controls.Add(_dgvModules, 0, 12);
+        _tlpMain.Controls.Add(_pnlComputed, 0, 13);
+        _tlpMain.Controls.Add(_flpButtons, 0, 14);
         _tlpMain.Dock = DockStyle.Fill;
         _tlpMain.Location = new Point(0, 0);
         _tlpMain.Name = "_tlpMain";
         _tlpMain.Padding = new Padding(16, 16, 16, 12);
-        _tlpMain.RowCount = 13;
+        _tlpMain.RowCount = 15;
+        _tlpMain.RowStyles.Add(new RowStyle());
+        _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.RowStyles.Add(new RowStyle());
@@ -355,6 +365,53 @@ partial class SettingsForm
         _txtCdnBaseUrl.TabIndex = 15;
         _txtCdnBaseUrl.Visible = false;
         // 
+        // _lblGeminiApiKey
+        // 
+        _lblGeminiApiKey.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _lblGeminiApiKey.AutoSize = true;
+        _lblGeminiApiKey.ForeColor = SystemColors.GrayText;
+        _lblGeminiApiKey.Location = new Point(19, 282);
+        _lblGeminiApiKey.Name = "_lblGeminiApiKey";
+        _lblGeminiApiKey.Size = new Size(128, 15);
+        _lblGeminiApiKey.TabIndex = 16;
+        _lblGeminiApiKey.Text = "Gemini API Anahtarı";
+        _lblGeminiApiKey.Visible = false;
+        // 
+        // _txtGeminiApiKey
+        // 
+        _txtGeminiApiKey.AccessibleName = "Gemini API anahtarı";
+        _txtGeminiApiKey.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _tlpMain.SetColumnSpan(_txtGeminiApiKey, 2);
+        _txtGeminiApiKey.Location = new Point(153, 278);
+        _txtGeminiApiKey.Name = "_txtGeminiApiKey";
+        _txtGeminiApiKey.Size = new Size(448, 23);
+        _txtGeminiApiKey.TabIndex = 16;
+        _txtGeminiApiKey.UseSystemPasswordChar = true;
+        _txtGeminiApiKey.Visible = false;
+        // 
+        // _lblUpdatePageUrl
+        // 
+        _lblUpdatePageUrl.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _lblUpdatePageUrl.AutoSize = true;
+        _lblUpdatePageUrl.ForeColor = SystemColors.GrayText;
+        _lblUpdatePageUrl.Location = new Point(19, 311);
+        _lblUpdatePageUrl.Name = "_lblUpdatePageUrl";
+        _lblUpdatePageUrl.Size = new Size(128, 15);
+        _lblUpdatePageUrl.TabIndex = 17;
+        _lblUpdatePageUrl.Text = "Güncelleme Sayfası URL";
+        _lblUpdatePageUrl.Visible = false;
+        // 
+        // _txtUpdatePageUrl
+        // 
+        _txtUpdatePageUrl.AccessibleName = "Güncelleme sayfası URL";
+        _txtUpdatePageUrl.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _tlpMain.SetColumnSpan(_txtUpdatePageUrl, 2);
+        _txtUpdatePageUrl.Location = new Point(153, 307);
+        _txtUpdatePageUrl.Name = "_txtUpdatePageUrl";
+        _txtUpdatePageUrl.Size = new Size(448, 23);
+        _txtUpdatePageUrl.TabIndex = 17;
+        _txtUpdatePageUrl.Visible = false;
+        // 
         // _lblModulesCaption
         //
         _lblModulesCaption.Anchor = AnchorStyles.Left;
@@ -603,5 +660,9 @@ partial class SettingsForm
     private ComboBox _cboUpdateMode;
     private Label _lblCdnBaseUrl;
     private TextBox _txtCdnBaseUrl;
+    private Label _lblGeminiApiKey;
+    private TextBox _txtGeminiApiKey;
+    private Label _lblUpdatePageUrl;
+    private TextBox _txtUpdatePageUrl;
 }
 

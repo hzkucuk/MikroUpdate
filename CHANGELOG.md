@@ -3,6 +3,17 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.14.0] - 2025-07-17
+
+### Eklenenler
+- **Gemini AI modu** — Yapay zeka destekli versiyon tespiti (Aşama 7)
+  - `GeminiService`: Google Gemini API (gemini-2.0-flash) istemcisi, prompt injection koruması, HTML→düz metin dönüşümü
+  - `AiVersionService`: Güncelleme sayfası indirme → Gemini ile versiyon çıkarma → CDN koduna dönüştürme
+  - `AiKeyManager`: DPAPI (DataProtectionScope.LocalMachine) ile API anahtarı şifreleme/çözme
+  - `UpdateConfig`: GeminiApiKey (şifreli) ve MikroUpdatePageUrl alanları
+  - `SettingsForm`: AI modu UI — API anahtarı (maskelenmiş) ve güncelleme sayfası URL alanları, mod bazlı görünürlük
+  - `UpdateWorker`: AI modu ayrı rota — AiVersionService üzerinden versiyon kontrolü, CDN kod seçimi
+
 ## [1.13.0] - 2025-07-16
 
 ### Eklenenler

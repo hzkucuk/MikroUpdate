@@ -20,6 +20,8 @@ public sealed class UpdateWorker : BackgroundService
     private readonly UpdateService _updateService = new();
     private readonly OnlineVersionService _onlineVersionService;
     private readonly DownloadService _downloadService;
+    private readonly GeminiService _geminiService;
+    private readonly AiVersionService _aiVersionService;
     private UpdateConfig _config = new();
     private ServiceStatus _currentStatus = ServiceStatus.Idle;
     private string _statusMessage = "Servis başlatıldı.";
@@ -34,12 +36,15 @@ public sealed class UpdateWorker : BackgroundService
         _logger = logger;
         _onlineVersionService = new OnlineVersionService(logger);
         _downloadService = new DownloadService(logger);
+        _geminiService = new GeminiService(logger);
+        _aiVersionService = new AiVersionService(_geminiService, logger);
     }
 
     public override void Dispose()
     {
         _onlineVersionService.Dispose();
         _downloadService.Dispose();
+        _aiVersionService.Dispose();
         base.Dispose();
     }
 
@@ -169,9 +174,15 @@ public sealed class UpdateWorker : BackgroundService
                         .GetOnlineModuleVersionsAsync(_config, stoppingToken).ConfigureAwait(false);
                 }
             }
-            else if (_config.UpdateMode is UpdateMode.Online or UpdateMode.AI)
+            else if (_config.UpdateMode == UpdateMode.AI)
             {
-                _logger.LogDebug("Online versiyon kontrolü başlatılıyor (mod: {Mode})...", _config.UpdateMode);
+                _logger.LogDebug("AI versiyon kontrolü başlatılıyor...");
+                _moduleVersions = await _aiVersionService
+                    .GetAiModuleVersionsAsync(_config, stoppingToken).ConfigureAwait(false);
+            }
+            else if (_config.UpdateMode == UpdateMode.Online)
+            {
+                _logger.LogDebug("Online versiyon kontrolü başlatılıyor...");
                 _moduleVersions = await _onlineVersionService
                     .GetOnlineModuleVersionsAsync(_config, stoppingToken).ConfigureAwait(false);
             }
@@ -414,7 +425,9 @@ public sealed class UpdateWorker : BackgroundService
                 return;
             }
 
-            string? cdnCode = _onlineVersionService.LatestCdnCode;
+            string? cdnCode = _config.UpdateMode == UpdateMode.AI
+                ? _aiVersionService.LatestCdnCode
+                : _onlineVersionService.LatestCdnCode;
 
             if (string.IsNullOrEmpty(cdnCode))
             {
