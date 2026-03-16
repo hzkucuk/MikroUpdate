@@ -200,6 +200,5 @@ public sealed class AiVersionService : IDisposable
     public void Dispose()
     {
         _httpClient.Dispose();
-        _geminiService.Dispose();
     }
 }

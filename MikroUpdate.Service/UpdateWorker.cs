@@ -45,6 +45,7 @@ public sealed class UpdateWorker : BackgroundService
         // Mevcut servisleri temizle
         _onlineVersionService?.Dispose();
         _downloadService?.Dispose();
+        _geminiService?.Dispose();
         _aiVersionService?.Dispose();
 
         string? proxy = string.IsNullOrWhiteSpace(_config.ProxyAddress) ? null : _config.ProxyAddress;
@@ -70,6 +71,7 @@ public sealed class UpdateWorker : BackgroundService
     {
         _onlineVersionService?.Dispose();
         _downloadService?.Dispose();
+        _geminiService?.Dispose();
         _aiVersionService?.Dispose();
         base.Dispose();
     }
