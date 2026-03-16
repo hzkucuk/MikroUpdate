@@ -255,4 +255,39 @@ public partial class SettingsForm : Form
         RefreshModuleGrid(defaults);
         UpdateComputedPaths();
     }
+
+    /// <summary>
+    /// Tüm ayarları fabrika varsayılanlarına sıfırlar.
+    /// Sürüm V16, ürün Jump, yollar varsayılan şablonlar, modüller otomatik oluşturulur.
+    /// </summary>
+    private void BtnDefaults_Click(object? sender, EventArgs e)
+    {
+        DialogResult result = MessageBox.Show(
+            this,
+            "Tüm ayarlar varsayılan değerlere sıfırlanacak.\nDevam etmek istiyor musunuz?",
+            "Varsayılan Ayarlar",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+
+        if (result != DialogResult.Yes)
+        {
+            return;
+        }
+
+        _suppressModuleRefresh = true;
+
+        _cboMajorVersion.SelectedItem = "V16";
+        _cboProduct.SelectedItem = "Jump";
+        _txtServerShare.Text = @"\\SERVER\MikroV16xx";
+        _txtLocalPath.Text = @"C:\Mikro\v16xx";
+        _txtSetupFilesPath.Text = @"\\SERVER\MikroV16xx\CLIENT";
+        _nudCheckInterval.Value = 30;
+        _chkAutoLaunch.Checked = true;
+
+        _suppressModuleRefresh = false;
+
+        List<UpdateModule> defaults = UpdateConfig.GetDefaultModules("Jump", "V16");
+        RefreshModuleGrid(defaults);
+        UpdateComputedPaths();
+    }
 }

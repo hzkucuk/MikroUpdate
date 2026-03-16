@@ -49,6 +49,7 @@ partial class SettingsForm
         _flpButtons = new FlowLayoutPanel();
         _btnCancel = new Button();
         _btnOK = new Button();
+        _btnDefaults = new Button();
         _tlpMain.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)_nudCheckInterval).BeginInit();
         ((System.ComponentModel.ISupportInitialize)_dgvModules).BeginInit();
@@ -422,12 +423,30 @@ partial class SettingsForm
         _tlpMain.SetColumnSpan(_flpButtons, 3);
         _flpButtons.Controls.Add(_btnCancel);
         _flpButtons.Controls.Add(_btnOK);
+        _flpButtons.Controls.Add(_btnDefaults);
         _flpButtons.FlowDirection = FlowDirection.RightToLeft;
         _flpButtons.Location = new Point(19, 500);
         _flpButtons.Name = "_flpButtons";
         _flpButtons.Padding = new Padding(0, 4, 0, 0);
         _flpButtons.Size = new Size(582, 45);
         _flpButtons.TabIndex = 12;
+        // 
+        // _btnDefaults
+        // 
+        _btnDefaults.AccessibleName = "Varsayılan ayarlara dön";
+        _btnDefaults.AccessibleDescription = "Tüm ayarları fabrika varsayılanlarına sıfırlar";
+        _btnDefaults.AutoSize = true;
+        _btnDefaults.FlatAppearance.BorderSize = 0;
+        _btnDefaults.FlatStyle = FlatStyle.Flat;
+        _btnDefaults.Font = new Font("Segoe UI", 8F);
+        _btnDefaults.ForeColor = Color.FromArgb(180, 180, 180);
+        _btnDefaults.Location = new Point(322, 7);
+        _btnDefaults.Name = "_btnDefaults";
+        _btnDefaults.Padding = new Padding(8, 4, 8, 4);
+        _btnDefaults.Size = new Size(85, 33);
+        _btnDefaults.TabIndex = 13;
+        _btnDefaults.Text = "Varsayılan";
+        _btnDefaults.Click += BtnDefaults_Click;
         // 
         // _btnCancel
         // 
@@ -521,5 +540,6 @@ partial class SettingsForm
     private FlowLayoutPanel _flpButtons;
     private Button _btnOK;
     private Button _btnCancel;
+    private Button _btnDefaults;
 }
 
