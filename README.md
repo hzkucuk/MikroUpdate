@@ -1,6 +1,6 @@
 # MikroUpdate
 
-![Version](https://img.shields.io/badge/version-1.4.0-blue)
+![Version](https://img.shields.io/badge/version-1.6.0-blue)
 ![.NET](https://img.shields.io/badge/.NET-10.0-purple)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 
@@ -41,6 +41,24 @@ Windows Service üzerinden yönetir. Servis çalışmadığında doğrudan mod i
 
 ## Hızlı Başlangıç
 
+### Kurulum Paketi (Önerilen)
+
+```powershell
+# Installer oluşturma (Inno Setup gerekli)
+cd Deployment
+.\Build-Setup.ps1
+
+# Kurulum (UI ile)
+.\installer\MikroUpdate_Setup_1.6.0.exe
+
+# Sessiz kurulum
+.\installer\MikroUpdate_Setup_1.6.0.exe /VERYSILENT /SUPPRESSMSGBOXES
+```
+
+Installer otomatik olarak: dosya kopyalama, servis kaydı, kısayollar, ProgramData dizinleri ve ilk yapılandırma oluşturur.
+
+### Manuel Derleme
+
 ```bash
 # Derleme
 dotnet build MikroUpdate.slnx
@@ -50,10 +68,6 @@ MikroUpdate.Win.exe
 
 # Otomatik mod (sessiz kontrol + güncelleme + Mikro başlatma)
 MikroUpdate.Win.exe /auto
-
-# Servis kurulumu (admin PowerShell)
-sc.exe create MikroUpdateService binPath="C:\MikroUpdate\MikroUpdate.Service.exe" start=auto
-sc.exe start MikroUpdateService
 ```
 
 ## Yapılandırma

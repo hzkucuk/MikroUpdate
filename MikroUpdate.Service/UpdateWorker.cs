@@ -324,7 +324,7 @@ public sealed class UpdateWorker : BackgroundService
             }
 
             await Task.Delay(
-                TimeSpan.FromMinutes(PipeConstants.CheckIntervalMinutes),
+                TimeSpan.FromMinutes(_config.CheckIntervalMinutes),
                 stoppingToken).ConfigureAwait(false);
         }
     }

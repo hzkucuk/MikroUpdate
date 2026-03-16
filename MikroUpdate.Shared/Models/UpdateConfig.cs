@@ -25,6 +25,9 @@ public sealed class UpdateConfig
     /// <summary>Güncelleme sonrası Mikro'yu otomatik başlat.</summary>
     public bool AutoLaunchAfterUpdate { get; set; } = true;
 
+    /// <summary>Periyodik versiyon kontrol aralığı (dakika). Varsayılan: 30.</summary>
+    public int CheckIntervalMinutes { get; set; } = 30;
+
     /// <summary>Mikro ana EXE dosyası adı (ürüne göre otomatik belirlenir).</summary>
     [JsonIgnore]
     public string ExeFileName => ProductName.Equals("Fly", StringComparison.OrdinalIgnoreCase)

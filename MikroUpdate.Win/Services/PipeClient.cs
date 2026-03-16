@@ -12,6 +12,11 @@ namespace MikroUpdate.Win.Services;
 public sealed class PipeClient
 {
     /// <summary>
+    /// Hata bildirim callback'i. Ayarlandığında pipe hataları bu callback ile raporlanır.
+    /// </summary>
+    public Action<string>? OnError { get; set; }
+
+    /// <summary>
     /// Servise komut gönderir ve yanıt alır.
     /// </summary>
     /// <returns>Servis yanıtı veya bağlantı hatası durumunda null.</returns>
@@ -43,10 +48,14 @@ public sealed class PipeClient
         }
         catch (TimeoutException)
         {
+            OnError?.Invoke($"Servis bağlantı zaman aşımı ({PipeConstants.ConnectionTimeoutMs}ms) — komut: {command}");
+
             return null;
         }
-        catch (IOException)
+        catch (IOException ex)
         {
+            OnError?.Invoke($"Servis pipe IO hatası — komut: {command} | {ex.Message}");
+
             return null;
         }
     }

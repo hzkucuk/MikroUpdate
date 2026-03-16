@@ -1,6 +1,44 @@
 # Özellikler
 
-## v1.1.0
+## v1.6.0
+
+### Inno Setup Kurulum Paketi
+- WiX v5 MSI yerine Inno Setup EXE installer
+- **Özel yapılandırma sayfası:** ürün seçimi (Jump/Fly), sunucu paylaşım yolu, terminal kurulum yolu, setup dosyaları yolu ve dosya adı
+- Kurulum sırasında `config.json` otomatik oluşturma (seçilen değerlerle)
+- Windows servisi kaydı ve başlatma (`sc.exe` ile, seçilebilir görev)
+- Windows Başlangıç kısayolu (seçilebilir görev)
+- Sessiz kurulum desteği (`/VERYSILENT /SUPPRESSMSGBOXES`)
+- Kaldırma sırasında ProgramData temizliği onay dialogu
+- `Deployment\Build-Setup.ps1` — tek komutla publish + installer derleme
+
+## v1.4.0
+
+### Dosya Tabanlı Log Sistemi
+- Tüm işlem logları `%ProgramData%\MikroUpdate\logs\` dizinine yazılır
+- Günlük rotasyonlu dosyalar (`MikroUpdate_YYYY-MM-DD.log`)
+- Log seviyeleri: `INFO`, `OK`, `WARN`, `ERROR`
+- Thread-safe yazım (Lock tabanlı senkronizasyon)
+- Exception detay desteği (`Type: Message` formatı)
+- UI log (RichTextBox) ve dosya log'u eş zamanlı çalışır (dual-write)
+
+### Tray Balloon Bildirimleri
+- Güncelleme mevcut → uyarı bildirimi (yeni sürüm numarası ile)
+- Güncelleme tamamlandı → bilgi bildirimi
+- Hata durumları → hata bildirimi (bağlantı, kurulum, versiyon)
+- Akıllı gösterim: form görünür durumdayken bildirim bastırılır
+
+### Dinamik Tray Tooltip
+- `NotifyIcon.Text` durum değişikliklerinde güncellenir
+- Format: "MikroUpdate — {durum}" (ör: "MikroUpdate — Güncel")
+
+### Geliştirilmiş Hata Yönetimi
+- **CheckVersionsDirect** — her GetVersion çağrısı ayrı try/catch ile korunur
+- **RunUpdateDirectAsync** — 7 adımın her biri (süreç kapatma, setup kopyalama, kurulum, versiyon kontrol, temizlik) ayrı try/catch ile sarılır
+- **RunAutoModeAsync** — yapılandırma, versiyon kontrol, güncelleme ve başlatma ayrı hata blokları
+- **PipeClient** — timeout ve IO hataları ayrıştırılarak `OnError` callback ile raporlanır
+
+## v1.3.0
 
 ### Windows Service Mimarisi
 - **MikroUpdate.Service** — `LocalSystem` yetkisiyle çalışan Windows Service

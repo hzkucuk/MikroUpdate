@@ -40,15 +40,33 @@ Her değişiklik sonrası:
 - Semantic versioning: breaking=MAJOR, yeni özellik=MINOR, düzeltme=PATCH.
 
 ## Versiyon Yönetimi (kritik — her release'de uygulanmalı)
-Versiyon **3 dosyada** senkron tutulmalı:
+Versiyon **5 noktada** senkron tutulmalı:
 
-1. **`Properties\AssemblyInfo.cs`** → `AssemblyVersion` + `AssemblyFileVersion` (tek kaynak)
-2. **`.csproj`** → `<ApplicationVersion>` (ClickOnce)
-3. **`CHANGELOG.md`** → `## [X.Y.Z] - YYYY-MM-DD` girdisi
+1. **`MikroUpdate.Win.csproj`** → `<Version>`, `<AssemblyVersion>`, `<FileVersion>`, `<ApplicationVersion>`
+2. **`MikroUpdate.Service.csproj`** → `<Version>`, `<AssemblyVersion>`, `<FileVersion>`
+3. **`Deployment\MikroUpdate.iss`** → `#define MyAppVersion`
+4. **`CHANGELOG.md`** → `## [X.Y.Z] - YYYY-MM-DD` girdisi
+5. **`README.md`** → Version badge
 
-- Versiyon değişikliğinde **üçü birlikte** güncellenmelidir.
-- Release için `Deployment\Build-Release.ps1` scripti kullanılır.
-- ZIP arşivleri `releases/` klasörüne oluşturulur (Git dışı).
+- Versiyon değişikliğinde **beşi birlikte** güncellenmelidir.
+- Semantic versioning: breaking=MAJOR, yeni özellik=MINOR, düzeltme=PATCH.
+
+## Release Süreci (kullanıcı "release derle" dediğinde)
+
+Kullanıcı "release derle", "release yap", "release oluştur" veya benzeri dediğinde aşağıdaki adımları **sırayla** uygula:
+
+1. **Versiyon güncelle** — Yukarıdaki 5 noktayı yeni versiyon numarasıyla senkronize et
+2. **Dokümantasyon güncelle** — CHANGELOG.md, README.md, FEATURES.md, INSTALL.md gerekli bölümlerini güncelle
+3. **Build doğrula** — `dotnet build MikroUpdate.slnx -c Release` çalıştır, hata olmadığından emin ol
+4. **Git commit** — Tüm değişiklikleri commit et: `git add -A && git commit -m "release: vX.Y.Z"`
+5. **Git tag** — Versiyon tag'i oluştur: `git tag vX.Y.Z`
+6. **Git push** — Tag ile birlikte push et: `git push origin master --tags`
+7. **Bilgilendir** — GitHub Actions `release.yml` otomatik tetiklenecek, installer oluşturulup GitHub Release'e eklenecek
+
+> **Not:** Tag push edildiğinde `.github/workflows/release.yml` otomatik olarak:
+> - .NET 10 build + publish yapar
+> - Inno Setup installer derler
+> - GitHub Release oluşturur ve installer'ı artifact olarak ekler
 
 ## Yanıt Formatı
 1. Değişiklik özeti (1-2 cümle)

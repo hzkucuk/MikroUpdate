@@ -3,6 +3,84 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.6.0] - 2025-07-12
+
+### Eklenenler
+- **Inno Setup kurulum paketi** — WiX v5 MSI yerine Inno Setup EXE installer
+- `Deployment\MikroUpdate.iss` Inno Setup scripti — özel yapılandırma sayfası (ürün seçimi, sunucu yolu, kurulum yolları)
+- `Deployment\Build-Setup.ps1` build scripti — publish + ISCC derleme
+- Kurulum sırasında servis kaydı ve başlatma (`sc.exe` ile)
+- Özel sayfa: ürün seçimi (Jump/Fly), sunucu paylaşım yolu, terminal kurulum yolu, setup dosya yolu/adı
+- Kurulum sırasında `config.json` otomatik oluşturma (özel sayfa değerleriyle)
+- Kaldırma sırasında ProgramData temizliği onay dialogu
+- Sessiz kurulum desteği (`/VERYSILENT /SUPPRESSMSGBOXES`)
+
+### Kaldırılanlar
+- `MikroUpdate.Setup` WiX v5 projesi kaldırıldı
+- `Deployment\Build-MSI.ps1` kaldırıldı
+- WiX Toolset bağımlılığı kaldırıldı
+
+### Değişenler
+- `INSTALL.md` Inno Setup kurulum talimatları ile güncellendi
+- `README.md` hızlı başlangıç bölümü Inno Setup'a güncellendi
+
+### Etkilenen Dosyalar
+- `Deployment\MikroUpdate.iss` (yeni)
+- `Deployment\Build-Setup.ps1` (yeni)
+- `MikroUpdate.Setup\` (silindi)
+- `Deployment\Build-MSI.ps1` (silindi)
+- `MikroUpdate.slnx` (Setup projesi kaldırıldı)
+- `.gitignore` (*.g.wxs kaldırıldı)
+- `INSTALL.md`, `README.md`, `FEATURES.md` (güncellendi)
+
+## [1.5.0] - 2025-07-11
+
+### Eklenenler
+- **MSI kurulum paketi** — WiX Toolset v5 ile MSI installer (v1.6.0'da Inno Setup ile değiştirildi)
+
+### Etkilenen Dosyalar
+- `MikroUpdate.Setup\` (v1.6.0'da kaldırıldı)
+- `Deployment\Build-MSI.ps1` (v1.6.0'da kaldırıldı)
+
+## [1.4.0] - 2025-07-11
+
+### Eklenenler
+- **Dosya tabanlı log sistemi** — tüm işlem logları `%ProgramData%\MikroUpdate\logs\` dizinine günlük rotasyonlu dosyalara yazılır (`FileLogService`)
+- **Tray balloon bildirimleri** — güncelleme mevcut, güncelleme tamamlandı, hatalar ve bağlantı sorunları tray ikonundan bildirilir
+- **Dinamik tray tooltip** — `NotifyIcon.Text` durum değişikliklerinde güncellenir (ör: "MikroUpdate — Güncel")
+- **PipeClient hata raporlama** — `OnError` callback ile timeout ve IO hataları ayırt edilerek loglanır
+
+### Değişenler
+- **AppendLog ikili yazım** — UI log (RichTextBox) ve dosya log'u eş zamanlı çalışır
+- **CheckVersionsDirect hata dayanıklılığı** — GetVersion çağrıları ayrı try/catch ile korunur, ağ/IO hataları yutulamaz
+- **RunUpdateDirectAsync granüler hata yönetimi** — her güncelleme adımı (süreç kapatma, setup kopyalama, kurulum, versiyon kontrol, temizlik) ayrı try/catch ile sarılır
+- **RunAutoModeAsync kapsamlı hata yönetimi** — yapılandırma yükleme, versiyon kontrol, güncelleme ve Mikro başlatma adımları try/catch ile korunur
+- **Tray bildirimleri akıllı gösterim** — sadece form gizli/minimize durumundayken gösterilir
+
+### Etkilenen Dosyalar
+- `MikroUpdate.Win\Services\FileLogService.cs` (yeni)
+- `MikroUpdate.Win\Services\PipeClient.cs` (OnError callback eklendi)
+- `MikroUpdate.Win\Form1.cs` (hata yönetimi, tray bildirimleri, dosya log entegrasyonu)
+
+## [1.3.0] - 2025-07-11
+
+### Eklenenler
+- **Kontrol aralığı yapılandırılabilir** — periyodik versiyon kontrol süresi artık UI'dan ayarlanabilir (1–1440 dk, varsayılan 30)
+- `UpdateConfig.CheckIntervalMinutes` özelliği eklendi
+- `SettingsForm`'a NumericUpDown kontrol aralığı alanı eklendi
+
+### Değişenler
+- **Form1 modern minimalist tasarım** — GroupBox'lar kaldırıldı, koyu tema (dark background), büyük versiyon yazıları, ince 4px progress bar, flat butonlar, yeşil vurgulu "Başlat" butonu
+- **SettingsForm modern minimalist tasarım** — GroupBox kaldırıldı, hesaplanan yollar tek satır label'a sıkıştırıldı, koyu tema, flat butonlar, yeşil "Kaydet" butonu
+- `UpdateWorker` artık `PipeConstants.CheckIntervalMinutes` yerine `_config.CheckIntervalMinutes` kullanıyor
+
+### Etkilenen Dosyalar
+- `MikroUpdate.Shared\Models\UpdateConfig.cs` (CheckIntervalMinutes eklendi)
+- `MikroUpdate.Service\UpdateWorker.cs` (config-tabanlı interval)
+- `MikroUpdate.Win\Form1.Designer.cs` (tamamen yeniden yazıldı)
+- `MikroUpdate.Win\SettingsForm.Designer.cs` (tamamen yeniden yazıldı)
+- `MikroUpdate.Win\SettingsForm.cs` (CheckInterval binding + minimalist computed paths)
+
 ## [1.2.0] - 2025-07-11
 
 ### Eklenenler

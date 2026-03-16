@@ -1,0 +1,78 @@
+# ============================================================
+#  MikroUpdate — GitHub Actions Release Workflow
+#  Tag push (v*) tetiklemesiyle otomatik build + release
+# ============================================================
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore MikroUpdate.slnx
+
+      - name: Build solution
+        run: dotnet build MikroUpdate.slnx -c Release --no-restore
+
+      - name: Publish Win (framework-dependent)
+        run: |
+          dotnet publish MikroUpdate.Win -c Release -o publish/win --no-self-contained
+
+      - name: Publish Service (framework-dependent)
+        run: |
+          dotnet publish MikroUpdate.Service -c Release -o publish/service --no-self-contained
+
+      - name: Install Inno Setup 6
+        run: |
+          choco install innosetup --yes --no-progress
+        shell: pwsh
+
+      - name: Compile Inno Setup installer
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" Deployment\MikroUpdate.iss
+        shell: pwsh
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+          echo "Extracted version: $version"
+        shell: pwsh
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "MikroUpdate v${{ steps.version.outputs.VERSION }}"
+          body: |
+            ## MikroUpdate v${{ steps.version.outputs.VERSION }}
+
+            ### Kurulum
+            1. `.NET 10 Desktop Runtime` yüklü olmalıdır
+            2. `MikroUpdate_Setup_${{ steps.version.outputs.VERSION }}.exe` dosyasını indirip çalıştırın
+            3. Sessiz kurulum: `MikroUpdate_Setup_${{ steps.version.outputs.VERSION }}.exe /VERYSILENT /SUPPRESSMSGBOXES`
+
+            Detaylar için [CHANGELOG.md](CHANGELOG.md) dosyasına bakın.
+          files: |
+            installer/MikroUpdate_Setup_*.exe
+          draft: false
+          prerelease: false
+          generate_release_notes: true

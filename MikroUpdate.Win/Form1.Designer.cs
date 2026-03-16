@@ -20,7 +20,6 @@ partial class Form1
         // 1. Instantiate
         components = new System.ComponentModel.Container();
         _tlpMain = new TableLayoutPanel();
-        _grpStatus = new GroupBox();
         _tlpStatus = new TableLayoutPanel();
         _lblLocalVerCaption = new Label();
         _lblLocalVersion = new Label();
@@ -29,7 +28,6 @@ partial class Form1
         _lblStatusCaption = new Label();
         _lblStatus = new Label();
         _prgProgress = new ProgressBar();
-        _grpLog = new GroupBox();
         _rtbLog = new RichTextBox();
         _flpButtons = new FlowLayoutPanel();
         _btnLaunch = new Button();
@@ -47,9 +45,7 @@ partial class Form1
 
         // 3. Suspend
         _tlpMain.SuspendLayout();
-        _grpStatus.SuspendLayout();
         _tlpStatus.SuspendLayout();
-        _grpLog.SuspendLayout();
         _flpButtons.SuspendLayout();
         _ctxTray.SuspendLayout();
         SuspendLayout();
@@ -100,25 +96,14 @@ partial class Form1
         _tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.Dock = DockStyle.Fill;
-        _tlpMain.Padding = new Padding(6);
+        _tlpMain.Padding = new Padding(12, 12, 12, 8);
         _tlpMain.Name = "_tlpMain";
-        _tlpMain.Controls.Add(_grpStatus, 0, 0);
+        _tlpMain.Controls.Add(_tlpStatus, 0, 0);
         _tlpMain.Controls.Add(_prgProgress, 0, 1);
-        _tlpMain.Controls.Add(_grpLog, 0, 2);
+        _tlpMain.Controls.Add(_rtbLog, 0, 2);
         _tlpMain.Controls.Add(_flpButtons, 0, 3);
 
-        // _grpStatus
-        _grpStatus.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-        _grpStatus.AutoSize = true;
-        _grpStatus.AutoSizeMode = AutoSizeMode.GrowOnly;
-        _grpStatus.Controls.Add(_tlpStatus);
-        _grpStatus.Name = "_grpStatus";
-        _grpStatus.Padding = new Padding(8);
-        _grpStatus.TabIndex = 0;
-        _grpStatus.TabStop = false;
-        _grpStatus.Text = "Versiyon Durumu";
-
-        // _tlpStatus
+        // _tlpStatus (3 columns — clean card-style, no GroupBox)
         _tlpStatus.ColumnCount = 3;
         _tlpStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
         _tlpStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.34F));
@@ -126,7 +111,8 @@ partial class Form1
         _tlpStatus.RowCount = 2;
         _tlpStatus.RowStyles.Add(new RowStyle());
         _tlpStatus.RowStyles.Add(new RowStyle());
-        _tlpStatus.Dock = DockStyle.Fill;
+        _tlpStatus.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+        _tlpStatus.Margin = new Padding(0, 0, 0, 6);
         _tlpStatus.Name = "_tlpStatus";
         _tlpStatus.Controls.Add(_lblLocalVerCaption, 0, 0);
         _tlpStatus.Controls.Add(_lblLocalVersion, 0, 1);
@@ -135,56 +121,62 @@ partial class Form1
         _tlpStatus.Controls.Add(_lblStatusCaption, 2, 0);
         _tlpStatus.Controls.Add(_lblStatus, 2, 1);
 
+        _lblLocalVerCaption.Text = "TERMINAL";
         _lblLocalVerCaption.AutoSize = true;
-        _lblLocalVerCaption.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        _lblLocalVerCaption.Font = new Font("Segoe UI", 7.5F, FontStyle.Bold);
+        _lblLocalVerCaption.ForeColor = SystemColors.GrayText;
+        _lblLocalVerCaption.Margin = new Padding(0, 4, 0, 0);
         _lblLocalVerCaption.Name = "_lblLocalVerCaption";
-        _lblLocalVerCaption.Text = "Terminal Versiyonu:";
 
+        _lblLocalVersion.Text = "—";
         _lblLocalVersion.AutoSize = true;
+        _lblLocalVersion.Font = new Font("Segoe UI Semibold", 12F);
+        _lblLocalVersion.Margin = new Padding(0, 0, 0, 4);
         _lblLocalVersion.Name = "_lblLocalVersion";
-        _lblLocalVersion.Text = "---";
 
+        _lblServerVerCaption.Text = "SUNUCU";
         _lblServerVerCaption.AutoSize = true;
-        _lblServerVerCaption.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        _lblServerVerCaption.Font = new Font("Segoe UI", 7.5F, FontStyle.Bold);
+        _lblServerVerCaption.ForeColor = SystemColors.GrayText;
+        _lblServerVerCaption.Margin = new Padding(0, 4, 0, 0);
         _lblServerVerCaption.Name = "_lblServerVerCaption";
-        _lblServerVerCaption.Text = "Sunucu Versiyonu:";
 
+        _lblServerVersion.Text = "—";
         _lblServerVersion.AutoSize = true;
+        _lblServerVersion.Font = new Font("Segoe UI Semibold", 12F);
+        _lblServerVersion.Margin = new Padding(0, 0, 0, 4);
         _lblServerVersion.Name = "_lblServerVersion";
-        _lblServerVersion.Text = "---";
 
+        _lblStatusCaption.Text = "DURUM";
         _lblStatusCaption.AutoSize = true;
-        _lblStatusCaption.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        _lblStatusCaption.Font = new Font("Segoe UI", 7.5F, FontStyle.Bold);
+        _lblStatusCaption.ForeColor = SystemColors.GrayText;
+        _lblStatusCaption.Margin = new Padding(0, 4, 0, 0);
         _lblStatusCaption.Name = "_lblStatusCaption";
-        _lblStatusCaption.Text = "Durum:";
 
-        _lblStatus.AutoSize = true;
-        _lblStatus.Name = "_lblStatus";
         _lblStatus.Text = "Kontrol edilmedi";
+        _lblStatus.AutoSize = true;
+        _lblStatus.Font = new Font("Segoe UI Semibold", 12F);
+        _lblStatus.Margin = new Padding(0, 0, 0, 4);
+        _lblStatus.Name = "_lblStatus";
 
-        // _prgProgress
+        // _prgProgress (slim)
         _prgProgress.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _prgProgress.Margin = new Padding(0, 2, 0, 6);
+        _prgProgress.Size = new Size(0, 4);
         _prgProgress.Name = "_prgProgress";
         _prgProgress.TabIndex = 1;
 
-        // _grpLog
-        _grpLog.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-        _grpLog.Controls.Add(_rtbLog);
-        _grpLog.Name = "_grpLog";
-        _grpLog.Padding = new Padding(8);
-        _grpLog.TabIndex = 2;
-        _grpLog.TabStop = false;
-        _grpLog.Text = "İşlem Günlüğü";
-
-        // _rtbLog
+        // _rtbLog (borderless, dark, directly in main layout)
         _rtbLog.AccessibleName = "İşlem günlüğü";
-        _rtbLog.BackColor = Color.FromArgb(30, 30, 30);
+        _rtbLog.BackColor = Color.FromArgb(25, 25, 25);
         _rtbLog.BorderStyle = BorderStyle.None;
-        _rtbLog.Dock = DockStyle.Fill;
-        _rtbLog.Font = new Font("Consolas", 9F);
-        _rtbLog.ForeColor = Color.White;
+        _rtbLog.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+        _rtbLog.Font = new Font("Cascadia Mono", 8.5F);
+        _rtbLog.ForeColor = Color.FromArgb(210, 210, 210);
         _rtbLog.Name = "_rtbLog";
         _rtbLog.ReadOnly = true;
+        _rtbLog.TabIndex = 2;
         _rtbLog.Text = "";
 
         // _flpButtons
@@ -193,7 +185,7 @@ partial class Form1
         _flpButtons.AutoSizeMode = AutoSizeMode.GrowOnly;
         _flpButtons.FlowDirection = FlowDirection.RightToLeft;
         _flpButtons.Name = "_flpButtons";
-        _flpButtons.Padding = new Padding(0, 4, 0, 4);
+        _flpButtons.Padding = new Padding(0, 6, 0, 0);
         _flpButtons.TabIndex = 3;
         _flpButtons.Controls.Add(_btnLaunch);
         _flpButtons.Controls.Add(_btnUpdate);
@@ -202,52 +194,63 @@ partial class Form1
 
         _btnLaunch.AccessibleName = "Mikro'yu Başlat";
         _btnLaunch.AutoSize = true;
+        _btnLaunch.FlatStyle = FlatStyle.Flat;
+        _btnLaunch.FlatAppearance.BorderSize = 0;
+        _btnLaunch.BackColor = Color.FromArgb(0, 150, 80);
+        _btnLaunch.ForeColor = Color.White;
+        _btnLaunch.Font = new Font("Segoe UI Semibold", 9F);
         _btnLaunch.Name = "_btnLaunch";
-        _btnLaunch.Padding = new Padding(8, 2, 8, 2);
+        _btnLaunch.Padding = new Padding(12, 4, 12, 4);
         _btnLaunch.TabIndex = 7;
-        _btnLaunch.Text = "Mikro'yu Başlat";
+        _btnLaunch.Text = "▶  Başlat";
         _btnLaunch.Click += BtnLaunch_Click;
 
         _btnUpdate.AccessibleName = "Güncelleme başlat";
         _btnUpdate.AutoSize = true;
+        _btnUpdate.FlatStyle = FlatStyle.Flat;
+        _btnUpdate.FlatAppearance.BorderSize = 1;
         _btnUpdate.Name = "_btnUpdate";
-        _btnUpdate.Padding = new Padding(8, 2, 8, 2);
+        _btnUpdate.Padding = new Padding(10, 4, 10, 4);
         _btnUpdate.TabIndex = 6;
         _btnUpdate.Text = "Güncelle";
         _btnUpdate.Click += BtnUpdate_Click;
 
         _btnCheck.AccessibleName = "Versiyon kontrol et";
         _btnCheck.AutoSize = true;
+        _btnCheck.FlatStyle = FlatStyle.Flat;
+        _btnCheck.FlatAppearance.BorderSize = 1;
         _btnCheck.Name = "_btnCheck";
-        _btnCheck.Padding = new Padding(8, 2, 8, 2);
+        _btnCheck.Padding = new Padding(10, 4, 10, 4);
         _btnCheck.TabIndex = 5;
         _btnCheck.Text = "Kontrol Et";
         _btnCheck.Click += BtnCheck_Click;
 
         _btnSettings.AccessibleName = "Ayarları aç";
         _btnSettings.AutoSize = true;
+        _btnSettings.FlatStyle = FlatStyle.Flat;
+        _btnSettings.FlatAppearance.BorderSize = 0;
+        _btnSettings.ForeColor = SystemColors.GrayText;
         _btnSettings.Name = "_btnSettings";
-        _btnSettings.Padding = new Padding(8, 2, 8, 2);
+        _btnSettings.Padding = new Padding(6, 4, 6, 4);
         _btnSettings.TabIndex = 4;
-        _btnSettings.Text = "Ayarlar";
+        _btnSettings.Text = "⚙  Ayarlar";
         _btnSettings.Click += BtnSettings_Click;
 
         // 5. Configure Form
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(850, 500);
-        MinimumSize = new Size(700, 400);
+        BackColor = Color.FromArgb(30, 30, 30);
+        ForeColor = Color.FromArgb(230, 230, 230);
+        ClientSize = new Size(720, 440);
+        MinimumSize = new Size(580, 360);
         Controls.Add(_tlpMain);
         Name = "Form1";
-        Text = "MikroUpdate - Otomatik Güncelleme Sistemi";
+        Text = "MikroUpdate";
 
         // 6. Resume
         _ctxTray.ResumeLayout(false);
         _tlpStatus.ResumeLayout(false);
         _tlpStatus.PerformLayout();
-        _grpStatus.ResumeLayout(false);
-        _grpStatus.PerformLayout();
-        _grpLog.ResumeLayout(false);
         _flpButtons.ResumeLayout(false);
         _flpButtons.PerformLayout();
         _tlpMain.ResumeLayout(false);
@@ -258,7 +261,6 @@ partial class Form1
     #endregion
 
     private TableLayoutPanel _tlpMain;
-    private GroupBox _grpStatus;
     private TableLayoutPanel _tlpStatus;
     private Label _lblLocalVerCaption;
     private Label _lblLocalVersion;
@@ -267,7 +269,6 @@ partial class Form1
     private Label _lblStatusCaption;
     private Label _lblStatus;
     private ProgressBar _prgProgress;
-    private GroupBox _grpLog;
     private RichTextBox _rtbLog;
     private FlowLayoutPanel _flpButtons;
     private Button _btnSettings;
@@ -283,5 +284,3 @@ partial class Form1
     private ToolStripSeparator _tsmSeparator;
     private ToolStripMenuItem _tsmExit;
 }
-
-

@@ -2,11 +2,55 @@
 
 ## Gereksinimler
 
-- **İşletim Sistemi:** Windows 10 / 11 (domain ortamı)
+- **İşletim Sistemi:** Windows 10 / 11
 - **Runtime:** [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)
 - **Ağ:** Sunucu paylaşım klasörüne erişim (`\\sunucu\MikroVxx`)
 
-## Derleme
+## Inno Setup Kurulum Paketi
+
+### Gereksinimler (Build)
+
+- [Inno Setup 6](https://jrsoftware.org/isdl.php) — `ISCC.exe` PATH'te veya varsayılan dizinde
+- .NET 10 SDK
+
+### Installer Oluşturma
+
+```powershell
+cd Deployment
+.\Build-Setup.ps1
+```
+
+Script otomatik olarak:
+1. Her iki projeyi publish eder (framework-dependent)
+2. Inno Setup Compiler (ISCC) ile EXE installer derler
+3. Sonuç dosyasını `installer\` dizinine koyar
+
+### Installer ile Kurulum
+
+```powershell
+# Standart kurulum (UI ile — özel yapılandırma sayfası dahil)
+.\installer\MikroUpdate_Setup_1.6.0.exe
+
+# Sessiz kurulum
+.\installer\MikroUpdate_Setup_1.6.0.exe /VERYSILENT /SUPPRESSMSGBOXES
+
+# Sessiz kaldırma
+.\installer\unins000.exe /VERYSILENT
+```
+
+Kurulum sihirbazı şunları yapar:
+- `C:\Program Files\MikroUpdate\Win\` — Tray uygulaması dosyaları
+- `C:\Program Files\MikroUpdate\Service\` — Windows servisi dosyaları
+- **Özel yapılandırma sayfası** — ürün seçimi (Jump/Fly), sunucu yolu, terminal yolu, setup dosyası
+- **MikroUpdateService** Windows servisini kaydeder ve başlatır (görev seçiliyse)
+- Başlat Menüsü kısayolu oluşturur
+- Windows Başlangıç kısayolu oluşturur (görev seçiliyse, `/auto` parametresi ile)
+- `%ProgramData%\MikroUpdate\` dizin yapısını oluşturur
+- `config.json` dosyasını özel sayfadaki değerlerle oluşturur
+
+## Manuel Kurulum (Alternatif)
+
+### Derleme
 
 ```bash
 dotnet build MikroUpdate.slnx -c Release
@@ -86,6 +130,15 @@ Konum: `%ProgramData%\MikroUpdate\config.json`
 Ayarlar formunu kullanmanız önerilir. Ayar değişikliklerinde servis otomatik olarak
 yeni yapılandırmayı yükler (`ReloadConfig` komutu).
 
+## Log Dosyaları
+
+Konum: `%ProgramData%\MikroUpdate\logs\`
+
+- Günlük rotasyonlu dosyalar: `MikroUpdate_YYYY-MM-DD.log`
+- Log seviyeleri: `INFO`, `OK`, `WARN`, `ERROR`
+- UI log paneli ve dosya log'u eş zamanlı çalışır
+- Hata teşhisi için log dosyalarını inceleyin
+
 ## Servis Yönetimi
 
 ```powershell
@@ -103,10 +156,17 @@ sc.exe stop MikroUpdateService
 sc.exe delete MikroUpdateService
 ```
 
-## GPO ile Dağıtım
+## Toplu Dağıtım
 
-Domain ortamında toplu dağıtım için:
+Sessiz kurulum parametreleri ile dağıtım:
 
-1. Dosyaları bir ağ paylaşımına kopyalayın
-2. GPO → Bilgisayar Yapılandırması → Tercihler → Zamanlanmış Görevler
-3. Servis kaydı için GPO → Bilgisayar Yapılandırması → İlkeler → Windows Ayarları → Sistem Hizmetleri
+```powershell
+# Sessiz kurulum (tüm varsayılan görevlerle)
+MikroUpdate_Setup_1.6.0.exe /VERYSILENT /SUPPRESSMSGBOXES
+
+# Sessiz kurulum — görev seçimi ile
+MikroUpdate_Setup_1.6.0.exe /VERYSILENT /SUPPRESSMSGBOXES /TASKS="servicetask,startuptask"
+
+# Sessiz kurulum — servis olmadan
+MikroUpdate_Setup_1.6.0.exe /VERYSILENT /SUPPRESSMSGBOXES /TASKS="startuptask"
+```

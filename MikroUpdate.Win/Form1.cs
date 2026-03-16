@@ -10,6 +10,7 @@ public partial class Form1 : Form
     private readonly VersionService _versionService = new();
     private readonly UpdateService _updateService = new();
     private readonly PipeClient _pipeClient = new();
+    private readonly FileLogService _fileLog = new();
     private readonly bool _autoMode;
     private UpdateConfig _config = new();
     private CancellationTokenSource? _cts;
@@ -20,6 +21,7 @@ public partial class Form1 : Form
     {
         InitializeComponent();
         _autoMode = autoMode;
+        _pipeClient.OnError = message => _fileLog.Warning(message);
         LoadConfig();
     }
 
@@ -38,10 +40,16 @@ public partial class Form1 : Form
             {
                 await RunAutoModeAsync();
             }
+            else
+            {
+                await CheckVersionsAsync();
+            }
         }
         catch (Exception ex)
         {
             LogError($"Başlatma hatası: {ex.Message}");
+            _fileLog.Error("Uygulama başlatma hatası", ex);
+            ShowTrayBalloon("Başlatma Hatası", ex.Message, ToolTipIcon.Error);
         }
     }
 
@@ -58,6 +66,8 @@ public partial class Form1 : Form
 
         _cts?.Cancel();
         _cts?.Dispose();
+        _fileLog.Info("Uygulama kapatılıyor.");
+        _fileLog.Dispose();
         _notifyIcon.Visible = false;
         base.OnFormClosing(e);
     }
@@ -97,10 +107,12 @@ public partial class Form1 : Form
             _config = _configService.Load();
             LogInfo($"Ayarlar yüklendi: {_config.ProductName} | {_config.ServerSharePath}");
             LogInfo("Yapılandırma dosyası: " + ConfigService.GetConfigFilePath());
+            LogInfo("Log dizini: " + FileLogService.GetLogDirectory());
         }
         catch (Exception ex)
         {
             LogError($"Ayarlar yüklenirken hata: {ex.Message}");
+            _fileLog.Error("Yapılandırma yükleme hatası", ex);
         }
     }
 
@@ -145,11 +157,17 @@ public partial class Form1 : Form
                     {
                         LogInfo("Servis yapılandırmayı yeniden yükledi.");
                     }
+                    else
+                    {
+                        LogWarning("Servis yapılandırma yeniden yüklemesine yanıt vermedi.");
+                    }
                 }
             }
             catch (Exception ex)
             {
                 LogError($"Ayarlar kaydedilirken hata: {ex.Message}");
+                _fileLog.Error("Ayar kaydetme hatası", ex);
+                ShowTrayBalloon("Ayar Hatası", "Ayarlar kaydedilirken bir hata oluştu.", ToolTipIcon.Error);
             }
         }
     }
@@ -164,6 +182,8 @@ public partial class Form1 : Form
         catch (Exception ex)
         {
             LogError($"Versiyon kontrol hatası: {ex.Message}");
+            _fileLog.Error("Versiyon kontrol hatası", ex);
+            ShowTrayBalloon("Kontrol Hatası", "Versiyon kontrolü sırasında hata oluştu.", ToolTipIcon.Error);
         }
         finally
         {
@@ -182,10 +202,13 @@ public partial class Form1 : Form
         catch (OperationCanceledException)
         {
             LogWarning("Güncelleme iptal edildi.");
+            _fileLog.Warning("Güncelleme kullanıcı tarafından iptal edildi.");
         }
         catch (Exception ex)
         {
             LogError($"Güncelleme hatası: {ex.Message}");
+            _fileLog.Error("Güncelleme hatası", ex);
+            ShowTrayBalloon("Güncelleme Hatası", "Güncelleme sırasında bir hata oluştu.", ToolTipIcon.Error);
         }
         finally
         {
@@ -229,6 +252,7 @@ public partial class Form1 : Form
         if (response is null)
         {
             LogWarning("Servis yanıt vermedi, doğrudan moda geçiliyor...");
+            _fileLog.Warning("Servis pipe yanıt vermedi — doğrudan moda fallback.");
             _serviceAvailable = false;
             CheckVersionsDirect();
 
@@ -242,11 +266,13 @@ public partial class Form1 : Form
         {
             SetStatus("Hata", Color.OrangeRed);
             LogError(response.Message ?? "Versiyon kontrol hatası.");
+            ShowTrayBalloon("Kontrol Hatası", response.Message ?? "Versiyon kontrol hatası.", ToolTipIcon.Error);
         }
         else if (response.UpdateRequired)
         {
             SetStatus("Güncelleme mevcut!", Color.Red);
             LogWarning(response.Message ?? "Güncelleme gerekli.");
+            ShowTrayBalloon("Güncelleme Mevcut", $"Yeni sürüm: {response.ServerVersion}", ToolTipIcon.Warning);
         }
         else
         {
@@ -257,8 +283,28 @@ public partial class Form1 : Form
 
     private void CheckVersionsDirect()
     {
-        Version? localVersion = _versionService.GetVersion(_config.LocalExePath);
-        Version? serverVersion = _versionService.GetVersion(_config.ServerExePath);
+        Version? localVersion = null;
+        Version? serverVersion = null;
+
+        try
+        {
+            localVersion = _versionService.GetVersion(_config.LocalExePath);
+        }
+        catch (Exception ex)
+        {
+            LogError($"Yerel versiyon okunamadı: {ex.Message}");
+            _fileLog.Error($"Yerel versiyon okuma hatası: {_config.LocalExePath}", ex);
+        }
+
+        try
+        {
+            serverVersion = _versionService.GetVersion(_config.ServerExePath);
+        }
+        catch (Exception ex)
+        {
+            LogError($"Sunucu versiyonu okunamadı: {ex.Message}");
+            _fileLog.Error($"Sunucu versiyon okuma hatası: {_config.ServerExePath}", ex);
+        }
 
         _lblLocalVersion.Text = localVersion?.ToString() ?? "Kurulu değil";
         _lblServerVersion.Text = serverVersion?.ToString() ?? "Erişilemiyor";
@@ -267,6 +313,7 @@ public partial class Form1 : Form
         {
             SetStatus("Sunucu erişilemiyor", Color.Orange);
             LogWarning("Sunucu EXE dosyasına erişilemedi: " + _config.ServerExePath);
+            ShowTrayBalloon("Bağlantı Sorunu", "Sunucu EXE dosyasına erişilemiyor.", ToolTipIcon.Warning);
         }
         else if (localVersion is null)
         {
@@ -277,6 +324,7 @@ public partial class Form1 : Form
         {
             SetStatus("Güncelleme mevcut!", Color.Red);
             LogWarning($"Güncelleme gerekli: {localVersion} → {serverVersion}");
+            ShowTrayBalloon("Güncelleme Mevcut", $"Yeni sürüm: {serverVersion}", ToolTipIcon.Warning);
         }
         else
         {
@@ -289,6 +337,7 @@ public partial class Form1 : Form
     {
         _lblStatus.Text = text;
         _lblStatus.ForeColor = color;
+        _notifyIcon.Text = $"MikroUpdate — {text}";
     }
 
     #endregion
@@ -320,6 +369,7 @@ public partial class Form1 : Form
         if (response is null)
         {
             LogWarning("Servis yanıt vermedi, doğrudan moda geçiliyor...");
+            _fileLog.Warning("Güncelleme sırasında servis pipe yanıt vermedi — doğrudan moda fallback.");
             _serviceAvailable = false;
             await RunUpdateDirectAsync(cancellationToken);
 
@@ -334,6 +384,7 @@ public partial class Form1 : Form
             _prgProgress.Value = 100;
             SetStatus("Güncelleme tamamlandı", Color.LimeGreen);
             LogSuccess(response.Message ?? "Güncelleme başarıyla tamamlandı.");
+            ShowTrayBalloon("Güncelleme Tamamlandı", $"Yeni sürüm: {response.LocalVersion}", ToolTipIcon.Info);
 
             if (_config.AutoLaunchAfterUpdate)
             {
@@ -344,18 +395,30 @@ public partial class Form1 : Form
         {
             SetStatus("Hata", Color.OrangeRed);
             LogError(response.Message ?? "Güncelleme sırasında hata oluştu.");
+            _fileLog.Error($"Servis güncelleme hatası: {response.Message}");
+            ShowTrayBalloon("Güncelleme Hatası", response.Message ?? "Güncelleme başarısız.", ToolTipIcon.Error);
         }
     }
 
     private async Task RunUpdateDirectAsync(CancellationToken cancellationToken)
     {
-
         // 1. Versiyon kontrol
         LogInfo("Versiyon kontrol ediliyor (doğrudan mod)...");
         CheckVersionsDirect();
 
-        Version? localVersion = _versionService.GetVersion(_config.LocalExePath);
-        Version? serverVersion = _versionService.GetVersion(_config.ServerExePath);
+        Version? localVersion = null;
+        Version? serverVersion = null;
+
+        try
+        {
+            localVersion = _versionService.GetVersion(_config.LocalExePath);
+            serverVersion = _versionService.GetVersion(_config.ServerExePath);
+        }
+        catch (Exception ex)
+        {
+            LogError($"Versiyon okuma hatası: {ex.Message}");
+            _fileLog.Error("Doğrudan güncelleme versiyon okuma hatası", ex);
+        }
 
         if (serverVersion is not null && localVersion is not null && localVersion >= serverVersion)
         {
@@ -365,19 +428,43 @@ public partial class Form1 : Form
         }
 
         // 2. Mikro sürecini kapat
-        LogInfo($"{_config.ExeFileName} süreci kapatılıyor...");
-        int killed = _updateService.KillMikroProcess(_config.ExeFileName);
-        LogInfo(killed > 0 ? $"{killed} süreç kapatıldı." : "Çalışan süreç bulunamadı.");
+        try
+        {
+            LogInfo($"{_config.ExeFileName} süreci kapatılıyor...");
+            int killed = _updateService.KillMikroProcess(_config.ExeFileName);
+            LogInfo(killed > 0 ? $"{killed} süreç kapatıldı." : "Çalışan süreç bulunamadı.");
+        }
+        catch (Exception ex)
+        {
+            LogError($"Süreç kapatma hatası: {ex.Message}");
+            _fileLog.Error("Mikro süreç kapatma hatası", ex);
+        }
+
         await Task.Delay(1500, cancellationToken);
 
         // 3. Setup dosyasını sunucudan al
         LogInfo("Setup dosyası sunucuda aranıyor: " + _config.ServerSetupFilePath);
-        string? setupPath = _updateService.CopySetupFromServer(_config.ServerSetupFilePath);
+        string? setupPath;
+
+        try
+        {
+            setupPath = _updateService.CopySetupFromServer(_config.ServerSetupFilePath);
+        }
+        catch (Exception ex)
+        {
+            LogError($"Setup kopyalama hatası: {ex.Message}");
+            _fileLog.Error("Setup dosyası sunucudan kopyalanamadı", ex);
+            ShowTrayBalloon("Güncelleme Hatası", "Setup dosyası sunucudan kopyalanamadı.", ToolTipIcon.Error);
+
+            return;
+        }
 
         if (string.IsNullOrEmpty(setupPath))
         {
             LogError("Setup dosyası sunucuda bulunamadı: " + _config.ServerSetupFilePath);
             LogError("Güncelleme iptal edildi.");
+            _fileLog.Error($"Setup dosyası bulunamadı: {_config.ServerSetupFilePath}");
+            ShowTrayBalloon("Güncelleme Hatası", "Setup dosyası sunucuda bulunamadı.", ToolTipIcon.Error);
 
             return;
         }
@@ -389,33 +476,68 @@ public partial class Form1 : Form
         LogInfo($"Hedef dizin: {_config.LocalInstallPath}");
         _prgProgress.Style = ProgressBarStyle.Marquee;
 
-        int exitCode = await _updateService.RunSilentInstallAsync(
-            setupPath, _config.LocalInstallPath, cancellationToken);
+        int exitCode;
+
+        try
+        {
+            exitCode = await _updateService.RunSilentInstallAsync(
+                setupPath, _config.LocalInstallPath, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _prgProgress.Style = ProgressBarStyle.Blocks;
+            LogError($"Kurulum çalıştırma hatası: {ex.Message}");
+            _fileLog.Error("Sessiz kurulum çalıştırma hatası", ex);
+            ShowTrayBalloon("Kurulum Hatası", "Kurulum işlemi başarısız oldu.", ToolTipIcon.Error);
+
+            return;
+        }
 
         _prgProgress.Style = ProgressBarStyle.Blocks;
         _prgProgress.Value = 100;
 
         if (exitCode == 0)
         {
+            SetStatus("Güncelleme tamamlandı", Color.LimeGreen);
             LogSuccess("Client kurulumu başarıyla tamamlandı.");
+            ShowTrayBalloon("Güncelleme Tamamlandı", "Kurulum başarıyla tamamlandı.", ToolTipIcon.Info);
         }
         else
         {
+            SetStatus("Kurulum hatası", Color.OrangeRed);
             LogError($"Kurulum hata kodu ile tamamlandı: {exitCode}");
+            _fileLog.Error($"Sessiz kurulum hata kodu: {exitCode}");
+            ShowTrayBalloon("Kurulum Hatası", $"Kurulum hata kodu: {exitCode}", ToolTipIcon.Error);
         }
 
         // 5. Kurulum sonrası versiyon kontrol
-        Version? newVersion = _versionService.GetVersion(_config.LocalExePath);
-
-        if (newVersion is not null)
+        try
         {
-            _lblLocalVersion.Text = newVersion.ToString();
-            LogSuccess($"Yeni versiyon: {newVersion}");
+            Version? newVersion = _versionService.GetVersion(_config.LocalExePath);
+
+            if (newVersion is not null)
+            {
+                _lblLocalVersion.Text = newVersion.ToString();
+                LogSuccess($"Yeni versiyon: {newVersion}");
+            }
+        }
+        catch (Exception ex)
+        {
+            LogWarning($"Kurulum sonrası versiyon okunamadı: {ex.Message}");
+            _fileLog.Error("Kurulum sonrası versiyon okuma hatası", ex);
         }
 
         // 6. Geçici dosyaları temizle
-        UpdateService.CleanupTempFiles();
-        LogInfo("Geçici dosyalar temizlendi.");
+        try
+        {
+            UpdateService.CleanupTempFiles();
+            LogInfo("Geçici dosyalar temizlendi.");
+        }
+        catch (Exception ex)
+        {
+            LogWarning($"Geçici dosya temizleme hatası: {ex.Message}");
+            _fileLog.Warning($"Geçici dosya temizleme hatası: {ex.Message}");
+        }
 
         // 7. Otomatik başlatma
         if (_config.AutoLaunchAfterUpdate && exitCode == 0)
@@ -436,6 +558,8 @@ public partial class Form1 : Form
         catch (Exception ex)
         {
             LogError($"Mikro başlatılamadı: {ex.Message}");
+            _fileLog.Error("Mikro başlatma hatası", ex);
+            ShowTrayBalloon("Başlatma Hatası", $"{_config.ExeFileName} başlatılamadı.", ToolTipIcon.Error);
         }
     }
 
@@ -451,15 +575,36 @@ public partial class Form1 : Form
     private async Task RunAutoModeAsync()
     {
         LogInfo("═══ Otomatik mod başlatıldı ═══");
+        _fileLog.Info("═══ Otomatik mod başlatıldı ═══");
 
-        _config = _configService.Load();
+        try
+        {
+            _config = _configService.Load();
+        }
+        catch (Exception ex)
+        {
+            LogError($"Otomatik mod yapılandırma hatası: {ex.Message}");
+            _fileLog.Error("Otomatik mod yapılandırma yükleme hatası", ex);
+            ShowTrayBalloon("Otomatik Mod Hatası", "Yapılandırma yüklenemedi.", ToolTipIcon.Error);
+
+            return;
+        }
 
         LogInfo($"Ürün: {_config.ProductName} | EXE: {_config.ExeFileName}");
         LogInfo($"Sunucu: {_config.ServerSharePath}");
         LogInfo($"Terminal: {_config.LocalInstallPath}");
         LogInfo(_serviceAvailable ? "Mod: Servis" : "Mod: Doğrudan");
 
-        await CheckVersionsAsync();
+        try
+        {
+            await CheckVersionsAsync();
+        }
+        catch (Exception ex)
+        {
+            LogError($"Otomatik mod versiyon kontrol hatası: {ex.Message}");
+            _fileLog.Error("Otomatik mod versiyon kontrol hatası", ex);
+            ShowTrayBalloon("Kontrol Hatası", "Versiyon kontrolü başarısız.", ToolTipIcon.Error);
+        }
 
         bool updateNeeded = _serviceAvailable
             ? _lblStatus.Text.Contains("mevcut", StringComparison.OrdinalIgnoreCase)
@@ -470,13 +615,22 @@ public partial class Form1 : Form
         {
             LogSuccess("Terminal güncel. Mikro başlatılıyor...");
 
-            if (File.Exists(_config.LocalExePath))
+            try
             {
-                _updateService.LaunchMikro(_config.LocalExePath);
+                if (File.Exists(_config.LocalExePath))
+                {
+                    _updateService.LaunchMikro(_config.LocalExePath);
+                }
+                else
+                {
+                    LogWarning("Mikro EXE bulunamadı: " + _config.LocalExePath);
+                    _fileLog.Warning($"Otomatik mod — Mikro EXE bulunamadı: {_config.LocalExePath}");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                LogWarning("Mikro EXE bulunamadı: " + _config.LocalExePath);
+                LogError($"Otomatik mod Mikro başlatma hatası: {ex.Message}");
+                _fileLog.Error("Otomatik mod Mikro başlatma hatası", ex);
             }
 
             await Task.Delay(2000);
@@ -489,10 +643,20 @@ public partial class Form1 : Form
         LogWarning("Güncelleme gerekli, kurulum başlatılıyor...");
         SetStatus("Güncelleme yapılıyor...", Color.Orange);
 
-        using CancellationTokenSource cts = new();
-        await RunUpdateAsync(cts.Token);
+        try
+        {
+            using CancellationTokenSource cts = new();
+            await RunUpdateAsync(cts.Token);
+        }
+        catch (Exception ex)
+        {
+            LogError($"Otomatik mod güncelleme hatası: {ex.Message}");
+            _fileLog.Error("Otomatik mod güncelleme hatası", ex);
+            ShowTrayBalloon("Güncelleme Hatası", "Otomatik güncelleme başarısız.", ToolTipIcon.Error);
+        }
 
         LogInfo("═══ Otomatik mod tamamlandı ═══");
+        _fileLog.Info("═══ Otomatik mod tamamlandı ═══");
         await Task.Delay(3000);
         _forceExit = true;
         Close();
@@ -519,13 +683,16 @@ public partial class Form1 : Form
         }
     }
 
-    private void LogInfo(string message) => AppendLog(message, Color.White);
-    private void LogSuccess(string message) => AppendLog(message, Color.LimeGreen);
-    private void LogWarning(string message) => AppendLog(message, Color.Yellow);
-    private void LogError(string message) => AppendLog(message, Color.OrangeRed);
+    private void LogInfo(string message) => AppendLog(message, Color.White, LogLevel.INFO);
+    private void LogSuccess(string message) => AppendLog(message, Color.LimeGreen, LogLevel.OK);
+    private void LogWarning(string message) => AppendLog(message, Color.Yellow, LogLevel.WARN);
+    private void LogError(string message) => AppendLog(message, Color.OrangeRed, LogLevel.ERROR);
 
-    private void AppendLog(string message, Color color)
+    private void AppendLog(string message, Color color, LogLevel level)
     {
+        // Dosya log'u her zaman yaz (handle durumu ne olursa olsun)
+        _fileLog.Write(level, message);
+
         if (!IsHandleCreated)
         {
             return;
@@ -537,6 +704,15 @@ public partial class Form1 : Form
         _rtbLog.SelectionColor = color;
         _rtbLog.AppendText($"[{timestamp}] {message}{Environment.NewLine}");
         _rtbLog.ScrollToCaret();
+    }
+
+    /// <summary>
+    /// Windows bildirim alanında toast bildirimi gösterir.
+    /// Durum değişiklikleri, güncelleme uyarıları ve hatalar için kullanılır.
+    /// </summary>
+    private void ShowTrayBalloon(string title, string text, ToolTipIcon icon)
+    {
+        _notifyIcon.ShowBalloonTip(3000, title, text, icon);
     }
 
     #endregion

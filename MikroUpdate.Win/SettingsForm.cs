@@ -46,6 +46,7 @@ public partial class SettingsForm : Form
         _txtLocalPath.Text = _config.LocalInstallPath;
         _txtSetupFile.Text = _config.SetupFileName;
         _txtSetupFilesPath.Text = _config.SetupFilesPath;
+        _nudCheckInterval.Value = Math.Clamp(_config.CheckIntervalMinutes, 1, 1440);
         _chkAutoLaunch.Checked = _config.AutoLaunchAfterUpdate;
 
         UpdateComputedPaths();
@@ -60,6 +61,7 @@ public partial class SettingsForm : Form
             LocalInstallPath = _txtLocalPath.Text.Trim(),
             SetupFileName = _txtSetupFile.Text.Trim(),
             SetupFilesPath = _txtSetupFilesPath.Text.Trim(),
+            CheckIntervalMinutes = (int)_nudCheckInterval.Value,
             AutoLaunchAfterUpdate = _chkAutoLaunch.Checked
         };
     }
@@ -76,10 +78,10 @@ public partial class SettingsForm : Form
     {
         UpdateConfig current = ReadConfigFromUI();
 
-        _lblExeFileValue.Text = current.ExeFileName;
-        _lblServerExeValue.Text = current.ServerExePath;
-        _lblLocalExeValue.Text = current.LocalExePath;
-        _lblSetupPathValue.Text = current.ServerSetupFilePath;
+        _lblComputedPaths.Text =
+            $"EXE: {current.ExeFileName}  \u2022  Setup: {current.ServerSetupFilePath}\n" +
+            $"Sunucu: {current.ServerExePath}\n" +
+            $"Terminal: {current.LocalExePath}";
     }
 
     private void BtnBrowseServer_Click(object? sender, EventArgs e)
