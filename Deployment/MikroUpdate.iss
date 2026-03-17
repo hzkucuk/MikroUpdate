@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.18.0"
+#define MyAppVersion "1.18.1"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -26,6 +26,8 @@ ArchitecturesInstallIn64BitMode=x64compatible
 PrivilegesRequired=admin
 MinVersion=10.0
 WizardStyle=modern
+CloseApplications=force
+RestartApplications=no
 SetupIconFile=..\MikroUpdate.Win\app.ico
 UninstallDisplayIcon={app}\Win\{#MyAppExeName}
 
@@ -84,10 +86,14 @@ Filename: "sc.exe"; Parameters: "start MikroUpdateService"; Flags: runhidden wai
 Filename: "{app}\Win\{#MyAppExeName}"; Description: "MikroUpdate'i şimdi başlat"; Flags: nowait postinstall skipifsilent unchecked
 
 ; ============================================================
-;  Kaldırma: Servis Temizliği
+;  Kaldırma: Süreç ve Servis Temizliği
 ; ============================================================
 [UninstallRun]
+; Önce tray uygulamasını kapat
+Filename: "taskkill.exe"; Parameters: "/F /IM MikroUpdate.exe"; Flags: runhidden waituntilterminated; RunOnceId: "KillTrayApp"
+; Servisi durdur, bekleme sonrası sil
 Filename: "sc.exe"; Parameters: "stop MikroUpdateService"; Flags: runhidden waituntilterminated; RunOnceId: "StopService"
+Filename: "cmd.exe"; Parameters: "/C timeout /T 3 /NOBREAK >nul"; Flags: runhidden waituntilterminated; RunOnceId: "WaitAfterStop"
 Filename: "sc.exe"; Parameters: "delete MikroUpdateService"; Flags: runhidden waituntilterminated; RunOnceId: "DeleteService"
 
 ; ============================================================
@@ -456,6 +462,12 @@ var
   ResultCode: Integer;
 begin
   Result := '';
+
+  { Yükseltme kurulumunda çalışan tray uygulamasını kapat }
+  if Exec('taskkill.exe', '/F /IM MikroUpdate.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    Log('Tray uygulaması kapatıldı.')
+  else
+    Log('Tray uygulaması zaten çalışmıyor veya kapatılamadı.');
 
   if IsDotNet10DesktopInstalled then
   begin

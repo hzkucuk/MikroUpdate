@@ -3,6 +3,15 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.18.1] - 2025-07-18
+
+### Düzeltmeler
+- **Installer kaldırma temizliği** — Uninstall sonrası tray icon ve servis düzgün kaldırılıyor
+  - `taskkill /F /IM MikroUpdate.exe` ile tray uygulaması kaldırma öncesi kapatılıyor
+  - Servis stop → 3sn bekleme → servis delete sıralaması eklendi
+  - Upgrade kurulumunda çalışan tray app otomatik kapatılıyor (`PrepareToInstall`)
+  - `CloseApplications=force` ayarı ile Inno Setup yerleşik süreç kapatma aktifleştirildi
+
 ## [1.18.0] - 2025-07-18
 
 ### Eklenenler
