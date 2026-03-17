@@ -3,6 +3,13 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.17.1] - 2025-07-18
+
+### Düzeltmeler
+- **Assembly adı düzeltmesi** — Exe adı `MikroUpdate.Win.exe` → `MikroUpdate.exe` olarak değiştirildi
+  - Windows bildirimlerinde artık "MikroUpdate" görünüyor ("MikroUpdate.Win" yerine)
+  - Installer exe referansı güncellendi
+
 ## [1.17.0] - 2025-07-18
 
 ### Kaldırılanlar

@@ -3,13 +3,14 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
+    <AssemblyName>MikroUpdate</AssemblyName>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>1.17.0</Version>
-    <AssemblyVersion>1.17.0</AssemblyVersion>
-    <FileVersion>1.17.0</FileVersion>
-    <ApplicationVersion>1.17.0</ApplicationVersion>
+    <Version>1.17.1</Version>
+    <AssemblyVersion>1.17.1</AssemblyVersion>
+    <FileVersion>1.17.1</FileVersion>
+    <ApplicationVersion>1.17.1</ApplicationVersion>
     <Product>MikroUpdate</Product>
     <Description>Mikro ERP otomatik güncelleme sistemi</Description>
     <ApplicationIcon>app.ico</ApplicationIcon>

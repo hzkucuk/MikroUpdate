@@ -4,10 +4,10 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.17.0"
+#define MyAppVersion "1.17.1"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
-#define MyAppExeName "MikroUpdate.Win.exe"
+#define MyAppExeName "MikroUpdate.exe"
 
 [Setup]
 AppId={{21CEB31C-1D57-42E1-B0D5-65536218CD0F}
