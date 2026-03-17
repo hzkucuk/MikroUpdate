@@ -49,10 +49,10 @@ cd Deployment
 .\Build-Setup.ps1
 
 # Kurulum (UI ile)
-.\installer\MikroUpdate_Setup_1.9.0.exe
+.\installer\MikroUpdate_Setup_1.18.4.exe
 
 # Sessiz kurulum
-.\installer\MikroUpdate_Setup_1.9.0.exe /VERYSILENT /SUPPRESSMSGBOXES
+.\installer\MikroUpdate_Setup_1.18.4.exe /VERYSILENT /SUPPRESSMSGBOXES
 ```
 
 Installer otomatik olarak: dosya kopyalama, servis kaydı, kısayollar, ProgramData dizinleri ve ilk yapılandırma oluşturur.
