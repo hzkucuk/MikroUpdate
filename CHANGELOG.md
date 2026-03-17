@@ -12,6 +12,12 @@ Format: [Semantic Versioning](https://semver.org/lang/tr/)
   - Menü açılırken durum otomatik güncelleniyor
   - `System.ServiceProcess.ServiceController` NuGet paketi eklendi
 
+### Düzeltmeler
+- **CS8602 nullable uyarıları giderildi** — `UpdateWorker.cs`'de `_onlineVersionService` ve `_downloadService` null guard eklendi
+
+### İyileştirmeler
+- **Copilot direktifine nullable kuralı eklendi** — CS8600–CS8604 uyarılarının önlenmesi için standart belirlendi
+
 ## [1.18.3] - 2025-07-18
 
 ### Düzeltmeler
