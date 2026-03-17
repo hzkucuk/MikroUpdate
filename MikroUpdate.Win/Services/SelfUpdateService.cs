@@ -132,7 +132,8 @@ public sealed class SelfUpdateService : IDisposable
 
     /// <summary>
     /// İndirilen installer'ı sessiz modda çalıştırır.
-    /// Uygulama kapatılmalıdır.
+    /// Installer, CloseApplications=force ile uygulamayı kapatır
+    /// ve postinstall ile yeniden başlatır.
     /// </summary>
     public static void LaunchInstaller(string installerPath)
     {
@@ -146,7 +147,7 @@ public sealed class SelfUpdateService : IDisposable
         Process.Start(new ProcessStartInfo
         {
             FileName = installerPath,
-            Arguments = "/SILENT /SUPPRESSMSGBOXES /RESTARTAPPLICATIONS",
+            Arguments = "/SILENT /SUPPRESSMSGBOXES",
             UseShellExecute = true
         });
     }

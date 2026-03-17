@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.18.1"
+#define MyAppVersion "1.18.2"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -27,7 +27,7 @@ PrivilegesRequired=admin
 MinVersion=10.0
 WizardStyle=modern
 CloseApplications=force
-RestartApplications=no
+RestartApplications=yes
 SetupIconFile=..\MikroUpdate.Win\app.ico
 UninstallDisplayIcon={app}\Win\{#MyAppExeName}
 
@@ -82,8 +82,11 @@ Filename: "sc.exe"; Parameters: "create MikroUpdateService binPath=""{app}\Servi
 Filename: "sc.exe"; Parameters: "description MikroUpdateService ""Mikro ERP otomatik güncelleme servisi"""; Flags: runhidden waituntilterminated; Tasks: servicetask
 Filename: "sc.exe"; Parameters: "start MikroUpdateService"; Flags: runhidden waituntilterminated; Tasks: servicetask
 
-; Kurulum sonrası uygulamayı başlat (opsiyonel)
+; Kurulum sonrası uygulamayı başlat (interaktif kurulum — kullanıcı seçer)
 Filename: "{app}\Win\{#MyAppExeName}"; Description: "MikroUpdate'i şimdi başlat"; Flags: nowait postinstall skipifsilent unchecked
+
+; Sessiz kurulum sonrası uygulamayı otomatik başlat (self-update için)
+Filename: "{app}\Win\{#MyAppExeName}"; Flags: nowait postinstall skipifnotsilent runasoriginaluser
 
 ; ============================================================
 ;  Kaldırma: Süreç ve Servis Temizliği
@@ -462,12 +465,6 @@ var
   ResultCode: Integer;
 begin
   Result := '';
-
-  { Yükseltme kurulumunda çalışan tray uygulamasını kapat }
-  if Exec('taskkill.exe', '/F /IM MikroUpdate.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-    Log('Tray uygulaması kapatıldı.')
-  else
-    Log('Tray uygulaması zaten çalışmıyor veya kapatılamadı.');
 
   if IsDotNet10DesktopInstalled then
   begin

@@ -3,6 +3,17 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.18.2] - 2025-07-18
+
+### Düzeltmeler
+- **Self-update installer uyumluluğu** — Self-update sonrası uygulama düzgün yeniden başlatılıyor
+  - `PrepareToInstall`’dan `taskkill` kaldırıldı (Restart Manager ile çakışıyordu)
+  - `RestartApplications=yes` ile upgrade sonrası uygulama yeniden başlatılıyor
+  - Sessiz kurulum sonrası app otomatik başlatılıyor (`[Run]` postinstall `skipifnotsilent`)
+  - App kendini kapatmıyor, installer `CloseApplications=force` ile kapatıyor
+  - Installer argümanları `/SILENT /SUPPRESSMSGBOXES` olarak sadeleştirildi
+  - Copilot direktiflerine Installer & Self-Update Yaşam Döngüsü kuralları eklendi
+
 ## [1.18.1] - 2025-07-18
 
 ### Düzeltmeler

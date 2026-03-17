@@ -1032,15 +1032,11 @@ public partial class Form1 : Form
             string installerPath = await _selfUpdateService.DownloadInstallerAsync(release, progress);
 
             LogSuccess($"İndirme tamamlandı: {Path.GetFileName(installerPath)}");
-            LogInfo("Installer başlatılıyor, uygulama kapatılacak...");
+            LogInfo("Installer başlatılıyor...");
 
             _fileLog.Info($"Self-update installer başlatılıyor: {installerPath}");
 
             SelfUpdateService.LaunchInstaller(installerPath);
-
-            // Uygulamayı kapat
-            _forceExit = true;
-            Close();
         }
         catch (Exception ex)
         {

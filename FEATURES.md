@@ -6,10 +6,14 @@
 - **SelfUpdateService:** GitHub Releases API ile yeni sürüm kontrolü
   - Mevcut versiyon ile karşılaştırma (AssemblyInformationalVersion)
   - Installer asset indirme (İlerleme raporlu)
-  - Sessiz kurulum başlatma (`/SILENT /SUPPRESSMSGBOXES /RESTARTAPPLICATIONS`)
+  - Sessiz kurulum başlatma (`/SILENT /SUPPRESSMSGBOXES`)
 - **Form1:** Başlangıçta arka plan kontrolü + tray menü entegrasyonu
   - "Uygulama Güncellemesi" tray menü öğesi
   - Onay dialogu ile indirme ve otomatik kurulum
+- **Installer yaşam döngüsü:**
+  - Uninstall: `taskkill` → `sc stop` → 3sn bekleme → `sc delete`
+  - Upgrade: `CloseApplications=force` + `RestartApplications=yes` (Restart Manager)
+  - Self-update: App kendini kapatmaz, installer `[Run]` postinstall ile yeniden başlatır
 
 ## v1.16.0
 

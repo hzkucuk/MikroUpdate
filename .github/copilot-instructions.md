@@ -97,3 +97,43 @@ Her özellik/güncelleme/düzeltme tamamlandıktan sonra aşağıdaki adımlar *
 > - Yeni özellik → MINOR (1.8.0 → 1.9.0)
 > - Bug fix / küçük düzeltme → PATCH (1.8.0 → 1.8.1)
 > - Breaking change → MAJOR (1.8.0 → 2.0.0)
+
+## Installer & Self-Update Yaşam Döngüsü (kritik — değişiklik yaparken uyulmalı)
+
+MikroUpdate iki bağımsız süreçten oluşur: **Tray App** (`MikroUpdate.exe`) ve **Windows Service** (`MikroUpdateService`).
+Installer (`MikroUpdate.iss`) ve self-update (`SelfUpdateService`) değişikliklerinde aşağıdaki kurallar geçerlidir.
+
+### Süreç Kapatma Sorumlulukları
+
+| Senaryo | Tray App Kapatma | Servis Kapatma | App Yeniden Başlatma |
+|---------|------------------|----------------|----------------------|
+| **Kaldırma (Uninstall)** | `[UninstallRun]` → `taskkill /F /IM MikroUpdate.exe` | `[UninstallRun]` → `sc stop` + `sc delete` | Yok |
+| **Yükseltme (Upgrade)** | `CloseApplications=force` (Restart Manager) | Inno Setup otomatik (servis dosyaları değişmiyorsa dokunma) | `RestartApplications=yes` (Restart Manager) |
+| **Self-Update** | `CloseApplications=force` (Restart Manager) | Dokunulmaz | `[Run]` → `skipifnotsilent` postinstall |
+
+### Self-Update Akışı — Kurallar
+
+1. **App kendini kapatmamalı** — `Close()` / `Application.Exit()` ÇAĞIRMA. Installer'ın `CloseApplications=force` ayarı Restart Manager üzerinden kapatır.
+2. **`/RESTARTAPPLICATIONS` kullanma** — Restart Manager'ın app'i kapatıp takip etmesi gerekir. App kendini kapatırsa RM takip edemez.
+3. **Sessiz kurulum sonrası app başlatma** — `[Run]` bölümünde `skipifnotsilent` flag'li entry ile sağlanır.
+4. **`PrepareToInstall`'da `taskkill` kullanma** — Restart Manager ile çakışır ve RM'nin app'i yeniden başlatmasını engeller.
+5. **Installer argümanları:** yalnızca `/SILENT /SUPPRESSMSGBOXES` — başka flag ekleme.
+
+### Uninstall Akışı — Kurallar
+
+1. **`[UninstallRun]` sırası:** taskkill → sc stop → 3sn bekleme → sc delete
+2. **`taskkill` sadece `[UninstallRun]`'da** kullanılır, `PrepareToInstall`'da DEĞİL.
+3. **Servis silme öncesi bekleme:** `sc stop` sonrası `timeout /T 3` ile servisin tamamen durmasını bekle.
+4. **ProgramData temizliği:** `CurUninstallStepChanged(usPostUninstall)` içinde kullanıcıya sor.
+
+### Installer Değişiklik Kontrol Listesi
+
+Herhangi bir installer/self-update değişikliğinde şunları doğrula:
+- [ ] Uninstall: tray app kapanıyor mu? (`taskkill` `[UninstallRun]`'da)
+- [ ] Uninstall: servis duruyor ve siliniyor mu? (bekleme dahil)
+- [ ] Upgrade: `CloseApplications=force` aktif mi?
+- [ ] Upgrade: `RestartApplications=yes` mi?
+- [ ] Self-update: App `Close()` çağırmıyor mu?
+- [ ] Self-update: Installer args sadece `/SILENT /SUPPRESSMSGBOXES` mi?
+- [ ] Self-update: `[Run]` postinstall `skipifnotsilent` entry var mı?
+- [ ] `PrepareToInstall`'da `taskkill` YOK mu?
