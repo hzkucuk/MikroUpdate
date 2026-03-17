@@ -3,6 +3,16 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.18.0] - 2025-07-18
+
+### Eklenenler
+- **Otomatik uygulama güncellemesi (Self-Update)** — MikroUpdate kendini güncelleyebiliyor
+  - GitHub Releases API üzerinden yeni sürüm kontrolü
+  - Uygulama başlangıcında arka planda otomatik kontrol
+  - Tray menüsünde "Uygulama Güncellemesi" seçeneği
+  - İlerleme çubuğuyla installer indirme
+  - Sessiz kurulum ve uygulama yeniden başlatma
+
 ## [1.17.1] - 2025-07-18
 
 ### Düzeltmeler

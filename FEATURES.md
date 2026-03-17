@@ -1,5 +1,16 @@
 # Özellikler
 
+## v1.18.0
+
+### Otomatik Uygulama Güncellemesi (Self-Update)
+- **SelfUpdateService:** GitHub Releases API ile yeni sürüm kontrolü
+  - Mevcut versiyon ile karşılaştırma (AssemblyInformationalVersion)
+  - Installer asset indirme (İlerleme raporlu)
+  - Sessiz kurulum başlatma (`/SILENT /SUPPRESSMSGBOXES /RESTARTAPPLICATIONS`)
+- **Form1:** Başlangıçta arka plan kontrolü + tray menü entegrasyonu
+  - "Uygulama Güncellemesi" tray menü öğesi
+  - Onay dialogu ile indirme ve otomatik kurulum
+
 ## v1.16.0
 
 ### GeminiService Entegrasyon Testleri

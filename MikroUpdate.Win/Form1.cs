@@ -11,6 +11,7 @@ public partial class Form1 : Form
     private readonly UpdateService _updateService = new();
     private readonly PipeClient _pipeClient = new();
     private readonly FileLogService _fileLog = new();
+    private readonly SelfUpdateService _selfUpdateService = new();
     private readonly bool _autoMode;
     private UpdateConfig _config = new();
     private CancellationTokenSource? _cts;
@@ -44,6 +45,9 @@ public partial class Form1 : Form
             {
                 await CheckVersionsAsync();
             }
+
+            // Arka planda uygulama güncellemesi kontrol et
+            _ = CheckSelfUpdateAsync();
         }
         catch (Exception ex)
         {
@@ -66,6 +70,7 @@ public partial class Form1 : Form
 
         _cts?.Cancel();
         _cts?.Dispose();
+        _selfUpdateService.Dispose();
         _fileLog.Info("Uygulama kapatılıyor.");
         _fileLog.Dispose();
         _notifyIcon.Visible = false;
@@ -906,6 +911,7 @@ public partial class Form1 : Form
         _tsmCheck.Enabled = !busy;
         _tsmUpdate.Enabled = !busy;
         _tsmSettings.Enabled = !busy;
+        _tsmSelfUpdate.Enabled = !busy;
 
         if (!busy)
         {
@@ -944,6 +950,108 @@ public partial class Form1 : Form
     private void ShowTrayBalloon(string title, string text, ToolTipIcon icon)
     {
         _notifyIcon.ShowBalloonTip(3000, title, text, icon);
+    }
+
+    #endregion
+
+    #region Self-Update
+
+    /// <summary>
+    /// GitHub'dan uygulama güncellemesi kontrol eder.
+    /// Yeni sürüm varsa tray bildirimi gösterir.
+    /// </summary>
+    private async Task CheckSelfUpdateAsync()
+    {
+        try
+        {
+            ReleaseInfo? release = await _selfUpdateService.CheckForUpdateAsync();
+
+            if (release is null)
+            {
+                return;
+            }
+
+            LogInfo($"Yeni MikroUpdate sürümü mevcut: v{release.LatestVersion} (mevcut: v{release.CurrentVersion})");
+            _fileLog.Info($"Yeni uygulama sürümü: v{release.LatestVersion}");
+
+            ShowTrayBalloon(
+                "MikroUpdate Güncellemesi",
+                $"Yeni sürüm v{release.LatestVersion} mevcut. Menüden güncelleyebilirsiniz.",
+                ToolTipIcon.Info);
+        }
+        catch (Exception ex)
+        {
+            _fileLog.Warning($"Uygulama güncelleme kontrolü başarısız: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Yeni sürümü indirip sessiz kurulum başlatır.
+    /// </summary>
+    private async void BtnSelfUpdate_Click(object? sender, EventArgs e)
+    {
+        try
+        {
+            LogInfo("Uygulama güncellemesi kontrol ediliyor...");
+            SetUIBusy(true);
+
+            ReleaseInfo? release = await _selfUpdateService.CheckForUpdateAsync();
+
+            if (release is null)
+            {
+                LogSuccess("MikroUpdate zaten güncel.");
+                ShowTrayBalloon("MikroUpdate", "Uygulama zaten güncel sürümde.", ToolTipIcon.Info);
+
+                return;
+            }
+
+            DialogResult result = MessageBox.Show(
+                this,
+                $"Yeni MikroUpdate sürümü mevcut!\n\n" +
+                $"Mevcut: v{release.CurrentVersion}\n" +
+                $"Yeni: v{release.LatestVersion}\n\n" +
+                $"Güncelleme indirilip kurulsun mu?\n" +
+                $"(Uygulama kapatılıp yeniden başlatılacaktır)",
+                "MikroUpdate Güncellemesi",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (result != DialogResult.Yes)
+            {
+                return;
+            }
+
+            LogInfo($"Güncelleme indiriliyor: v{release.LatestVersion}...");
+            _prgProgress.Style = ProgressBarStyle.Blocks;
+
+            Progress<int> progress = new(percent =>
+            {
+                _prgProgress.Value = Math.Clamp(percent, 0, 100);
+            });
+
+            string installerPath = await _selfUpdateService.DownloadInstallerAsync(release, progress);
+
+            LogSuccess($"İndirme tamamlandı: {Path.GetFileName(installerPath)}");
+            LogInfo("Installer başlatılıyor, uygulama kapatılacak...");
+
+            _fileLog.Info($"Self-update installer başlatılıyor: {installerPath}");
+
+            SelfUpdateService.LaunchInstaller(installerPath);
+
+            // Uygulamayı kapat
+            _forceExit = true;
+            Close();
+        }
+        catch (Exception ex)
+        {
+            LogError($"Güncelleme hatası: {ex.Message}");
+            _fileLog.Error("Self-update hatası", ex);
+            ShowTrayBalloon("Güncelleme Hatası", ex.Message, ToolTipIcon.Error);
+        }
+        finally
+        {
+            SetUIBusy(false);
+        }
     }
 
     #endregion

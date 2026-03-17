@@ -44,6 +44,8 @@ partial class Form1
         _tsmUpdate = new ToolStripMenuItem();
         _tsmSettings = new ToolStripMenuItem();
         _tsmAbout = new ToolStripMenuItem();
+        _tsmSepUpdate = new ToolStripSeparator();
+        _tsmSelfUpdate = new ToolStripMenuItem();
         _tsmSeparator = new ToolStripSeparator();
         _tsmExit = new ToolStripMenuItem();
 
@@ -58,7 +60,7 @@ partial class Form1
         // 4. Configure controls
 
         // _ctxTray
-        _ctxTray.Items.AddRange(new ToolStripItem[] { _tsmShow, _tsmCheck, _tsmUpdate, _tsmSettings, _tsmAbout, _tsmSeparator, _tsmExit });
+        _ctxTray.Items.AddRange(new ToolStripItem[] { _tsmShow, _tsmCheck, _tsmUpdate, _tsmSettings, _tsmAbout, _tsmSepUpdate, _tsmSelfUpdate, _tsmSeparator, _tsmExit });
         _ctxTray.Name = "_ctxTray";
         _ctxTray.Size = new Size(180, 120);
 
@@ -82,6 +84,12 @@ partial class Form1
         _tsmAbout.Text = "Hakkında";
         _tsmAbout.Name = "_tsmAbout";
         _tsmAbout.Click += BtnAbout_Click;
+
+        _tsmSepUpdate.Name = "_tsmSepUpdate";
+
+        _tsmSelfUpdate.Text = "Uygulama Güncellemesi";
+        _tsmSelfUpdate.Name = "_tsmSelfUpdate";
+        _tsmSelfUpdate.Click += BtnSelfUpdate_Click;
 
         _tsmSeparator.Name = "_tsmSeparator";
 
@@ -336,6 +344,8 @@ partial class Form1
     private ToolStripMenuItem _tsmUpdate;
     private ToolStripMenuItem _tsmSettings;
     private ToolStripMenuItem _tsmAbout;
+    private ToolStripSeparator _tsmSepUpdate;
+    private ToolStripMenuItem _tsmSelfUpdate;
     private ToolStripSeparator _tsmSeparator;
     private ToolStripMenuItem _tsmExit;
     private Button _btnAbout;
