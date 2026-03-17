@@ -191,6 +191,19 @@ public sealed class UpdateWorker : BackgroundService
                 if (!serverReachable)
                 {
                     _logger.LogInformation("Yerel sunucu erişilemedi, CDN probe'a geçiliyor...");
+
+                    if (_onlineVersionService is null)
+                    {
+                        _logger.LogError("OnlineVersionService başlatılmamış — hybrid CDN fallback yapılamıyor.");
+
+                        return new ServiceResponse
+                        {
+                            Success = false,
+                            Status = ServiceStatus.Error,
+                            Message = "Online servis başlatılmamış — CDN fallback yapılamıyor."
+                        };
+                    }
+
                     _moduleVersions = await _onlineVersionService
                         .GetOnlineModuleVersionsAsync(_config, stoppingToken).ConfigureAwait(false);
                 }
@@ -198,6 +211,19 @@ public sealed class UpdateWorker : BackgroundService
             else if (_config.UpdateMode == UpdateMode.Online)
             {
                 _logger.LogDebug("Online versiyon kontrolü başlatılıyor...");
+
+                if (_onlineVersionService is null)
+                {
+                    _logger.LogError("OnlineVersionService başlatılmamış — online kontrol yapılamıyor.");
+
+                    return new ServiceResponse
+                    {
+                        Success = false,
+                        Status = ServiceStatus.Error,
+                        Message = "Online servis başlatılmamış."
+                    };
+                }
+
                 _moduleVersions = await _onlineVersionService
                     .GetOnlineModuleVersionsAsync(_config, stoppingToken).ConfigureAwait(false);
             }
