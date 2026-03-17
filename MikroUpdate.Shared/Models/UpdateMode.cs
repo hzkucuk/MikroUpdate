@@ -15,8 +15,5 @@ public enum UpdateMode
     Online,
 
     /// <summary>Önce yerel ağı dene, erişilemezse CDN'ye düş.</summary>
-    Hybrid,
-
-    /// <summary>Gemini AI ile mikro.com.tr sayfasından versiyon tespiti ve CDN indirme.</summary>
-    AI
+    Hybrid
 }

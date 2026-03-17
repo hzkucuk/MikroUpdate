@@ -57,8 +57,6 @@ public partial class SettingsForm : Form
         _chkAutoLaunch.Checked = _config.AutoLaunchAfterUpdate;
         _cboUpdateMode.SelectedItem = _config.UpdateMode.ToString();
         _txtCdnBaseUrl.Text = _config.CdnBaseUrl;
-        _txtGeminiApiKey.Text = AiKeyManager.Decrypt(_config.GeminiApiKey);
-        _txtUpdatePageUrl.Text = _config.MikroUpdatePageUrl;
         _txtProxyAddress.Text = _config.ProxyAddress;
         _nudHttpTimeout.Value = Math.Clamp(_config.HttpTimeoutSeconds, 0, 3600);
 
@@ -83,8 +81,6 @@ public partial class SettingsForm : Form
             UpdateMode = Enum.TryParse<UpdateMode>(_cboUpdateMode.SelectedItem?.ToString(), out UpdateMode mode)
                 ? mode : UpdateMode.Local,
             CdnBaseUrl = _txtCdnBaseUrl.Text.Trim(),
-            GeminiApiKey = AiKeyManager.Encrypt(_txtGeminiApiKey.Text.Trim()),
-            MikroUpdatePageUrl = _txtUpdatePageUrl.Text.Trim(),
             ProxyAddress = _txtProxyAddress.Text.Trim(),
             HttpTimeoutSeconds = (int)_nudHttpTimeout.Value,
             Modules = ReadModulesFromGrid()
@@ -287,16 +283,10 @@ public partial class SettingsForm : Form
     /// </summary>
     private void UpdateOnlineFieldsVisibility()
     {
-        bool isOnlineCapable = _cboUpdateMode.SelectedItem?.ToString() is "Online" or "Hybrid" or "AI";
-        bool isAiMode = _cboUpdateMode.SelectedItem?.ToString() is "AI";
+        bool isOnlineCapable = _cboUpdateMode.SelectedItem?.ToString() is "Online" or "Hybrid";
 
         _lblCdnBaseUrl.Visible = isOnlineCapable;
         _txtCdnBaseUrl.Visible = isOnlineCapable;
-
-        _lblGeminiApiKey.Visible = isAiMode;
-        _txtGeminiApiKey.Visible = isAiMode;
-        _lblUpdatePageUrl.Visible = isAiMode;
-        _txtUpdatePageUrl.Visible = isAiMode;
 
         _lblProxyAddress.Visible = isOnlineCapable;
         _txtProxyAddress.Visible = isOnlineCapable;
@@ -337,8 +327,6 @@ public partial class SettingsForm : Form
         _chkAutoLaunch.Checked = true;
         _cboUpdateMode.SelectedItem = "Local";
         _txtCdnBaseUrl.Text = "https://cdn-mikro.atros.com.tr/mikro";
-        _txtGeminiApiKey.Text = string.Empty;
-        _txtUpdatePageUrl.Text = "https://www.mikro.com.tr/modulGuncellworkleri";
         _txtProxyAddress.Text = string.Empty;
         _nudHttpTimeout.Value = 0;
 

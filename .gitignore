@@ -364,4 +364,5 @@ MigrationBackup/
 .ionide/
 
 # Fody - auto-generated XML schema
-FodyWeavers.xsd
+FodyWeavers.xsdprompt_debug.txt
+test_output.txt

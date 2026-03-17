@@ -422,7 +422,7 @@ public partial class Form1 : Form
     {
         if (_serviceAvailable)
         {
-            if (_config.UpdateMode is UpdateMode.Online or UpdateMode.Hybrid or UpdateMode.AI)
+            if (_config.UpdateMode is UpdateMode.Online or UpdateMode.Hybrid)
             {
                 await RunOnlineUpdateViaServiceAsync(cancellationToken);
             }
@@ -433,7 +433,7 @@ public partial class Form1 : Form
         }
         else
         {
-            if (_config.UpdateMode is UpdateMode.Online or UpdateMode.AI)
+            if (_config.UpdateMode is UpdateMode.Online)
             {
                 LogError("Online güncelleme için MikroUpdate servisi çalışıyor olmalıdır.");
                 SetStatus("Servis gerekli", Color.OrangeRed);

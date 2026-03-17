@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.16.0"
+#define MyAppVersion "1.17.0"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.Win.exe"
@@ -219,7 +219,6 @@ begin
   UpdateModeCombo.Items.Add('Local');
   UpdateModeCombo.Items.Add('Online');
   UpdateModeCombo.Items.Add('Hybrid');
-  UpdateModeCombo.Items.Add('AI');
   UpdateModeCombo.ItemIndex := 0;  { Varsayılan: Local }
 
   TopPos := TopPos + 52;

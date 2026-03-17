@@ -29,17 +29,11 @@ public sealed class UpdateConfig
     /// <summary>Periyodik versiyon kontrol aralığı (dakika). Varsayılan: 30.</summary>
     public int CheckIntervalMinutes { get; set; } = 30;
 
-    /// <summary>Güncelleme modu: Local (varsayılan), Online, Hybrid veya AI.</summary>
+    /// <summary>Güncelleme modu: Local (varsayılan), Online veya Hybrid.</summary>
     public UpdateMode UpdateMode { get; set; } = UpdateMode.Local;
 
-    /// <summary>CDN temel URL'si. Online/Hybrid/AI modlarında kullanılır.</summary>
+    /// <summary>CDN temel URL'si. Online/Hybrid modlarında kullanılır.</summary>
     public string CdnBaseUrl { get; set; } = "https://cdn-mikro.atros.com.tr/mikro";
-
-    /// <summary>Gemini API anahtarı (DPAPI ile şifrelenmiş Base64). Yalnızca AI modunda kullanılır.</summary>
-    public string GeminiApiKey { get; set; } = string.Empty;
-
-    /// <summary>Mikro güncelleme sayfası URL'si. AI modu bu sayfayı tarayarak sürüm bilgisi çıkarır.</summary>
-    public string MikroUpdatePageUrl { get; set; } = "https://www.mikro.com.tr/modulGuncellworkleri";
 
     /// <summary>HTTP proxy adresi (ör: "http://proxy:8080"). Boş ise proxy kullanılmaz.</summary>
     public string ProxyAddress { get; set; } = string.Empty;

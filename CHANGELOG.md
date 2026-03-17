@@ -3,6 +3,18 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.17.0] - 2025-07-18
+
+### Kaldırılanlar
+- **AI modülü tamamen kaldırıldı** — Gemini API entegrasyonu güvenilmez olduğu için projeden çıkarıldı
+  - `GeminiService`, `AiVersionService`, `AiKeyManager` sınıfları silindi
+  - `UpdateMode.AI` enum değeri kaldırıldı
+  - `UpdateConfig` modelinden `GeminiApiKey` ve `MikroUpdatePageUrl` alanları kaldırıldı
+  - SettingsForm'dan AI kontrolleri (API anahtarı, sayfa URL) kaldırıldı
+  - Installer'dan AI modu seçeneği kaldırıldı
+  - `System.Security.Cryptography.ProtectedData` NuGet bağımlılığı kaldırıldı
+  - `MikroUpdate.Service.Tests` test projesi kaldırıldı
+
 ## [1.16.0] - 2025-07-17
 
 ### Eklenenler

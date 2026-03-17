@@ -20,8 +20,6 @@ public sealed class UpdateWorker : BackgroundService
     private readonly UpdateService _updateService = new();
     private OnlineVersionService? _onlineVersionService;
     private DownloadService? _downloadService;
-    private GeminiService? _geminiService;
-    private AiVersionService? _aiVersionService;
     private UpdateConfig _config = new();
     private ServiceStatus _currentStatus = ServiceStatus.Idle;
     private string _statusMessage = "Servis başlatıldı.";
@@ -45,16 +43,12 @@ public sealed class UpdateWorker : BackgroundService
         // Mevcut servisleri temizle
         _onlineVersionService?.Dispose();
         _downloadService?.Dispose();
-        _geminiService?.Dispose();
-        _aiVersionService?.Dispose();
 
         string? proxy = string.IsNullOrWhiteSpace(_config.ProxyAddress) ? null : _config.ProxyAddress;
         int timeout = _config.HttpTimeoutSeconds;
 
         _onlineVersionService = new OnlineVersionService(_logger, proxy, timeout);
         _downloadService = new DownloadService(_logger, proxy, timeout);
-        _geminiService = new GeminiService(_logger, proxy, timeout);
-        _aiVersionService = new AiVersionService(_geminiService, _logger, proxy, timeout);
 
         if (proxy is not null)
         {
@@ -71,8 +65,6 @@ public sealed class UpdateWorker : BackgroundService
     {
         _onlineVersionService?.Dispose();
         _downloadService?.Dispose();
-        _geminiService?.Dispose();
-        _aiVersionService?.Dispose();
         base.Dispose();
     }
 
@@ -202,12 +194,6 @@ public sealed class UpdateWorker : BackgroundService
                     _moduleVersions = await _onlineVersionService
                         .GetOnlineModuleVersionsAsync(_config, stoppingToken).ConfigureAwait(false);
                 }
-            }
-            else if (_config.UpdateMode == UpdateMode.AI)
-            {
-                _logger.LogDebug("AI versiyon kontrolü başlatılıyor...");
-                _moduleVersions = await _aiVersionService
-                    .GetAiModuleVersionsAsync(_config, stoppingToken).ConfigureAwait(false);
             }
             else if (_config.UpdateMode == UpdateMode.Online)
             {
@@ -455,9 +441,7 @@ public sealed class UpdateWorker : BackgroundService
                 return;
             }
 
-            string? cdnCode = _config.UpdateMode == UpdateMode.AI
-                ? _aiVersionService.LatestCdnCode
-                : _onlineVersionService.LatestCdnCode;
+            string? cdnCode = _onlineVersionService.LatestCdnCode;
 
             if (string.IsNullOrEmpty(cdnCode))
             {
