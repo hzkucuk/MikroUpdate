@@ -563,8 +563,12 @@ partial class SettingsForm
         // 
         _btnCancel.AccessibleName = "İptal";
         _btnCancel.AutoSize = true;
+        _btnCancel.BackColor = Color.FromArgb(50, 50, 50);
         _btnCancel.DialogResult = DialogResult.Cancel;
         _btnCancel.FlatStyle = FlatStyle.Flat;
+        _btnCancel.FlatAppearance.BorderSize = 1;
+        _btnCancel.FlatAppearance.BorderColor = Color.FromArgb(80, 80, 80);
+        _btnCancel.ForeColor = Color.FromArgb(230, 230, 230);
         _btnCancel.Location = new Point(504, 7);
         _btnCancel.Name = "_btnCancel";
         _btnCancel.Padding = new Padding(12, 4, 12, 4);
@@ -578,7 +582,8 @@ partial class SettingsForm
         _btnOK.AutoSize = true;
         _btnOK.BackColor = Color.FromArgb(0, 150, 80);
         _btnOK.DialogResult = DialogResult.OK;
-        _btnOK.FlatAppearance.BorderSize = 0;
+        _btnOK.FlatAppearance.BorderSize = 1;
+        _btnOK.FlatAppearance.BorderColor = Color.FromArgb(0, 120, 60);
         _btnOK.FlatStyle = FlatStyle.Flat;
         _btnOK.Font = new Font("Segoe UI Semibold", 9F);
         _btnOK.ForeColor = Color.White;
@@ -595,7 +600,8 @@ partial class SettingsForm
         _btnDefaults.AccessibleDescription = "Tüm ayarları fabrika varsayılanlarına sıfırlar";
         _btnDefaults.AccessibleName = "Varsayılan ayarlara dön";
         _btnDefaults.AutoSize = true;
-        _btnDefaults.FlatAppearance.BorderSize = 0;
+        _btnDefaults.FlatAppearance.BorderSize = 1;
+        _btnDefaults.FlatAppearance.BorderColor = Color.FromArgb(60, 60, 60);
         _btnDefaults.FlatStyle = FlatStyle.Flat;
         _btnDefaults.Font = new Font("Segoe UI", 8F);
         _btnDefaults.ForeColor = Color.FromArgb(180, 180, 180);
@@ -612,15 +618,15 @@ partial class SettingsForm
         AcceptButton = _btnOK;
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
+        AutoScroll = true;
         BackColor = Color.FromArgb(30, 30, 30);
         CancelButton = _btnCancel;
-        ClientSize = new Size(620, 620);
+        ClientSize = new Size(620, 720);
         Controls.Add(_tlpMain);
         ForeColor = Color.FromArgb(230, 230, 230);
-        FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
-        MinimumSize = new Size(540, 480);
+        MinimumSize = new Size(540, 580);
         Name = "SettingsForm";
         ShowInTaskbar = false;
         StartPosition = FormStartPosition.CenterParent;
