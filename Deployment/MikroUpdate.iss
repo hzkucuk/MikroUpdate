@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.18.2"
+#define MyAppVersion "1.18.3"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -70,17 +70,13 @@ Name: "{commonstartup}\{#MyAppName}"; Filename: "{app}\Win\{#MyAppExeName}"; Par
 ;  Görevler (Tasks)
 ; ============================================================
 [Tasks]
-Name: "servicetask"; Description: "MikroUpdate Windows servisini kur ve başlat"; GroupDescription: "Ek görevler:"; Flags: checkedonce
 Name: "startuptask"; Description: "Windows başlangıcında otomatik çalıştır"; GroupDescription: "Ek görevler:"; Flags: checkedonce
 
 ; ============================================================
-;  Kurulum Sonrası: Servis Kaydı
+;  Kurulum Sonrası: Uygulama Başlatma
 ; ============================================================
 [Run]
-; Servis kaydı (task seçiliyse)
-Filename: "sc.exe"; Parameters: "create MikroUpdateService binPath=""{app}\Service\MikroUpdate.Service.exe"" start=auto DisplayName=""MikroUpdate Güncelleme Servisi"""; Flags: runhidden waituntilterminated; Tasks: servicetask
-Filename: "sc.exe"; Parameters: "description MikroUpdateService ""Mikro ERP otomatik güncelleme servisi"""; Flags: runhidden waituntilterminated; Tasks: servicetask
-Filename: "sc.exe"; Parameters: "start MikroUpdateService"; Flags: runhidden waituntilterminated; Tasks: servicetask
+; Servis kurulumu CurStepChanged(ssPostInstall) içinde yapılır (zorunlu, her kurulumda)
 
 ; Kurulum sonrası uygulamayı başlat (interaktif kurulum — kullanıcı seçer)
 Filename: "{app}\Win\{#MyAppExeName}"; Description: "MikroUpdate'i şimdi başlat"; Flags: nowait postinstall skipifsilent unchecked
@@ -415,11 +411,66 @@ begin
   end;
 end;
 
+function IsServiceInstalled: Boolean;
+var
+  ResultCode: Integer;
+begin
+  { sc query returns 0 if service exists (running or stopped) }
+  Result := Exec('sc.exe', 'query MikroUpdateService', '', SW_HIDE, ewWaitUntilTerminated, ResultCode)
+            and (ResultCode = 0);
+end;
+
+procedure InstallAndStartService;
+var
+  ResultCode: Integer;
+  BinPath: String;
+begin
+  BinPath := ExpandConstant('{app}\Service\MikroUpdate.Service.exe');
+
+  if IsServiceInstalled then
+  begin
+    { Upgrade: servisi durdur, sil, yeniden oluştur (dosyalar güncellenmiş olabilir) }
+    Log('MikroUpdateService zaten mevcut — yeniden oluşturuluyor...');
+    Exec('sc.exe', 'stop MikroUpdateService', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Sleep(2000);
+    Exec('sc.exe', 'delete MikroUpdateService', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Sleep(1000);
+  end;
+
+  { Servisi oluştur }
+  Exec('sc.exe',
+    Format('create MikroUpdateService binPath= "%s" start= auto DisplayName= "MikroUpdate Güncelleme Servisi"', [BinPath]),
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Log(Format('sc create sonuç: %d', [ResultCode]));
+
+  { Açıklamasını ayarla }
+  Exec('sc.exe',
+    'description MikroUpdateService "Mikro ERP otomatik güncelleme servisi"',
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+  { Çökme durumunda otomatik yeniden başlatma: 5sn / 10sn / 30sn }
+  Exec('sc.exe',
+    'failure MikroUpdateService reset= 60 actions= restart/5000/restart/10000/restart/30000',
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Log(Format('sc failure sonuç: %d', [ResultCode]));
+
+  { Servisi başlat }
+  Exec('sc.exe', 'start MikroUpdateService', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Log(Format('sc start sonuç: %d', [ResultCode]));
+
+  { Kurulum doğrulama }
+  if IsServiceInstalled then
+    Log('MikroUpdateService başarıyla kuruldu ve başlatıldı.')
+  else
+    Log('UYARI: MikroUpdateService kurulumu doğrulanamadı!');
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
   begin
     WriteConfigFile;
+    InstallAndStartService;
   end;
 end;
 

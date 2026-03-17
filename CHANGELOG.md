@@ -3,6 +3,20 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.18.3] - 2025-07-18
+
+### Düzeltmeler
+- **Servis kurulumu zorunlu yapıldı** — MikroUpdateService artık her kurulumda otomatik kurulur
+  - `[Tasks]` bölümünden servis task kaldırıldı (artık opsiyonel değil)
+  - Servis kurulumu `CurStepChanged(ssPostInstall)` içinde Pascal Script ile yapılır
+  - `sc create` komutu düzeltildi (`binPath=` sonrası boşluk eksikliği giderildi)
+  - Upgrade kurulumda servis otomatik durdur/sil/yeniden oluştur mantığı eklendi
+  - Çökme sonrası otomatik yeniden başlatma yapılandırması eklendi (5sn/10sn/30sn)
+- **Servis bulunamadı uyarısı iyileştirildi** — Kullanıcıya hata mesajı ve yönlendirme gösteriliyor
+- **Dark theme düğme görünürlüğü düzeltildi** — FlatStyle.Flat düğmelere belirgin renk/kenarlık eklendi
+  - Header TLP AutoSize eklendi, FlowLayoutPanel MinimumSize ayarlandı
+  - DataGridView kenarlık stili FixedSingle olarak değiştirildi
+
 ## [1.18.2] - 2025-07-18
 
 ### Düzeltmeler

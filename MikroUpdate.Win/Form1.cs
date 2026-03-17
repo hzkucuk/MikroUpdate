@@ -33,9 +33,19 @@ public partial class Form1 : Form
         try
         {
             _serviceAvailable = await _pipeClient.IsServiceRunningAsync();
-            LogInfo(_serviceAvailable
-                ? "MikroUpdate servisi algılandı — servis modu aktif."
-                : "MikroUpdate servisi bulunamadı — doğrudan mod aktif.");
+
+            if (_serviceAvailable)
+            {
+                LogInfo("MikroUpdate servisi algılandı — servis modu aktif.");
+            }
+            else
+            {
+                LogError("MikroUpdate servisi bulunamadı! Güncelleme admin hakları olmadan yapılamaz.");
+                LogInfo("Servis durumunu kontrol edin: services.msc → MikroUpdateService");
+                ShowTrayBalloon("Servis Hatası",
+                    "MikroUpdateService çalışmıyor. Güncelleme için servis gereklidir.",
+                    ToolTipIcon.Warning);
+            }
 
             if (_autoMode)
             {

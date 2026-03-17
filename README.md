@@ -1,6 +1,6 @@
 # MikroUpdate
 
-![Version](https://img.shields.io/badge/version-1.18.2-blue)
+![Version](https://img.shields.io/badge/version-1.18.3-blue)
 ![.NET](https://img.shields.io/badge/.NET-10.0-purple)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 

@@ -129,6 +129,8 @@ partial class Form1
         _tlpHeader.RowCount = 2;
         _tlpHeader.RowStyles.Add(new RowStyle());
         _tlpHeader.RowStyles.Add(new RowStyle());
+        _tlpHeader.AutoSize = true;
+        _tlpHeader.AutoSizeMode = AutoSizeMode.GrowOnly;
         _tlpHeader.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
         _tlpHeader.Margin = new Padding(0, 0, 0, 4);
         _tlpHeader.Name = "_tlpHeader";
@@ -169,7 +171,7 @@ partial class Form1
         _dgvModules.MultiSelect = false;
         _dgvModules.BackgroundColor = Color.FromArgb(35, 35, 35);
         _dgvModules.GridColor = Color.FromArgb(50, 50, 50);
-        _dgvModules.BorderStyle = BorderStyle.None;
+        _dgvModules.BorderStyle = BorderStyle.FixedSingle;
         _dgvModules.DefaultCellStyle.BackColor = Color.FromArgb(35, 35, 35);
         _dgvModules.DefaultCellStyle.ForeColor = Color.FromArgb(210, 210, 210);
         _dgvModules.DefaultCellStyle.SelectionBackColor = Color.FromArgb(50, 50, 50);
@@ -231,6 +233,8 @@ partial class Form1
         _flpButtons.AutoSize = true;
         _flpButtons.AutoSizeMode = AutoSizeMode.GrowOnly;
         _flpButtons.FlowDirection = FlowDirection.RightToLeft;
+        _flpButtons.MinimumSize = new Size(0, 40);
+        _flpButtons.BackColor = Color.FromArgb(35, 35, 35);
         _flpButtons.Name = "_flpButtons";
         _flpButtons.Padding = new Padding(0, 6, 0, 0);
         _flpButtons.TabIndex = 3;
@@ -244,6 +248,7 @@ partial class Form1
         _btnLaunch.AutoSize = true;
         _btnLaunch.FlatStyle = FlatStyle.Flat;
         _btnLaunch.FlatAppearance.BorderSize = 0;
+        _btnLaunch.FlatAppearance.BorderColor = Color.FromArgb(0, 120, 60);
         _btnLaunch.BackColor = Color.FromArgb(0, 150, 80);
         _btnLaunch.ForeColor = Color.White;
         _btnLaunch.Font = new Font("Segoe UI Semibold", 9F);
@@ -257,6 +262,9 @@ partial class Form1
         _btnUpdate.AutoSize = true;
         _btnUpdate.FlatStyle = FlatStyle.Flat;
         _btnUpdate.FlatAppearance.BorderSize = 1;
+        _btnUpdate.FlatAppearance.BorderColor = Color.FromArgb(80, 80, 80);
+        _btnUpdate.BackColor = Color.FromArgb(50, 50, 50);
+        _btnUpdate.ForeColor = Color.FromArgb(230, 230, 230);
         _btnUpdate.Name = "_btnUpdate";
         _btnUpdate.Padding = new Padding(10, 4, 10, 4);
         _btnUpdate.TabIndex = 6;
@@ -267,6 +275,9 @@ partial class Form1
         _btnCheck.AutoSize = true;
         _btnCheck.FlatStyle = FlatStyle.Flat;
         _btnCheck.FlatAppearance.BorderSize = 1;
+        _btnCheck.FlatAppearance.BorderColor = Color.FromArgb(80, 80, 80);
+        _btnCheck.BackColor = Color.FromArgb(50, 50, 50);
+        _btnCheck.ForeColor = Color.FromArgb(230, 230, 230);
         _btnCheck.Name = "_btnCheck";
         _btnCheck.Padding = new Padding(10, 4, 10, 4);
         _btnCheck.TabIndex = 5;
@@ -276,8 +287,9 @@ partial class Form1
         _btnSettings.AccessibleName = "Ayarları aç";
         _btnSettings.AutoSize = true;
         _btnSettings.FlatStyle = FlatStyle.Flat;
-        _btnSettings.FlatAppearance.BorderSize = 0;
-        _btnSettings.ForeColor = SystemColors.GrayText;
+        _btnSettings.FlatAppearance.BorderSize = 1;
+        _btnSettings.FlatAppearance.BorderColor = Color.FromArgb(60, 60, 60);
+        _btnSettings.ForeColor = Color.FromArgb(180, 180, 180);
         _btnSettings.Name = "_btnSettings";
         _btnSettings.Padding = new Padding(6, 4, 6, 4);
         _btnSettings.TabIndex = 4;
@@ -287,8 +299,9 @@ partial class Form1
         _btnAbout.AccessibleName = "Hakkında";
         _btnAbout.AutoSize = true;
         _btnAbout.FlatStyle = FlatStyle.Flat;
-        _btnAbout.FlatAppearance.BorderSize = 0;
-        _btnAbout.ForeColor = SystemColors.GrayText;
+        _btnAbout.FlatAppearance.BorderSize = 1;
+        _btnAbout.FlatAppearance.BorderColor = Color.FromArgb(60, 60, 60);
+        _btnAbout.ForeColor = Color.FromArgb(180, 180, 180);
         _btnAbout.Name = "_btnAbout";
         _btnAbout.Padding = new Padding(6, 4, 6, 4);
         _btnAbout.TabIndex = 8;

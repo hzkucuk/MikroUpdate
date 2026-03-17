@@ -1,5 +1,16 @@
 # Özellikler
 
+## v1.18.3
+
+### Servis Kurulumu Zorunlu
+- **Installer:** Servis kurulumu artık opsiyonel task değil, her kurulumda zorunlu
+  - `CurStepChanged(ssPostInstall)` Pascal Script ile otomatik kurulum
+  - `sc create` syntax düzeltmesi (`=` sonrası boşluk)
+  - Upgrade: mevcut servisi durdur/sil/yeniden oluştur
+  - Çökme sonrası otomatik yeniden başlatma (failure recovery: 5sn/10sn/30sn)
+- **Dark theme:** Düğme görünürlüğü düzeltildi (BackColor/BorderColor kontrast)
+- **Form1:** Servis bulunamazsa hata mesajı ve yönlendirme gösteriliyor
+
 ## v1.18.0
 
 ### Otomatik Uygulama Güncellemesi (Self-Update)
