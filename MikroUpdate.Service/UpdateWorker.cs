@@ -467,6 +467,14 @@ public sealed class UpdateWorker : BackgroundService
                 return;
             }
 
+            if (_onlineVersionService is null)
+            {
+                await SendFinalResponseAsync(pipeServer, false, ServiceStatus.Error,
+                    "Online versiyon servisi başlatılamamış.", stoppingToken);
+
+                return;
+            }
+
             string? cdnCode = _onlineVersionService.LatestCdnCode;
 
             if (string.IsNullOrEmpty(cdnCode))
@@ -529,7 +537,7 @@ public sealed class UpdateWorker : BackgroundService
                 }
 
                 // Online veya Hybrid fallback: CDN'den indir
-                if (string.IsNullOrEmpty(setupPath))
+                if (string.IsNullOrEmpty(setupPath) && _downloadService is not null)
                 {
                     _currentStatus = ServiceStatus.Downloading;
                     _statusMessage = $"{module.Name} CDN'den indiriliyor...";

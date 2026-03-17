@@ -22,6 +22,7 @@
 - Gereksiz `ToList()` / `ToArray()` kullanma.
 - Magic number yasak; sabit veya enum kullan.
 - Nullable Reference Types: her public method girişinde `ArgumentNullException.ThrowIfNull()` ekle.
+- **CS8602 / Nullable uyarıları:** Kod yazarken veya değiştirirken `CS8602` (olası null başvuru) ve diğer nullable uyarılarını (`CS8600`, `CS8601`, `CS8603`, `CS8604`) bırakma. Null olabilecek değişkenlere erişimden önce `is not null` kontrolü, `!` (null-forgiving) yerine `??` / `?.` operatörü veya early-return pattern kullan. Her değişiklik sonrası build uyarılarını kontrol et.
 
 ## Veritabanı
 Açık talimat olmadan: EF Migration oluşturma, kolon silme/rename/tip değiştirme.
