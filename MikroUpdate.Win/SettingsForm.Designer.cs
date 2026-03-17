@@ -338,7 +338,7 @@ partial class SettingsForm
         _tlpMain.SetColumnSpan(_cboUpdateMode, 2);
         _cboUpdateMode.DropDownStyle = ComboBoxStyle.DropDownList;
         _cboUpdateMode.FlatStyle = FlatStyle.Flat;
-        _cboUpdateMode.Items.AddRange(new object[] { "Local", "Online", "Hybrid", "AI" });
+        _cboUpdateMode.Items.AddRange(new object[] { "Local", "Online", "Hybrid" });
         _cboUpdateMode.Location = new Point(153, 224);
         _cboUpdateMode.Name = "_cboUpdateMode";
         _cboUpdateMode.Size = new Size(121, 23);
