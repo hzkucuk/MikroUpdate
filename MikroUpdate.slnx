@@ -1,5 +1,4 @@
 <Solution>
-  <Project Path="MikroUpdate.Service.Tests/MikroUpdate.Service.Tests.csproj" />
   <Project Path="MikroUpdate.Service/MikroUpdate.Service.csproj" />
   <Project Path="MikroUpdate.Shared/MikroUpdate.Shared.csproj" />
   <Project Path="MikroUpdate.Win/MikroUpdate.Win.csproj" />
