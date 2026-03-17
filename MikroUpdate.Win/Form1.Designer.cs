@@ -47,6 +47,11 @@ partial class Form1
         _tsmSepUpdate = new ToolStripSeparator();
         _tsmSelfUpdate = new ToolStripMenuItem();
         _tsmSeparator = new ToolStripSeparator();
+        _tsmSepService = new ToolStripSeparator();
+        _tsmServiceStatus = new ToolStripMenuItem();
+        _tsmServiceStart = new ToolStripMenuItem();
+        _tsmServiceStop = new ToolStripMenuItem();
+        _tsmServiceRestart = new ToolStripMenuItem();
         _tsmExit = new ToolStripMenuItem();
 
         // 3. Suspend
@@ -60,9 +65,10 @@ partial class Form1
         // 4. Configure controls
 
         // _ctxTray
-        _ctxTray.Items.AddRange(new ToolStripItem[] { _tsmShow, _tsmCheck, _tsmUpdate, _tsmSettings, _tsmAbout, _tsmSepUpdate, _tsmSelfUpdate, _tsmSeparator, _tsmExit });
+        _ctxTray.Items.AddRange(new ToolStripItem[] { _tsmShow, _tsmCheck, _tsmUpdate, _tsmSettings, _tsmAbout, _tsmSepUpdate, _tsmSelfUpdate, _tsmSepService, _tsmServiceStatus, _tsmServiceStart, _tsmServiceStop, _tsmServiceRestart, _tsmSeparator, _tsmExit });
         _ctxTray.Name = "_ctxTray";
-        _ctxTray.Size = new Size(180, 120);
+        _ctxTray.Size = new Size(220, 180);
+        _ctxTray.Opening += CtxTray_Opening;
 
         _tsmShow.Text = "Göster";
         _tsmShow.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
@@ -90,6 +96,24 @@ partial class Form1
         _tsmSelfUpdate.Text = "Uygulama Güncellemesi";
         _tsmSelfUpdate.Name = "_tsmSelfUpdate";
         _tsmSelfUpdate.Click += BtnSelfUpdate_Click;
+
+        _tsmSepService.Name = "_tsmSepService";
+
+        _tsmServiceStatus.Text = "Servis: kontrol ediliyor...";
+        _tsmServiceStatus.Enabled = false;
+        _tsmServiceStatus.Name = "_tsmServiceStatus";
+
+        _tsmServiceStart.Text = "▶  Servisi Başlat";
+        _tsmServiceStart.Name = "_tsmServiceStart";
+        _tsmServiceStart.Click += TsmServiceStart_Click;
+
+        _tsmServiceStop.Text = "■  Servisi Durdur";
+        _tsmServiceStop.Name = "_tsmServiceStop";
+        _tsmServiceStop.Click += TsmServiceStop_Click;
+
+        _tsmServiceRestart.Text = "↻  Servisi Yeniden Başlat";
+        _tsmServiceRestart.Name = "_tsmServiceRestart";
+        _tsmServiceRestart.Click += TsmServiceRestart_Click;
 
         _tsmSeparator.Name = "_tsmSeparator";
 
@@ -360,6 +384,11 @@ partial class Form1
     private ToolStripSeparator _tsmSepUpdate;
     private ToolStripMenuItem _tsmSelfUpdate;
     private ToolStripSeparator _tsmSeparator;
+    private ToolStripSeparator _tsmSepService;
+    private ToolStripMenuItem _tsmServiceStatus;
+    private ToolStripMenuItem _tsmServiceStart;
+    private ToolStripMenuItem _tsmServiceStop;
+    private ToolStripMenuItem _tsmServiceRestart;
     private ToolStripMenuItem _tsmExit;
     private Button _btnAbout;
 }

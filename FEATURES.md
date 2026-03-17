@@ -1,5 +1,14 @@
 # Özellikler
 
+## v1.18.4
+
+### Servis Kontrol Menüsü
+- **Tray menüsünden servis yönetimi:**
+  - Servis durumu göstergesi (ServiceController API)
+  - Başlat / Durdur / Yeniden Başlat komutları
+  - Menü açıldığında durum otomatik sorgulanıyor
+  - Komut sonrası pipe bağlantısı yeniden kontrol ediliyor
+
 ## v1.18.3
 
 ### Servis Kurulumu Zorunlu

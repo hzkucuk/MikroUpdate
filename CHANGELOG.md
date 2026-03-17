@@ -3,6 +3,15 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.18.4] - 2025-07-18
+
+### Eklenenler
+- **Tray menüsüne servis kontrolü eklendi** — MikroUpdateService durumu görüntüleme ve yönetim
+  - Servis durumu göstergesi (Çalışıyor / Durduruldu / Kurulu değil)
+  - Başlat / Durdur / Yeniden Başlat komutları
+  - Menü açılırken durum otomatik güncelleniyor
+  - `System.ServiceProcess.ServiceController` NuGet paketi eklendi
+
 ## [1.18.3] - 2025-07-18
 
 ### Düzeltmeler

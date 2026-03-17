@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using System.ServiceProcess;
+
 using MikroUpdate.Shared.Messages;
 using MikroUpdate.Shared.Models;
 using MikroUpdate.Win.Services;
@@ -33,6 +36,7 @@ public partial class Form1 : Form
         try
         {
             _serviceAvailable = await _pipeClient.IsServiceRunningAsync();
+            UpdateServiceStatus();
 
             if (_serviceAvailable)
             {
@@ -144,6 +148,130 @@ public partial class Form1 : Form
     {
         _forceExit = true;
         Close();
+    }
+
+    #endregion
+
+    #region Service Control
+
+    private const string ServiceName = "MikroUpdateService";
+
+    /// <summary>
+    /// Servis durumunu sorgular ve tray menüsünü günceller.
+    /// </summary>
+    private void UpdateServiceStatus()
+    {
+        try
+        {
+            using ServiceController sc = new(ServiceName);
+            ServiceControllerStatus status = sc.Status;
+
+            _tsmServiceStatus.Text = status switch
+            {
+                ServiceControllerStatus.Running => "Servis: ✔ Çalışıyor",
+                ServiceControllerStatus.Stopped => "Servis: ✖ Durduruldu",
+                ServiceControllerStatus.StartPending => "Servis: ⏳ Başlatılıyor...",
+                ServiceControllerStatus.StopPending => "Servis: ⏳ Durduruluyor...",
+                ServiceControllerStatus.Paused => "Servis: ⏸ Duraklatıldı",
+                _ => $"Servis: {status}"
+            };
+
+            _tsmServiceStart.Enabled = status == ServiceControllerStatus.Stopped;
+            _tsmServiceStop.Enabled = status == ServiceControllerStatus.Running;
+            _tsmServiceRestart.Enabled = status == ServiceControllerStatus.Running;
+        }
+        catch (InvalidOperationException)
+        {
+            _tsmServiceStatus.Text = "Servis: ✖ Kurulu değil";
+            _tsmServiceStart.Enabled = false;
+            _tsmServiceStop.Enabled = false;
+            _tsmServiceRestart.Enabled = false;
+        }
+    }
+
+    private void CtxTray_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        UpdateServiceStatus();
+    }
+
+    private async void TsmServiceStart_Click(object? sender, EventArgs e)
+    {
+        await RunServiceCommandAsync("start", "Servis başlatılıyor...", "Servis başlatıldı.");
+    }
+
+    private async void TsmServiceStop_Click(object? sender, EventArgs e)
+    {
+        await RunServiceCommandAsync("stop", "Servis durduruluyor...", "Servis durduruldu.");
+    }
+
+    private async void TsmServiceRestart_Click(object? sender, EventArgs e)
+    {
+        try
+        {
+            LogInfo("Servis yeniden başlatılıyor...");
+            await RunScCommandAsync("stop");
+            await Task.Delay(2000);
+            await RunScCommandAsync("start");
+
+            LogSuccess("Servis yeniden başlatıldı.");
+            ShowTrayBalloon("Servis", "MikroUpdateService yeniden başlatıldı.", ToolTipIcon.Info);
+
+            // Pipe bağlantısını yeniden kontrol et
+            _serviceAvailable = await _pipeClient.IsServiceRunningAsync();
+        }
+        catch (Exception ex)
+        {
+            LogError($"Servis yeniden başlatma hatası: {ex.Message}");
+            _fileLog.Error("Servis yeniden başlatma hatası", ex);
+        }
+    }
+
+    /// <summary>
+    /// Tekli servis komutu çalıştırır (start/stop).
+    /// </summary>
+    private async Task RunServiceCommandAsync(string command, string startMessage, string successMessage)
+    {
+        try
+        {
+            LogInfo(startMessage);
+            await RunScCommandAsync(command);
+            LogSuccess(successMessage);
+            ShowTrayBalloon("Servis", successMessage, ToolTipIcon.Info);
+
+            // Pipe bağlantısını yeniden kontrol et
+            if (command == "start")
+            {
+                await Task.Delay(1500);
+                _serviceAvailable = await _pipeClient.IsServiceRunningAsync();
+            }
+            else if (command == "stop")
+            {
+                _serviceAvailable = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            LogError($"Servis komutu hatası ({command}): {ex.Message}");
+            _fileLog.Error($"Servis {command} hatası", ex);
+        }
+    }
+
+    private static async Task RunScCommandAsync(string command)
+    {
+        using Process process = new()
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "sc.exe",
+                Arguments = $"{command} {ServiceName}",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            }
+        };
+
+        process.Start();
+        await process.WaitForExitAsync().ConfigureAwait(true);
     }
 
     #endregion
