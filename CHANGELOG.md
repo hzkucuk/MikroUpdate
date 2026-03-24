@@ -3,6 +3,11 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.19.1] - 2025-07-20
+
+### İyileştirmeler
+- **SignPath otomatik imzalama pipeline testi** — Code signing altyapısının GitHub Actions üzerinden otomatik çalıştığını doğrulama amaçlı test release
+
 ## [1.19.0] - 2025-07-19
 
 ### Eklenenler
