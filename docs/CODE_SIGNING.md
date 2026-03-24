@@ -1,85 +1,75 @@
-# Code Signing — SignPath.io Entegrasyonu
+# Code Signing — SignPath.io Manuel İmzalama
 
 MikroUpdate installer'ı Windows SmartScreen uyarısını önlemek için dijital olarak imzalanır.
 Açık kaynak projeler için [SignPath.io](https://signpath.io) ücretsiz code signing sertifikası sağlar.
 
-## Kurulum Adımları
+> **Not:** SignPath.io ücretsiz planı yalnızca manuel imzalamayı destekler.
+> CI/CD entegrasyonu (GitHub Actions otomatik imzalama) için "Open Source Code Signing" programına
+> ayrıca başvuru yapılması gerekir: https://signpath.io/open-source
 
-### 1. SignPath.io Başvurusu
+## SignPath Bilgileri
 
-1. **https://signpath.io/open-source** adresine git
-2. **"Apply for Open Source"** butonuna tıkla
-3. GitHub repo URL'ini gir: `https://github.com/hzkucuk/MikroUpdate`
-4. Başvuruyu tamamla ve onay bekle (genellikle birkaç gün)
+| Alan | Değer |
+|------|-------|
+| Organization | Zafer Bilgisayar |
+| Project slug | `MikroUpdate` |
+| Signing policy | `MikroUpdate` |
+| Artifact config | `Initial version` (DEFAULT) |
+| Certificate | MikroUpdate (X.509 certificate) |
+| Repository URL | https://github.com/hzkucuk/MikroUpdate |
 
-### 2. SignPath Yapılandırması (onay sonrası)
+## Manuel İmzalama Adımları
 
-SignPath panelinde:
+Her release sonrası installer'ı manuel olarak imzalamak için:
 
-1. **Organization ID**'yi not al
-2. **Project** oluştur: `MikroUpdate`
-3. **Artifact Configuration** oluştur: `installer`
-   - Artifact türü: **PE (Portable Executable)**
-   - Dosya deseni: `MikroUpdate_Setup_*.exe`
-4. **Signing Policy** oluştur: `release-signing`
-   - Sertifika tipi: **Public Trust** (SmartScreen için)
-5. **CI User** → API Token oluştur
+1. **GitHub Release'den installer'ı indirin**
+   - GitHub Actions otomatik olarak `MikroUpdate_Setup_X.Y.Z.exe` dosyasını release'e ekler
 
-### 3. GitHub Repository Ayarları
+2. **SignPath.io'da imzalama isteği oluşturun**
+   - [app.signpath.io](https://app.signpath.io) → **Dashboard** → **Sign artifact** butonuna tıklayın
+   - **Project:** MikroUpdate
+   - **Signing policy:** MikroUpdate
+   - **Artifact configuration:** Initial version
+   - İndirdiğiniz `.exe` dosyasını yükleyin
 
-GitHub repo → **Settings** → **Secrets and variables** → **Actions**:
+3. **İmzalı dosyayı indirin**
+   - İstek tamamlandığında (Status: ✅ Completed) imzalı installer'ı indirin
 
-#### Secrets
-| Secret | Değer |
-|--------|-------|
-| `SIGNPATH_API_TOKEN` | SignPath'ten aldığın API token |
+4. **GitHub Release'e imzalı sürümü ekleyin** (opsiyonel)
+   - Release sayfasını düzenleyip imzalı `.exe`'yi ekleyebilirsiniz
 
-#### Variables
-| Variable | Değer |
-|----------|-------|
-| `SIGNPATH_ORGANIZATION_ID` | SignPath organization ID |
-| `SIGNPATH_SIGNING_ENABLED` | `true` (imzalamayı aktif eder) |
-
-### 4. İmzalamayı Aktif Et
-
-`SIGNPATH_SIGNING_ENABLED` değişkenini `true` yaptığında, her tag push'unda:
-
-1. `build-and-release` job → installer derler, artifact yükler, release oluşturur
-2. `sign-installer` job → SignPath'e imzalama isteği gönderir
-3. İmzalı installer otomatik olarak GitHub Release'e eklenir
-
-### Akış Diyagramı
+## Release Akışı
 
 ```
 Tag push (v*)
      │
      ▼
 ┌─────────────────────┐
-│  build-and-release   │
+│  GitHub Actions      │
 │  ├─ .NET build       │
 │  ├─ Inno Setup       │
 │  ├─ Upload artifact  │
-│  └─ Create release   │
+│  └─ Create release   │  ← İmzasız installer
 └──────────┬──────────┘
            │
-           ▼
+           ▼ (manuel)
 ┌─────────────────────┐
-│  sign-installer      │ ← SIGNPATH_SIGNING_ENABLED=true ise
-│  ├─ SignPath request │
-│  ├─ Wait for signing │
-│  └─ Upload signed    │
+│  SignPath.io         │
+│  ├─ Upload exe       │
+│  ├─ Sign artifact    │
+│  └─ Download signed  │  ← İmzalı installer
 └─────────────────────┘
 ```
 
 ## SSS
 
-**S: SignPath başvurusu onaylanmadan ne olur?**
-İmzalama job'ı `SIGNPATH_SIGNING_ENABLED` değişkeni `true` olmadıkça çalışmaz.
-Mevcut release akışı aynen devam eder.
-
 **S: SmartScreen uyarısı ne zaman kalkar?**
 İmzalı installer'ı kullanıcılar indirip çalıştırdıkça SmartScreen reputasyonu otomatik artar.
 EV sertifikası ile anında kalkar, OV sertifikası ile birkaç gün sürebilir.
+
+**S: Otomatik imzalama mümkün mü?**
+SignPath.io "Open Source Code Signing" programına kabul edilirse CI entegrasyonu aktif edilebilir.
+Başvuru: https://signpath.io/open-source
 
 **S: Maliyet?**
 SignPath.io açık kaynak projeler için tamamen ücretsizdir.

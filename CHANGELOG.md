@@ -3,6 +3,15 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.19.2] - 2025-07-20
+
+### Değişiklikler
+- **SignPath manuel imzalama moduna geçildi** — Ücretsiz plan CI entegrasyonunu desteklemediği için `sign-installer` job kaldırıldı
+  - Release workflow sadeleştirildi (tek job: build-and-release)
+  - `docs/CODE_SIGNING.md` manuel imzalama rehberi olarak güncellendi
+  - Release notes'a code signing bilgisi eklendi
+  - Gereksiz GitHub permissions (`id-token`, `actions:read`) kaldırıldı
+
 ## [1.19.1] - 2025-07-20
 
 ### İyileştirmeler
