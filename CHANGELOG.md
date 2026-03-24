@@ -3,6 +3,11 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.18.5] - 2025-07-19
+
+### Düzeltmeler
+- **Installer ayarları programa yansımıyor hatası giderildi** — `WriteConfigFile` prosedüründeki `if not FileExists` koşulu kaldırıldı; kurulum sihirbazında yapılan ayarlar (ürün, sürüm, yollar, modüller) artık her kurulumda `config.json` dosyasına yazılıyor
+
 ## [1.18.4] - 2025-07-18
 
 ### Eklenenler

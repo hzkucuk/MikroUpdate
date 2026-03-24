@@ -1,5 +1,12 @@
 # Özellikler
 
+## v1.18.5
+
+### Installer Ayar Düzeltmesi
+- **Config dosyası her kurulumda yazılıyor:** `WriteConfigFile` prosedüründeki `if not FileExists` koşulu kaldırıldı
+  - Kurulum sihirbazında seçilen ürün (Jump/Fly), sürüm (V16/V17), yollar ve modüller artık programa doğru aktarılıyor
+  - Upgrade kurulumlarında da kullanıcı seçimleri geçerli oluyor
+
 ## v1.18.4
 
 ### Servis Kontrol Menüsü

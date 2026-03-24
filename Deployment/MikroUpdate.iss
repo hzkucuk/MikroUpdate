@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.18.4"
+#define MyAppVersion "1.18.5"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -403,12 +403,9 @@ begin
   if not DirExists(ConfigDir) then
     ForceDirectories(ConfigDir);
 
-  { Mevcut config varsa üzerine yazma }
-  if not FileExists(ConfigPath) then
-  begin
-    JsonContent := GenerateConfigJson;
-    SaveStringToFile(ConfigPath, JsonContent, False);
-  end;
+  { Kullanıcının kurulum sırasında seçtiği ayarları her zaman yaz }
+  JsonContent := GenerateConfigJson;
+  SaveStringToFile(ConfigPath, JsonContent, False);
 end;
 
 function IsServiceInstalled: Boolean;
