@@ -130,3 +130,8 @@ Beyanname: Sunucu 16.40.0.00000 > Terminal 16.38.0.45000  →  ▲ Güncelle
 ## Lisans
 
 Bu proje [MIT Lisansı](LICENSE) ile lisanslanmıştır.
+
+## Gizlilik Politikası
+
+Bu program, kullanıcı tarafından yapılandırılmadıkça hiçbir bilgiyi ağ üzerinden iletmez.
+Detaylar için [PRIVACY.md](PRIVACY.md) dosyasına bakın.
