@@ -2,10 +2,14 @@
 
 ## v1.18.5
 
-### Installer Ayar Düzeltmesi
+### Installer Ayar Düzeltmesi & Config Senkronizasyonu
 - **Config dosyası her kurulumda yazılıyor:** `WriteConfigFile` prosedüründeki `if not FileExists` koşulu kaldırıldı
   - Kurulum sihirbazında seçilen ürün (Jump/Fly), sürüm (V16/V17), yollar ve modüller artık programa doğru aktarılıyor
   - Upgrade kurulumlarında da kullanıcı seçimleri geçerli oluyor
+- **Installer mevcut config.json'u okuyor (upgrade senkronizasyonu):**
+  - JSON parsing helper fonksiyonları (`GetJsonStringValue`, `GetJsonBoolValue`, `GetJsonIntValue`, `IsModuleEnabled`)
+  - `LoadExistingConfig` prosedürü: mevcut ayarları okuyup installer UI'ını dolduruyor
+  - ProxyAddress, HttpTimeoutSeconds, CheckIntervalMinutes gibi UI'da olmayan alanlar korunuyor
 
 ## v1.18.4
 

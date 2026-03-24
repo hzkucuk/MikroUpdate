@@ -8,6 +8,11 @@ Format: [Semantic Versioning](https://semver.org/lang/tr/)
 ### Düzeltmeler
 - **Installer ayarları programa yansımıyor hatası giderildi** — `WriteConfigFile` prosedüründeki `if not FileExists` koşulu kaldırıldı; kurulum sihirbazında yapılan ayarlar (ürün, sürüm, yollar, modüller) artık her kurulumda `config.json` dosyasına yazılıyor
 
+### İyileştirmeler
+- **Installer mevcut ayarları okuyor** — Upgrade kurulumda `config.json` okunarak installer ekranı mevcut ayarlarla senkronize ediliyor
+  - Ürün (Jump/Fly), sürüm (V16/V17), yollar, güncelleme modu ve modül durumları otomatik dolduruluyor
+  - UI'da olmayan alanlar (ProxyAddress, HttpTimeoutSeconds, CheckIntervalMinutes, AutoLaunchAfterUpdate, CdnBaseUrl) korunuyor
+
 ## [1.18.4] - 2025-07-18
 
 ### Eklenenler

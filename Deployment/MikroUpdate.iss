@@ -117,6 +117,139 @@ var
   ChkClient: TNewCheckBox;
   ChkEDefter: TNewCheckBox;
   ChkBeyanname: TNewCheckBox;
+  { Mevcut config.json'dan korunan, UI'da olmayan alanlar }
+  ExistingAutoLaunch: Boolean;
+  ExistingCheckInterval: Integer;
+  ExistingCdnBaseUrl: String;
+  ExistingProxyAddress: String;
+  ExistingHttpTimeout: Integer;
+  ExistingConfigLoaded: Boolean;
+
+{ ============================================================ }
+{  JSON Yardımcı Fonksiyonları (basit anahtar-değer çıkarma)    }
+{ ============================================================ }
+
+function GetJsonStringValue(const Json, Key: String): String;
+var
+  SearchKey, Sub: String;
+  StartPos, EndPos: Integer;
+begin
+  Result := '';
+  SearchKey := '"' + Key + '"';
+  StartPos := Pos(SearchKey, Json);
+  if StartPos = 0 then
+    Exit;
+
+  Sub := Copy(Json, StartPos + Length(SearchKey), Length(Json));
+  { ':' karakterini ve boşlukları atla }
+  StartPos := Pos(':', Sub);
+  if StartPos = 0 then
+    Exit;
+  Sub := Copy(Sub, StartPos + 1, Length(Sub));
+
+  { Baştaki boşlukları atla }
+  while (Length(Sub) > 0) and ((Sub[1] = ' ') or (Sub[1] = #9)) do
+    Sub := Copy(Sub, 2, Length(Sub));
+
+  if (Length(Sub) > 0) and (Sub[1] = '"') then
+  begin
+    { String değer }
+    Sub := Copy(Sub, 2, Length(Sub));
+    EndPos := Pos('"', Sub);
+    if EndPos > 0 then
+      Result := Copy(Sub, 1, EndPos - 1);
+  end;
+end;
+
+function GetJsonBoolValue(const Json, Key: String; DefaultValue: Boolean): Boolean;
+var
+  SearchKey, Sub: String;
+  StartPos: Integer;
+begin
+  Result := DefaultValue;
+  SearchKey := '"' + Key + '"';
+  StartPos := Pos(SearchKey, Json);
+  if StartPos = 0 then
+    Exit;
+
+  Sub := Copy(Json, StartPos + Length(SearchKey), Length(Json));
+  if Pos('true', Lowercase(Sub)) < Pos('false', Lowercase(Sub)) then
+    Result := True
+  else if Pos('false', Lowercase(Sub)) > 0 then
+    Result := False;
+end;
+
+function GetJsonIntValue(const Json, Key: String; DefaultValue: Integer): Integer;
+var
+  SearchKey, Sub, NumStr: String;
+  StartPos, I: Integer;
+begin
+  Result := DefaultValue;
+  SearchKey := '"' + Key + '"';
+  StartPos := Pos(SearchKey, Json);
+  if StartPos = 0 then
+    Exit;
+
+  Sub := Copy(Json, StartPos + Length(SearchKey), Length(Json));
+  StartPos := Pos(':', Sub);
+  if StartPos = 0 then
+    Exit;
+  Sub := Copy(Sub, StartPos + 1, Length(Sub));
+
+  { Baştaki boşlukları atla }
+  while (Length(Sub) > 0) and ((Sub[1] = ' ') or (Sub[1] = #9)) do
+    Sub := Copy(Sub, 2, Length(Sub));
+
+  { Sayıyı oku }
+  NumStr := '';
+  for I := 1 to Length(Sub) do
+  begin
+    if (Sub[I] >= '0') and (Sub[I] <= '9') then
+      NumStr := NumStr + Sub[I]
+    else
+      Break;
+  end;
+
+  if Length(NumStr) > 0 then
+    Result := StrToIntDef(NumStr, DefaultValue);
+end;
+
+function IsModuleEnabled(const Json, ModuleName: String): Boolean;
+var
+  SearchKey, Sub: String;
+  StartPos, EnabledPos: Integer;
+begin
+  Result := False;
+  SearchKey := '"Name": "' + ModuleName + '"';
+  StartPos := Pos(SearchKey, Json);
+  if StartPos = 0 then
+    Exit;
+
+  { Modül bloğunun geri kalanından Enabled değerini oku }
+  Sub := Copy(Json, StartPos, 200);
+  EnabledPos := Pos('"Enabled"', Sub);
+  if EnabledPos = 0 then
+    Exit;
+
+  Sub := Copy(Sub, EnabledPos, 50);
+  Result := Pos('true', Lowercase(Sub)) > 0;
+end;
+
+function SetComboByValue(Combo: TNewComboBox; const Value: String): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 0 to Combo.Items.Count - 1 do
+  begin
+    if CompareText(Combo.Items[I], Value) = 0 then
+    begin
+      Combo.ItemIndex := I;
+      Result := True;
+      Exit;
+    end;
+  end;
+end;
 
 procedure OnMajorVersionChange(Sender: TObject);
 var
@@ -155,6 +288,91 @@ begin
   StringChangeEx(Tmp, OldMikro, NewMikro, True);
   StringChangeEx(Tmp, OldTag, NewTag, True);
   SetupFilesPathEdit.Text := Tmp;
+end;
+
+function BoolToStr(Value: Boolean): String;
+begin
+  if Value then
+    Result := 'true'
+  else
+    Result := 'false';
+end;
+
+procedure LoadExistingConfig;
+var
+  ConfigPath, Val: String;
+  RawJson: AnsiString;
+  Json: String;
+begin
+  ExistingConfigLoaded := False;
+  { Varsayılan değerler }
+  ExistingAutoLaunch := True;
+  ExistingCheckInterval := 30;
+  ExistingCdnBaseUrl := 'https://cdn-mikro.atros.com.tr/mikro';
+  ExistingProxyAddress := '';
+  ExistingHttpTimeout := 0;
+
+  ConfigPath := ExpandConstant('{commonappdata}\MikroUpdate\config.json');
+  if not FileExists(ConfigPath) then
+  begin
+    Log('Mevcut config.json bulunamadı — varsayılan ayarlar kullanılacak.');
+    Exit;
+  end;
+
+  if not LoadStringFromFile(ConfigPath, RawJson) then
+  begin
+    Log('config.json okunamadı — varsayılan ayarlar kullanılacak.');
+    Exit;
+  end;
+
+  Json := String(RawJson);
+  Log('Mevcut config.json okundu — UI senkronize ediliyor...');
+  ExistingConfigLoaded := True;
+
+  { UI alanlarını mevcut config ile doldur }
+  Val := GetJsonStringValue(Json, 'MajorVersion');
+  if Length(Val) > 0 then
+    SetComboByValue(MajorVersionCombo, Val);
+
+  Val := GetJsonStringValue(Json, 'ProductName');
+  if Length(Val) > 0 then
+    SetComboByValue(ProductCombo, Val);
+
+  Val := GetJsonStringValue(Json, 'UpdateMode');
+  if Length(Val) > 0 then
+    SetComboByValue(UpdateModeCombo, Val);
+
+  Val := GetJsonStringValue(Json, 'ServerSharePath');
+  if Length(Val) > 0 then
+    ServerPathEdit.Text := Val;
+
+  Val := GetJsonStringValue(Json, 'LocalInstallPath');
+  if Length(Val) > 0 then
+    LocalPathEdit.Text := Val;
+
+  Val := GetJsonStringValue(Json, 'SetupFilesPath');
+  if Length(Val) > 0 then
+    SetupFilesPathEdit.Text := Val;
+
+  { Modül durumlarını yükle }
+  ChkEDefter.Checked := IsModuleEnabled(Json, 'e-Defter');
+  ChkBeyanname.Checked := IsModuleEnabled(Json, 'Beyanname');
+
+  { UI'da olmayan alanları koru }
+  ExistingAutoLaunch := GetJsonBoolValue(Json, 'AutoLaunchAfterUpdate', True);
+  ExistingCheckInterval := GetJsonIntValue(Json, 'CheckIntervalMinutes', 30);
+
+  Val := GetJsonStringValue(Json, 'CdnBaseUrl');
+  if Length(Val) > 0 then
+    ExistingCdnBaseUrl := Val;
+
+  Val := GetJsonStringValue(Json, 'ProxyAddress');
+  if Length(Val) > 0 then
+    ExistingProxyAddress := Val;
+
+  ExistingHttpTimeout := GetJsonIntValue(Json, 'HttpTimeoutSeconds', 0);
+
+  Log(Format('Config yüklendi: %s %s, Modüller: e-Defter=%s Beyanname=%s', [MajorVersionCombo.Items[MajorVersionCombo.ItemIndex], ProductCombo.Items[ProductCombo.ItemIndex], BoolToStr(ChkEDefter.Checked), BoolToStr(ChkBeyanname.Checked)]));
 end;
 
 procedure InitializeWizard;
@@ -311,14 +529,9 @@ begin
   ChkBeyanname.Width := ConfigPage.SurfaceWidth div 3;
   ChkBeyanname.Caption := 'Beyanname';
   ChkBeyanname.Checked := False;
-end;
 
-function BoolToStr(Value: Boolean): String;
-begin
-  if Value then
-    Result := 'true'
-  else
-    Result := 'false';
+  { Mevcut config.json varsa UI'yı senkronize et }
+  LoadExistingConfig;
 end;
 
 function GetModulesJson: String;
@@ -372,9 +585,16 @@ end;
 
 function GenerateConfigJson: String;
 var
-  UpdateMode: String;
+  UpdateMode, ProxyLine: String;
 begin
   UpdateMode := UpdateModeCombo.Items[UpdateModeCombo.ItemIndex];
+
+  { ProxyAddress boş değilse JSON'a ekle }
+  if Length(ExistingProxyAddress) > 0 then
+    ProxyLine := '  "ProxyAddress": "' + ExistingProxyAddress + '",' + #13#10
+  else
+    ProxyLine := '  "ProxyAddress": "",' + #13#10;
+
   Result :=
     '{' + #13#10 +
     '  "MajorVersion": "' + MajorVersionCombo.Items[MajorVersionCombo.ItemIndex] + '",' + #13#10 +
@@ -382,10 +602,12 @@ begin
     '  "ServerSharePath": "' + ServerPathEdit.Text + '",' + #13#10 +
     '  "LocalInstallPath": "' + LocalPathEdit.Text + '",' + #13#10 +
     '  "SetupFilesPath": "' + SetupFilesPathEdit.Text + '",' + #13#10 +
-    '  "AutoLaunchAfterUpdate": true,' + #13#10 +
-    '  "CheckIntervalMinutes": 30,' + #13#10 +
+    '  "AutoLaunchAfterUpdate": ' + BoolToStr(ExistingAutoLaunch) + ',' + #13#10 +
+    '  "CheckIntervalMinutes": ' + IntToStr(ExistingCheckInterval) + ',' + #13#10 +
     '  "UpdateMode": "' + UpdateMode + '",' + #13#10 +
-    '  "CdnBaseUrl": "https://cdn-mikro.atros.com.tr/mikro",' + #13#10 +
+    '  "CdnBaseUrl": "' + ExistingCdnBaseUrl + '",' + #13#10 +
+    ProxyLine +
+    '  "HttpTimeoutSeconds": ' + IntToStr(ExistingHttpTimeout) + ',' + #13#10 +
     '  "Modules": [' + #13#10 +
     GetModulesJson + #13#10 +
     '  ]' + #13#10 +
