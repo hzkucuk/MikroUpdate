@@ -1,6 +1,6 @@
 # MikroUpdate
 
-![Version](https://img.shields.io/badge/version-1.18.5-blue)
+![Version](https://img.shields.io/badge/version-1.19.0-blue)
 ![.NET](https://img.shields.io/badge/.NET-10.0-purple)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 
@@ -49,13 +49,15 @@ cd Deployment
 .\Build-Setup.ps1
 
 # Kurulum (UI ile)
-.\installer\MikroUpdate_Setup_1.18.4.exe
+.\installer\MikroUpdate_Setup_1.19.0.exe
 
 # Sessiz kurulum
-.\installer\MikroUpdate_Setup_1.18.4.exe /VERYSILENT /SUPPRESSMSGBOXES
+.\installer\MikroUpdate_Setup_1.19.0.exe /VERYSILENT /SUPPRESSMSGBOXES
 ```
 
 Installer otomatik olarak: dosya kopyalama, servis kaydı, kısayollar, ProgramData dizinleri ve ilk yapılandırma oluşturur.
+
+> **Not:** Installer [SignPath.io](https://signpath.io) ile dijital olarak imzalanır. Detaylar için [docs/CODE_SIGNING.md](docs/CODE_SIGNING.md) dosyasına bakın.
 
 ### Manuel Derleme
 

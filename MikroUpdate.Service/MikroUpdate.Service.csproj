@@ -4,9 +4,9 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>1.18.5</Version>
-    <AssemblyVersion>1.18.5</AssemblyVersion>
-    <FileVersion>1.18.5</FileVersion>
+    <Version>1.19.0</Version>
+    <AssemblyVersion>1.19.0</AssemblyVersion>
+    <FileVersion>1.19.0</FileVersion>
     <Product>MikroUpdate Service</Product>
     <Description>Mikro ERP güncelleme Windows servisi</Description>
   </PropertyGroup>

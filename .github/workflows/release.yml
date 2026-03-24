@@ -12,10 +12,14 @@ on:
 
 permissions:
   contents: write
+  id-token: write        # SignPath OIDC için gerekli
+  actions: read           # SignPath artifact erişimi için gerekli
 
 jobs:
   build-and-release:
     runs-on: windows-latest
+    outputs:
+      artifact-id: ${{ steps.upload-artifact.outputs.artifact-id }}
 
     steps:
       - name: Checkout
@@ -66,7 +70,16 @@ jobs:
           echo "Extracted version: $version"
         shell: pwsh
 
-      - name: Create GitHub Release
+      # SignPath imzalama için installer'ı artifact olarak yükle
+      - name: Upload installer artifact
+        id: upload-artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-unsigned
+          path: installer/MikroUpdate_Setup_*.exe
+          if-no-files-found: error
+
+      - name: Create GitHub Release (unsigned)
         uses: softprops/action-gh-release@v2
         with:
           name: "MikroUpdate v${{ steps.version.outputs.VERSION }}"
@@ -84,3 +97,30 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
+
+  # ============================================================
+  #  SignPath.io Code Signing (onay sonrası aktif olacak)
+  # ============================================================
+  sign-installer:
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    if: vars.SIGNPATH_SIGNING_ENABLED == 'true'
+
+    steps:
+      - name: Sign with SignPath
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: MikroUpdate
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: installer
+          github-artifact-id: ${{ needs.build-and-release.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed-installer
+
+      - name: Upload signed installer to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: signed-installer/MikroUpdate_Setup_*.exe

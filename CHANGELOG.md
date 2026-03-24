@@ -3,6 +3,15 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.19.0] - 2025-07-19
+
+### Eklenenler
+- **SignPath.io code signing entegrasyonu** — Windows SmartScreen uyarısını önlemek için installer dijital imzalama altyapısı
+  - GitHub Actions workflow'una `sign-installer` job eklendi
+  - `SIGNPATH_SIGNING_ENABLED` değişkeni ile koşullu aktifleştirme
+  - Installer artifact olarak yükleniyor, SignPath imzalayıp release'e ekliyor
+  - `docs/CODE_SIGNING.md` kurulum ve yapılandırma rehberi oluşturuldu
+
 ## [1.18.5] - 2025-07-19
 
 ### Düzeltmeler

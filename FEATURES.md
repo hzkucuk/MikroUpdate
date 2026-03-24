@@ -1,5 +1,14 @@
 # Özellikler
 
+## v1.19.0
+
+### Code Signing (SignPath.io)
+- **Windows SmartScreen uyarısı çözümü:** Installer dijital imzalama altyapısı
+  - SignPath.io açık kaynak projeler için ücretsiz code signing
+  - GitHub Actions `sign-installer` job: otomatik imzalama pipeline
+  - `SIGNPATH_SIGNING_ENABLED` ile koşullu aktifleştirme
+  - `docs/CODE_SIGNING.md` kurulum rehberi
+
 ## v1.18.5
 
 ### Installer Ayar Düzeltmesi & Config Senkronizasyonu
