@@ -136,8 +136,16 @@ public partial class Form1 : Form
         {
             _config = _configService.Load();
             _config.EnsureModules();
-            _lblConfigInfo.Text = $"{_config.MajorVersion} {_config.ProductName}  •  {_config.Modules.Count} modül";
-            LogInfo($"Ayarlar yüklendi: {_config.MajorVersion} {_config.ProductName} | {_config.Modules.Count} modül");
+
+            string modeLabel = _config.UpdateMode switch
+            {
+                UpdateMode.Online => "🌐 Online",
+                UpdateMode.Hybrid => "🔀 Hybrid",
+                _ => "📁 Yerel"
+            };
+
+            _lblConfigInfo.Text = $"{_config.MajorVersion} {_config.ProductName}  •  {_config.Modules.Count} modül  •  {modeLabel}";
+            LogInfo($"Ayarlar yüklendi: {_config.MajorVersion} {_config.ProductName} | {_config.Modules.Count} modül | {_config.UpdateMode}");
             LogInfo("Yapılandırma dosyası: " + ConfigService.GetConfigFilePath());
             LogInfo("Log dizini: " + FileLogService.GetLogDirectory());
         }
@@ -498,7 +506,9 @@ public partial class Form1 : Form
                 ModuleName = module.Name,
                 LocalVersion = localVersion?.ToString(),
                 ServerVersion = serverVersion?.ToString(),
-                UpdateRequired = updateRequired
+                UpdateRequired = updateRequired,
+                SourceType = "Yerel",
+                ServerPath = serverPath
             });
         }
 
@@ -535,6 +545,7 @@ public partial class Form1 : Form
 
     /// <summary>
     /// Modül versiyon bilgilerini DataGridView'da ve log'da gösterir.
+    /// Kaynak türü, tooltip'ler ve durum renkleri ile birlikte.
     /// </summary>
     private void DisplayModuleVersions(List<ModuleVersionInfo> moduleVersions)
     {
@@ -546,18 +557,53 @@ public partial class Form1 : Form
                 : info.ServerVersion is null ? "— Erişilemiyor"
                 : "✔ Güncel";
 
+            string sourceLabel = info.SourceType switch
+            {
+                "CDN" => "🌐 CDN",
+                "Yerel" => "📁 Yerel",
+                _ => "—"
+            };
+
             int rowIndex = _dgvModules.Rows.Add(
                 info.ModuleName,
                 info.LocalVersion ?? "Kurulu değil",
                 info.ServerVersion ?? "Erişilemiyor",
+                sourceLabel,
                 status);
 
             DataGridViewRow row = _dgvModules.Rows[rowIndex];
-            row.Cells[3].Style.ForeColor = info.UpdateRequired ? Color.Red
+
+            // Durum rengi
+            row.Cells[4].Style.ForeColor = info.UpdateRequired ? Color.Red
                 : info.ServerVersion is null ? Color.Orange
                 : Color.LimeGreen;
 
-            LogInfo($"  {info.ModuleName}: {info.LocalVersion ?? "-"} → {info.ServerVersion ?? "-"} [{status}]");
+            // Kaynak rengi
+            row.Cells[3].Style.ForeColor = info.SourceType switch
+            {
+                "CDN" => Color.FromArgb(100, 180, 255),
+                "Yerel" => Color.FromArgb(180, 180, 140),
+                _ => Color.Gray
+            };
+
+            // Tooltip: terminal yolu
+            string localPath = Path.Combine(_config.LocalInstallPath, 
+                _config.EnabledModules.FirstOrDefault(m => m.Name == info.ModuleName)?.ExeFileName ?? "");
+            row.Cells[1].ToolTipText = localPath;
+
+            // Tooltip: sunucu yolu
+            if (!string.IsNullOrEmpty(info.ServerPath))
+            {
+                row.Cells[2].ToolTipText = info.ServerPath;
+                row.Cells[3].ToolTipText = info.SourceType switch
+                {
+                    "CDN" => $"HTTP üzerinden CDN'den kontrol ediliyor\n{info.ServerPath}",
+                    "Yerel" => $"UNC paylaşım yolundan kontrol ediliyor\n{info.ServerPath}",
+                    _ => ""
+                };
+            }
+
+            LogInfo($"  {info.ModuleName}: {info.LocalVersion ?? "-"} → {info.ServerVersion ?? "-"} [{status}] ({info.SourceType})");
         }
     }
 

@@ -29,6 +29,7 @@ partial class Form1
         _colLocalVersion = new DataGridViewTextBoxColumn();
         _colServerVersion = new DataGridViewTextBoxColumn();
         _colStatus = new DataGridViewTextBoxColumn();
+        _colSource = new DataGridViewTextBoxColumn();
         _prgProgress = new ProgressBar();
         _rtbLog = new RichTextBox();
         _flpButtons = new FlowLayoutPanel();
@@ -211,7 +212,7 @@ partial class Form1
         _dgvModules.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
         _dgvModules.Margin = new Padding(0, 0, 0, 4);
         _dgvModules.Name = "_dgvModules";
-        _dgvModules.Columns.AddRange(new DataGridViewColumn[] { _colModuleName, _colLocalVersion, _colServerVersion, _colStatus });
+        _dgvModules.Columns.AddRange(new DataGridViewColumn[] { _colModuleName, _colLocalVersion, _colServerVersion, _colSource, _colStatus });
 
         _colModuleName.HeaderText = "MODÜL";
         _colModuleName.Name = "_colModuleName";
@@ -225,8 +226,13 @@ partial class Form1
 
         _colServerVersion.HeaderText = "SUNUCU";
         _colServerVersion.Name = "_colServerVersion";
-        _colServerVersion.Width = 130;
+        _colServerVersion.Width = 120;
         _colServerVersion.SortMode = DataGridViewColumnSortMode.NotSortable;
+
+        _colSource.HeaderText = "KAYNAK";
+        _colSource.Name = "_colSource";
+        _colSource.Width = 80;
+        _colSource.SortMode = DataGridViewColumnSortMode.NotSortable;
 
         _colStatus.HeaderText = "DURUM";
         _colStatus.Name = "_colStatus";
@@ -367,6 +373,7 @@ partial class Form1
     private DataGridViewTextBoxColumn _colLocalVersion;
     private DataGridViewTextBoxColumn _colServerVersion;
     private DataGridViewTextBoxColumn _colStatus;
+    private DataGridViewTextBoxColumn _colSource;
     private ProgressBar _prgProgress;
     private RichTextBox _rtbLog;
     private FlowLayoutPanel _flpButtons;

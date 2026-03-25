@@ -79,6 +79,11 @@ public sealed class OnlineVersionService : IDisposable
             string? serverVersionStr = null;
             bool updateRequired = false;
 
+            // CDN kaynak URL'sini oluştur (tooltip için)
+            string cdnPath = latestCdnCode is not null
+                ? CdnHelper.BuildDownloadUrl(config.CdnBaseUrl, config.MajorVersion, latestCdnCode, module.SetupFileName)
+                : config.CdnBaseUrl;
+
             if (latestCdnCode is not null && localClientVersion is not null)
             {
                 string? currentCdnCode = CdnHelper.EncodeCdnVersion(localClientVersion);
@@ -106,7 +111,9 @@ public sealed class OnlineVersionService : IDisposable
                 ModuleName = module.Name,
                 LocalVersion = localVersion?.ToString(),
                 ServerVersion = serverVersionStr,
-                UpdateRequired = updateRequired
+                UpdateRequired = updateRequired,
+                SourceType = "CDN",
+                ServerPath = cdnPath
             });
         }
 

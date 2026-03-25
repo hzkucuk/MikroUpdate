@@ -1,5 +1,14 @@
 # Özellikler
 
+## v1.21.0
+
+### Kaynak Türü Bilgilendirme
+- **Modül tablosuna KAYNAK kolonu eklendi:**
+  - Her modül için kaynak: 🌐 CDN (mavi) veya 📁 Yerel (sarımsı)
+  - Tooltip: sunucu tam yolu (UNC path veya CDN URL)
+  - Terminal tooltip: yerel kurulum yolu
+  - Header: güncelleme modu ikonu (Online / Hybrid / Yerel)
+
 ## v1.20.0
 
 ### Modern İndirme İlerleme Paneli

@@ -60,7 +60,9 @@ public sealed class VersionService
                 ModuleName = module.Name,
                 LocalVersion = localVersion?.ToString(),
                 ServerVersion = serverVersion?.ToString(),
-                UpdateRequired = updateRequired
+                UpdateRequired = updateRequired,
+                SourceType = "Yerel",
+                ServerPath = serverPath
             });
         }
 

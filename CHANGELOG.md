@@ -3,6 +3,16 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.21.0] - 2025-07-21
+
+### Eklenenler
+- **Kaynak türü bilgilendirme** — Modül tablosuna KAYNAK kolonu eklendi
+  - Her modül için kaynak türü gösterilir: 🌐 CDN veya 📁 Yerel
+  - Tooltip'lerde sunucu tam yolu (UNC path veya CDN URL) görünür
+  - Terminal hücresinde yerel kurulum yolu tooltip olarak gösterilir
+  - Header bilgisinde güncelleme modu gösterilir (🌐 Online / 🔀 Hybrid / 📁 Yerel)
+  - ModuleVersionInfo'ya SourceType ve ServerPath alanları eklendi
+
 ## [1.20.0] - 2025-07-21
 
 ### Eklenenler

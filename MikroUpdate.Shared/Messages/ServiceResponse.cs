@@ -43,6 +43,12 @@ public sealed class ModuleVersionInfo
 
     /// <summary>Bu modül için güncelleme gerekli mi.</summary>
     public bool UpdateRequired { get; set; }
+
+    /// <summary>Kaynak türü: "Yerel" (UNC paylaşım), "CDN" (HTTP), veya boş.</summary>
+    public string SourceType { get; set; } = string.Empty;
+
+    /// <summary>Sunucu tam yolu veya URL'si (tooltip bilgisi için).</summary>
+    public string ServerPath { get; set; } = string.Empty;
 }
 
 /// <summary>
