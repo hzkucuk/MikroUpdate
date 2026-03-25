@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.25.0"
+#define MyAppVersion "1.25.1"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -688,6 +688,19 @@ begin
   Exec('sc.exe',
     'description MikroUpdateService "Mikro ERP otomatik güncelleme servisi"',
     '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+  { Normal kullanıcıların servisi başlatıp durdurabilmesi için ACL ayarla }
+  { SDDL: SY=SYSTEM full, BA=Admins full, AU=Authenticated Users start/stop/query/interrogate }
+  if Exec('sc.exe',
+    'sdset MikroUpdateService D:(A;;CCLCSWRPWPDTLOCRRC;;;SY)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCLCSWRPWPDTLOCRRC;;;AU)',
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  begin
+    Log(Format('sc sdset sonuç: %d', [ResultCode]));
+  end
+  else
+  begin
+    Log(Format('sc sdset BAŞARISIZ: %d', [ResultCode]));
+  end;
 
   { Çökme durumunda otomatik yeniden başlatma: 5sn / 10sn / 30sn }
   Exec('sc.exe',

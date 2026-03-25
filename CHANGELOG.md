@@ -3,6 +3,18 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.25.1] - 2026-03-26
+
+### Duzeltmeler
+- **Servis erisim izni (ACCESS_DENIED) duzeltildi** — Installer artik `sc sdset` ile Authenticated Users grubuna servis baslatma/durdurma yetkisi veriyor, tray app normal kullanici olarak servisi kontrol edebiliyor
+- **Servis baslangic hatasi loglama** — Service host baslamadan cokerse hatayi `Service_CRASH_YYYY-MM-DD.log` dosyasina yazar
+- **Tray app hata mesajlari iyilestirildi** — `sc.exe` stderr ciktisi da hata mesajina dahil ediliyor
+
+### Teknik
+- ISS: `sc sdset` komutu eklendi — SDDL ile AU (Authenticated Users) grubuna RPWP (start/stop) hakki verildi
+- Service Program.cs: try-catch wrapper ile startup crash leri ProgramData/MikroUpdate/logs/ dizinine yaziliyor
+- Form1.cs: RunScCommandAsync artik stderr i de yakaliyor
+
 ## [1.25.0] - 2026-03-26
 
 ### Yenilikler

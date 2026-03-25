@@ -298,18 +298,21 @@ public partial class Form1 : Form
                 Arguments = $"{command} {ServiceName}",
                 UseShellExecute = false,
                 CreateNoWindow = true,
-                RedirectStandardOutput = true
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
             }
         };
 
         process.Start();
         string output = await process.StandardOutput.ReadToEndAsync().ConfigureAwait(true);
+        string error = await process.StandardError.ReadToEndAsync().ConfigureAwait(true);
         await process.WaitForExitAsync().ConfigureAwait(true);
 
         if (process.ExitCode != 0)
         {
+            string details = string.IsNullOrWhiteSpace(error) ? output.Trim() : $"{output.Trim()} | {error.Trim()}";
             throw new InvalidOperationException(
-                $"sc.exe {command} başarısız (çıkış kodu: {process.ExitCode}): {output.Trim()}");
+                $"sc.exe {command} başarısız (çıkış kodu: {process.ExitCode}): {details}");
         }
     }
 
