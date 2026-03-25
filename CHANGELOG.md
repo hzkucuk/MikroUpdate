@@ -3,6 +3,11 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.25.3] - 2026-03-26
+
+### Test
+- v1.25.2 self-update test release'i — icerik degisikligi yok, sadece versiyon bump
+
 ## [1.25.2] - 2026-03-26
 
 ### Duzeltmeler
