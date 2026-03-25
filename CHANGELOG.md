@@ -3,6 +3,11 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.23.7] - 2026-03-25
+
+### Test
+- Self-update UAC-free akisini dogrulamak icin test surumu (kod degisikligi yok)
+
 ## [1.23.6] - 2026-03-25
 
 ### Duzeltmeler
