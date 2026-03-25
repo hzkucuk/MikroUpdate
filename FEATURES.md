@@ -1,5 +1,15 @@
 # Özellikler
 
+## v1.20.0
+
+### Modern İndirme İlerleme Paneli
+- **Dosya indirme sırasında modern, titremesiz ilerleme göstergesi:**
+  - Double-buffered custom DownloadProgressPanel (GDI+ çizim)
+  - Rounded gradient progress bar (yeşil tonlama)
+  - Modül adı, indirilen/toplam boyut, yüzde ve hız bilgisi
+  - Eski TableLayoutPanel + Label yaklaşımı kaldırılarak layout flicker düzeltildi
+  - Self-update indirmesi de yeni panel ile çalışır
+
 ## v1.19.2
 
 ### Tray Menü Dikey Versiyon Sidebar

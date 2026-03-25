@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Reflection;
@@ -23,6 +24,8 @@ public partial class Form1 : Form
     private bool _forceExit;
     private bool _serviceAvailable;
 
+    private DownloadProgressPanel _downloadPanel;
+
     public Form1(bool autoMode = false)
     {
         InitializeComponent();
@@ -33,6 +36,7 @@ public partial class Form1 : Form
         _notifyIcon.Text = $"MikroUpdate v{version}";
         _ctxTray.Renderer = new VersionSidebarRenderer($"MikroUpdate v{version}");
 
+        InitializeDownloadUI();
         LoadConfig();
     }
 
@@ -652,8 +656,7 @@ public partial class Form1 : Form
     {
         LogInfo("Online güncelleme başlatılıyor (servis üzerinden)...");
         _fileLog.Info("Online güncelleme başlatılıyor — pipe progress streaming.");
-        SetStatus("CDN güncelleme başlatılıyor...", Color.Cyan);
-        _prgProgress.Style = ProgressBarStyle.Marquee;
+        ShowDownloadPanel();
 
         ServiceResponse? response = await _pipeClient.SendCommandWithProgressAsync(
             CommandType.DownloadUpdate,
@@ -670,7 +673,7 @@ public partial class Form1 : Form
             },
             cancellationToken);
 
-        _prgProgress.Style = ProgressBarStyle.Blocks;
+        HideDownloadPanel();
 
         if (response is null)
         {
@@ -713,25 +716,13 @@ public partial class Form1 : Form
 
     /// <summary>
     /// Pipe üzerinden gelen indirme ilerleme mesajını UI'da gösterir.
-    /// ProgressBar ve durum etiketini günceller.
+    /// Download panelini ve ProgressBar'ı günceller.
     /// </summary>
     private void HandleDownloadProgress(ServiceResponse progress)
     {
         if (progress.DownloadProgress is { } dp)
         {
-            // ProgressBar güncelle
-            if (dp.Percentage >= 0)
-            {
-                _prgProgress.Style = ProgressBarStyle.Blocks;
-                _prgProgress.Value = Math.Min(dp.Percentage, 100);
-            }
-            else
-            {
-                _prgProgress.Style = ProgressBarStyle.Marquee;
-            }
-
-            // Durum etiketini güncelle (her tick'de log spam yapmadan)
-            SetStatus(dp.StatusText, Color.Cyan);
+            UpdateDownloadPanel(dp);
         }
         else
         {
@@ -1044,6 +1035,224 @@ public partial class Form1 : Form
 
     #endregion
 
+    #region Download Progress Panel
+
+    /// <summary>
+    /// İndirme ilerleme panelini oluşturur ve TLP row 2'ye yerleştirir.
+    /// </summary>
+    private void InitializeDownloadUI()
+    {
+        _downloadPanel = new DownloadProgressPanel
+        {
+            Anchor = AnchorStyles.Left | AnchorStyles.Right,
+            Margin = new Padding(0, 2, 0, 6),
+            Visible = false
+        };
+
+        _tlpMain.Controls.Add(_downloadPanel, 0, 2);
+    }
+
+    /// <summary>
+    /// İndirme panelini gösterir — progress bar gizlenir, custom panel açılır.
+    /// </summary>
+    private void ShowDownloadPanel()
+    {
+        _prgProgress.Visible = false;
+        _downloadPanel.Reset();
+        _downloadPanel.Visible = true;
+        SetStatus("İndiriliyor...", Color.Cyan);
+    }
+
+    /// <summary>
+    /// İndirme panelini gizler — ince progress bar'a döner.
+    /// </summary>
+    private void HideDownloadPanel()
+    {
+        _downloadPanel.Visible = false;
+        _prgProgress.Visible = true;
+        _prgProgress.Value = 0;
+        _prgProgress.Style = ProgressBarStyle.Blocks;
+    }
+
+    /// <summary>
+    /// İndirme ilerleme bilgilerini panelde günceller.
+    /// </summary>
+    private void UpdateDownloadPanel(DownloadProgressInfo dp)
+    {
+        _downloadPanel.ModuleName = dp.ModuleName;
+        _downloadPanel.BytesReceived = dp.BytesReceived;
+        _downloadPanel.TotalBytes = dp.TotalBytes;
+        _downloadPanel.Percentage = dp.Percentage;
+        _downloadPanel.SpeedBps = dp.SpeedBytesPerSecond;
+        _downloadPanel.Invalidate();
+    }
+
+    private static string FormatBytes(long bytes) => bytes switch
+    {
+        >= 1_073_741_824 => $"{bytes / 1_073_741_824.0:F1} GB",
+        >= 1_048_576 => $"{bytes / 1_048_576.0:F1} MB",
+        >= 1024 => $"{bytes / 1024.0:F1} KB",
+        _ => $"{bytes} B"
+    };
+
+    /// <summary>
+    /// Custom-painted, double-buffered indirme ilerleme paneli.
+    /// Rounded gradient progress bar, modül adı, boyut, yüzde ve hız bilgisi çizer.
+    /// </summary>
+    private sealed class DownloadProgressPanel : Panel
+    {
+        private static readonly Color s_barBackground = Color.FromArgb(50, 50, 50);
+        private static readonly Color s_gradientStart = Color.FromArgb(0, 190, 110);
+        private static readonly Color s_gradientEnd = Color.FromArgb(0, 140, 80);
+        private static readonly Color s_textModule = Color.FromArgb(80, 210, 140);
+        private static readonly Color s_textInfo = Color.FromArgb(170, 170, 170);
+        private static readonly Color s_textDim = Color.FromArgb(120, 120, 120);
+
+        private readonly Font _fontModule = new("Segoe UI Semibold", 8.5F);
+        private readonly Font _fontInfo = new("Segoe UI", 8F);
+        private readonly Font _fontSmall = new("Segoe UI", 7.5F);
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public string ModuleName { get; set; } = "";
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public long BytesReceived { get; set; }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public long TotalBytes { get; set; }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public int Percentage { get; set; } = -1;
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public long SpeedBps { get; set; }
+
+        public DownloadProgressPanel()
+        {
+            DoubleBuffered = true;
+            SetStyle(
+                ControlStyles.AllPaintingInWmPaint
+                | ControlStyles.UserPaint
+                | ControlStyles.OptimizedDoubleBuffer
+                | ControlStyles.ResizeRedraw, true);
+            Height = 56;
+            BackColor = Color.Transparent;
+        }
+
+        /// <summary>Paneli ilk durumuna sıfırlar.</summary>
+        public void Reset()
+        {
+            ModuleName = "";
+            BytesReceived = 0;
+            TotalBytes = 0;
+            Percentage = -1;
+            SpeedBps = 0;
+            Invalidate();
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            Graphics g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+
+            int w = ClientSize.Width;
+
+            // --- Row 0: Modül adı (sol) + Boyut (sağ) ---
+            using SolidBrush brushModule = new(s_textModule);
+            using SolidBrush brushInfo = new(s_textInfo);
+            using SolidBrush brushDim = new(s_textDim);
+
+            if (!string.IsNullOrEmpty(ModuleName))
+            {
+                g.DrawString($"▼ {ModuleName}", _fontModule, brushModule, 0, 0);
+            }
+
+            if (TotalBytes > 0)
+            {
+                string sizeText = $"{FormatBytes(BytesReceived)} / {FormatBytes(TotalBytes)}";
+                SizeF sz = g.MeasureString(sizeText, _fontInfo);
+                g.DrawString(sizeText, _fontInfo, brushInfo, w - sz.Width, 1);
+            }
+
+            // --- Row 1: Rounded progress bar ---
+            int barY = 22;
+            int barH = 12;
+            Rectangle barBounds = new(0, barY, w, barH);
+            int radius = 6;
+
+            // Arka plan
+            using GraphicsPath bgPath = CreateRoundedRect(barBounds, radius);
+            using SolidBrush bgBrush = new(s_barBackground);
+            g.FillPath(bgBrush, bgPath);
+
+            // Dolgu (gradient)
+            if (Percentage > 0)
+            {
+                int fillW = Math.Max(barH, (int)(w * Percentage / 100.0));
+                Rectangle fillBounds = new(0, barY, fillW, barH);
+
+                using GraphicsPath fillPath = CreateRoundedRect(fillBounds, radius);
+                using LinearGradientBrush fillBrush = new(
+                    new Rectangle(0, barY, w, barH),
+                    s_gradientStart,
+                    s_gradientEnd,
+                    LinearGradientMode.Horizontal);
+                g.FillPath(fillBrush, fillPath);
+            }
+            else if (Percentage < 0)
+            {
+                // Belirsiz durum — yarı genişlikte animasyonsuz gösterge
+                int indW = w / 3;
+                Rectangle indBounds = new(0, barY, indW, barH);
+                using GraphicsPath indPath = CreateRoundedRect(indBounds, radius);
+                using SolidBrush indBrush = new(Color.FromArgb(80, s_gradientStart));
+                g.FillPath(indBrush, indPath);
+            }
+
+            // --- Row 2: Yüzde (sol) + Hız (sağ) ---
+            int row2Y = barY + barH + 4;
+
+            if (Percentage >= 0)
+            {
+                g.DrawString($"%{Percentage}", _fontSmall, brushDim, 0, row2Y);
+            }
+
+            if (SpeedBps > 0)
+            {
+                string speedText = $"{FormatBytes(SpeedBps)}/s";
+                SizeF sz = g.MeasureString(speedText, _fontSmall);
+                g.DrawString(speedText, _fontSmall, brushDim, w - sz.Width, row2Y);
+            }
+        }
+
+        private static GraphicsPath CreateRoundedRect(Rectangle bounds, int radius)
+        {
+            GraphicsPath path = new();
+            int d = radius * 2;
+            path.AddArc(bounds.X, bounds.Y, d, d, 180, 90);
+            path.AddArc(bounds.Right - d, bounds.Y, d, d, 270, 90);
+            path.AddArc(bounds.Right - d, bounds.Bottom - d, d, d, 0, 90);
+            path.AddArc(bounds.X, bounds.Bottom - d, d, d, 90, 90);
+            path.CloseFigure();
+            return path;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _fontModule.Dispose();
+                _fontInfo.Dispose();
+                _fontSmall.Dispose();
+            }
+
+            base.Dispose(disposing);
+        }
+    }
+
+    #endregion
+
     #region UI Helpers
 
     private void SetUIBusy(bool busy)
@@ -1270,15 +1479,19 @@ public partial class Form1 : Form
             }
 
             LogInfo($"Güncelleme indiriliyor: v{release.LatestVersion}...");
-            _prgProgress.Style = ProgressBarStyle.Blocks;
+            ShowDownloadPanel();
+            _downloadPanel.ModuleName = "MikroUpdate";
+            _downloadPanel.Invalidate();
 
             Progress<int> progress = new(percent =>
             {
-                _prgProgress.Value = Math.Clamp(percent, 0, 100);
+                _downloadPanel.Percentage = Math.Clamp(percent, 0, 100);
+                _downloadPanel.Invalidate();
             });
 
             string installerPath = await _selfUpdateService.DownloadInstallerAsync(release, progress);
 
+            HideDownloadPanel();
             LogSuccess($"İndirme tamamlandı: {Path.GetFileName(installerPath)}");
             LogInfo("Installer başlatılıyor...");
 

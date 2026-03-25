@@ -3,6 +3,15 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.20.0] - 2025-07-21
+
+### Eklenenler
+- **Modern indirme ilerleme paneli** — Double-buffered custom panel ile titremesiz, modern indirme göstergesi
+  - Rounded gradient progress bar (GDI+ custom paint)
+  - Modül adı, boyut, yüzde ve hız bilgisi tek panelde
+  - Eski TLP + 4 label yaklaşımı kaldırıldı (layout flicker düzeltildi)
+  - Self-update indirmesi de yeni panel ile entegre
+
 ## [1.19.2] - 2025-07-20
 
 ### Değişiklikler
