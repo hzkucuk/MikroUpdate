@@ -388,11 +388,6 @@ public partial class Form1 : Form
         }
     }
 
-    private void BtnLaunch_Click(object? sender, EventArgs e)
-    {
-        LaunchMikro();
-    }
-
     private void BtnAbout_Click(object? sender, EventArgs e)
     {
         using AboutForm aboutForm = new();
@@ -682,7 +677,7 @@ public partial class Form1 : Form
 
             if (_config.AutoLaunchAfterUpdate)
             {
-                LaunchMikro();
+                LaunchMikroExe();
             }
         }
         else
@@ -747,7 +742,7 @@ public partial class Form1 : Form
 
             if (_config.AutoLaunchAfterUpdate)
             {
-                LaunchMikro();
+                LaunchMikroExe();
             }
         }
         else
@@ -959,11 +954,14 @@ public partial class Form1 : Form
         // 7. Otomatik başlatma
         if (_config.AutoLaunchAfterUpdate && failCount == 0)
         {
-            LaunchMikro();
+            LaunchMikroExe();
         }
     }
 
-    private void LaunchMikro()
+    /// <summary>
+    /// Konfigürasyondaki ana modül EXE'sini başlatır (güncelleme sonrası otomatik başlatma).
+    /// </summary>
+    private void LaunchMikroExe()
     {
         LogInfo("Mikro başlatılıyor...");
 
@@ -1306,7 +1304,6 @@ public partial class Form1 : Form
         _btnCheck.Enabled = !busy;
         _btnUpdate.Enabled = !busy;
         _btnSettings.Enabled = !busy;
-        _btnLaunch.Enabled = !busy;
         _btnAbout.Enabled = !busy;
         _tsmCheck.Enabled = !busy;
         _tsmUpdate.Enabled = !busy;

@@ -33,7 +33,6 @@ partial class Form1
         _prgProgress = new ProgressBar();
         _rtbLog = new RichTextBox();
         _flpButtons = new FlowLayoutPanel();
-        _btnLaunch = new Button();
         _btnUpdate = new Button();
         _btnCheck = new Button();
         _btnSettings = new Button();
@@ -268,25 +267,10 @@ partial class Form1
         _flpButtons.Name = "_flpButtons";
         _flpButtons.Padding = new Padding(0, 6, 0, 0);
         _flpButtons.TabIndex = 3;
-        _flpButtons.Controls.Add(_btnLaunch);
         _flpButtons.Controls.Add(_btnUpdate);
         _flpButtons.Controls.Add(_btnCheck);
         _flpButtons.Controls.Add(_btnSettings);
         _flpButtons.Controls.Add(_btnAbout);
-
-        _btnLaunch.AccessibleName = "Mikro'yu Başlat";
-        _btnLaunch.AutoSize = true;
-        _btnLaunch.FlatStyle = FlatStyle.Flat;
-        _btnLaunch.FlatAppearance.BorderSize = 0;
-        _btnLaunch.FlatAppearance.BorderColor = Color.FromArgb(0, 120, 60);
-        _btnLaunch.BackColor = Color.FromArgb(0, 150, 80);
-        _btnLaunch.ForeColor = Color.White;
-        _btnLaunch.Font = new Font("Segoe UI Semibold", 9F);
-        _btnLaunch.Name = "_btnLaunch";
-        _btnLaunch.Padding = new Padding(12, 4, 12, 4);
-        _btnLaunch.TabIndex = 7;
-        _btnLaunch.Text = "▶  Başlat";
-        _btnLaunch.Click += BtnLaunch_Click;
 
         _btnUpdate.AccessibleName = "Güncelleme başlat";
         _btnUpdate.AutoSize = true;
@@ -380,7 +364,6 @@ partial class Form1
     private Button _btnSettings;
     private Button _btnCheck;
     private Button _btnUpdate;
-    private Button _btnLaunch;
     private NotifyIcon _notifyIcon;
     private ContextMenuStrip _ctxTray;
     private ToolStripMenuItem _tsmShow;

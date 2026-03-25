@@ -3,6 +3,14 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.22.0] - 2025-07-22
+
+### Değiştirilenler
+- **Başlat düğmesi kaldırıldı** — Güncelleme sonrası Mikro zaten otomatik başlatılıyor (`AutoLaunchAfterUpdate`), ayrı bir başlat düğmesine gerek kalmadı
+  - `_btnLaunch` ("▶ Başlat") butonunun UI'dan ve tüm koddan kaldırıldı
+  - `LaunchMikro()` metodu `LaunchMikroExe()` olarak yeniden adlandırıldı (sadece güncelleme sonrası otomatik başlatma için)
+  - `SetUIBusy()` temizlendi
+
 ## [1.21.1] - 2025-07-22
 
 ### Düzeltmeler
