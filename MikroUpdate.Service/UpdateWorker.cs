@@ -801,7 +801,12 @@ public sealed class UpdateWorker : BackgroundService
             await SendFinalResponseAsync(pipeServer, true, ServiceStatus.Installing,
                 "Self-update başlatılıyor, uygulama yeniden başlatılacak.", stoppingToken);
 
-            // 5. Installer'ı başlat (/SILENT /SUPPRESSMSGBOXES /NOPOSTLAUNCH=1)
+            // 5. Tray app'in kapanmasını bekle (Session 0 izolasyonu nedeniyle
+            //    Restart Manager cross-session app kapatamaz, tray app kendisi kapanıyor).
+            //    File lock'ların serbest kalması için kısa bekleme.
+            await Task.Delay(3000, stoppingToken).ConfigureAwait(false);
+
+            // 6. Installer'ı başlat (/SILENT /SUPPRESSMSGBOXES /NOPOSTLAUNCH=1)
             //    SYSTEM olarak çalıştığımız için UAC gerekmez.
             //    /NOPOSTLAUNCH=1 ile ISS'nin [Run] bölümünde app başlatmasını engelliyoruz.
             using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(
@@ -834,7 +839,7 @@ public sealed class UpdateWorker : BackgroundService
 
             _logger.LogInformation("Self-update installer başarıyla tamamlandı.");
 
-            // 6. Tray app'i kullanıcı oturumunda yeniden başlat
+            // 7. Tray app'i kullanıcı oturumunda yeniden başlat
             LaunchTrayAppInUserSession();
         }
         catch (Exception ex) when (ex is not OperationCanceledException)

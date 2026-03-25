@@ -3,6 +3,12 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.25.4] - 2026-03-26
+
+### Duzeltmeler
+- **Self-update Session 0 izolasyonu duzeltildi** — Installer SYSTEM (Session 0) olarak calistiginda Restart Manager, kullanici oturumundaki (Session 1) tray app'e WM_CLOSE gonderemiyor. Tray app artik servis'ten basarili yanit aldiktan sonra kendisi kapaniyor (`Application.Exit()`)
+- Servis, installer'i baslatmadan once 3 saniye bekleyerek tray app'in file lock'lari serbest birakmasi saglaniyor
+
 ## [1.25.3] - 2026-03-26
 
 ### Test

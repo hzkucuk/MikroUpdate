@@ -1342,6 +1342,13 @@ public partial class Form1 : Form
                 if (response is not null && response.Success)
                 {
                     _fileLog.Info("Self-update servise devredildi, uygulama kapatılıyor.");
+
+                    // Servis Session 0'da (SYSTEM) çalıştığı için installer da Session 0'da başlar.
+                    // Restart Manager cross-session WM_CLOSE gönderemez — app kendisi kapanmalı.
+                    // _selfUpdateInProgress = true olduğu için OnFormClosing izin verecek.
+                    Application.Exit();
+
+                    return;
                 }
                 else
                 {
