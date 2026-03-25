@@ -68,6 +68,12 @@ public sealed class PipeClient
 
             return null;
         }
+        catch (UnauthorizedAccessException)
+        {
+            OnError?.Invoke($"Servis pipe erişim reddedildi — komut: {command}. Servis pipe güvenlik ayarlarını kontrol edin.");
+
+            return null;
+        }
         catch (IOException ex)
         {
             OnError?.Invoke($"Servis pipe IO hatası — komut: {command} | {ex.Message}");
@@ -136,6 +142,12 @@ public sealed class PipeClient
         catch (TimeoutException)
         {
             OnError?.Invoke($"Servis bağlantı zaman aşımı ({PipeConstants.ConnectionTimeoutMs}ms) — komut: {command}");
+
+            return null;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            OnError?.Invoke($"Servis pipe erişim reddedildi — komut: {command}. Servis pipe güvenlik ayarlarını kontrol edin.");
 
             return null;
         }

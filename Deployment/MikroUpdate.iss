@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.23.7"
+#define MyAppVersion "1.23.8"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -57,6 +57,7 @@ Source: "..\publish\service\*"; DestDir: "{app}\Service"; Flags: ignoreversion r
 [Dirs]
 Name: "{commonappdata}\MikroUpdate"; Permissions: everyone-modify
 Name: "{commonappdata}\MikroUpdate\logs"; Permissions: everyone-modify
+Name: "{commonappdata}\MikroUpdate\Updates"; Permissions: everyone-modify
 
 ; ============================================================
 ;  Simgeler / Kısayollar

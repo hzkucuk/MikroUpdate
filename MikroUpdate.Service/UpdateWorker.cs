@@ -1,4 +1,6 @@
 using System.IO.Pipes;
+using System.Security.AccessControl;
+using System.Security.Principal;
 
 using MikroUpdate.Service.Services;
 using MikroUpdate.Shared;
@@ -102,12 +104,24 @@ public sealed class UpdateWorker : BackgroundService
         {
             try
             {
-                await using NamedPipeServerStream pipeServer = new(
+                // SYSTEM olarak çalışırken tüm kullanıcıların pipe'a bağlanabilmesini sağla
+#pragma warning disable CA1416 // Windows-only servis — platform uyumluluğu garantili
+                PipeSecurity pipeSecurity = new();
+                pipeSecurity.AddAccessRule(new PipeAccessRule(
+                    new SecurityIdentifier(WellKnownSidType.WorldSid, null),
+                    PipeAccessRights.ReadWrite,
+                    AccessControlType.Allow));
+
+                await using NamedPipeServerStream pipeServer = NamedPipeServerStreamAcl.Create(
                     PipeConstants.PipeName,
                     PipeDirection.InOut,
                     NamedPipeServerStream.MaxAllowedServerInstances,
                     PipeTransmissionMode.Byte,
-                    PipeOptions.Asynchronous);
+                    PipeOptions.Asynchronous,
+                    inBufferSize: 0,
+                    outBufferSize: 0,
+                    pipeSecurity);
+#pragma warning restore CA1416
 
                 await pipeServer.WaitForConnectionAsync(stoppingToken).ConfigureAwait(false);
                 _logger.LogDebug("Pipe bağlantısı alındı.");

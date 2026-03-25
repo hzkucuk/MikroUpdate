@@ -3,6 +3,13 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.23.8] - 2026-03-26
+
+### Duzeltmeler
+- **Named pipe guvenlik ACL eklendi** — Servis SYSTEM olarak calisirken pipe Everyone ReadWrite izni ile olusturuluyor, normal kullanicilar artik pipe'a baglanabiliyor
+- **PipeClient UnauthorizedAccessException yakalama** — Pipe erisim hatasi artik duzgun handle ediliyor, uygulama cokmesi onlendi
+- **Updates dizini ISS'de tanimli** — ProgramData/MikroUpdate/Updates everyone-modify izniyle olusturuluyor
+
 ## [1.23.7] - 2026-03-25
 
 ### Test
