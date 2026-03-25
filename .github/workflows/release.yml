@@ -85,9 +85,7 @@ jobs:
             2. `MikroUpdate_Setup_${{ steps.version.outputs.VERSION }}.exe` dosyasını indirip çalıştırın
             3. Sessiz kurulum: `MikroUpdate_Setup_${{ steps.version.outputs.VERSION }}.exe /VERYSILENT /SUPPRESSMSGBOXES`
 
-            ### 🔏 Code Signing
-            Installer, [SignPath.io](https://signpath.io) üzerinden dijital olarak imzalanmaktadır.
-            İmzalı sürüm için [SignPath signing requests](https://app.signpath.io) sayfasını kontrol edin.
+            > ⚠️ Installer imzasız olduğundan Windows SmartScreen uyarısı gösterebilir. "More info" → "Run anyway" ile devam edin.
 
             Detaylar için [CHANGELOG.md](CHANGELOG.md) dosyasına bakın.
           files: |

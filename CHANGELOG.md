@@ -6,11 +6,14 @@ Format: [Semantic Versioning](https://semver.org/lang/tr/)
 ## [1.19.2] - 2025-07-20
 
 ### Değişiklikler
-- **SignPath manuel imzalama moduna geçildi** — Ücretsiz plan CI entegrasyonunu desteklemediği için `sign-installer` job kaldırıldı
-  - Release workflow sadeleştirildi (tek job: build-and-release)
-  - `docs/CODE_SIGNING.md` manuel imzalama rehberi olarak güncellendi
-  - Release notes'a code signing bilgisi eklendi
-  - Gereksiz GitHub permissions (`id-token`, `actions:read`) kaldırıldı
+- **Tray menü dikey versiyon sidebar** — Sol kenarda yeşil gradient sidebar üzerine uygulama adı ve versiyon dikey yazılır
+  - Koyu tema uyumlu custom renderer (VersionSidebarRenderer)
+  - Hover efekti sidebar alanına binmez
+  - NotifyIcon tooltip'inde versiyon bilgisi gösterilir
+- **SignPath.io code signing kaldırıldı** — Proje henüz yeterli topluluk görünürlüğüne sahip olmadığından başvuru reddedildi
+  - Release workflow'dan imzalama referansları temizlendi
+  - `docs/CODE_SIGNING.md` imzasız durum bilgisi ile güncellendi
+  - OSS başvuru formu silindi
 
 ## [1.19.1] - 2025-07-20
 

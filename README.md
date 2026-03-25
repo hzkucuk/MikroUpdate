@@ -57,7 +57,7 @@ cd Deployment
 
 Installer otomatik olarak: dosya kopyalama, servis kaydı, kısayollar, ProgramData dizinleri ve ilk yapılandırma oluşturur.
 
-> **Not:** Installer [SignPath.io](https://signpath.io) ile dijital olarak imzalanır. Detaylar için [docs/CODE_SIGNING.md](docs/CODE_SIGNING.md) dosyasına bakın.
+> **Not:** Installer şu anda imzasız dağıtılmaktadır. SmartScreen uyarısı için [docs/CODE_SIGNING.md](docs/CODE_SIGNING.md) dosyasına bakın.
 
 ### Manuel Derleme
 

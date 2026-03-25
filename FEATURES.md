@@ -2,17 +2,11 @@
 
 ## v1.19.2
 
-### Code Signing — Manuel İmzalama
-- **SignPath.io ücretsiz planı:** CI entegrasyonu desteklenmiyor, manuel imzalama kullanılıyor
-  - `sign-installer` job kaldırıldı, release workflow sadeleştirildi
-  - `docs/CODE_SIGNING.md` manuel imzalama rehberi olarak güncellendi
-
-## v1.19.0
-
-### Code Signing (SignPath.io)
-- **Windows SmartScreen uyarısı çözümü:** Installer dijital imzalama altyapısı
-  - SignPath.io açık kaynak projeler için ücretsiz code signing
-  - `docs/CODE_SIGNING.md` kurulum rehberi
+### Tray Menü Dikey Versiyon Sidebar
+- **Tray icon context menüsüne dikey versiyon sidebar eklendi:**
+  - Sol kenarda yeşil gradient sidebar üzerinde uygulama adı ve versiyon dikey yazılır
+  - Koyu tema uyumlu custom renderer (VersionSidebarRenderer)
+  - Hover efekti sidebar alanına binmez
 
 ## v1.18.5
 
