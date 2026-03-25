@@ -1,6 +1,6 @@
 # MikroUpdate
 
-![Version](https://img.shields.io/badge/version-1.23.0-blue)
+![Version](https://img.shields.io/badge/version-1.23.1-blue)
 ![.NET](https://img.shields.io/badge/.NET-10.0-purple)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 
@@ -10,7 +10,7 @@ Mikro ERP (Jump / Fly) yazılımları için domain ortamında çalışan otomati
 
 MikroUpdate, sunucu üzerindeki Mikro ERP versiyonunu terminal makineleriyle karşılaştırarak
 otomatik sessiz kurulum gerçekleştirir. Domain ortamında admin yetkisi gerektiren kurulumları
-Windows Service üzerinden yönetir. Servis çalışmadığında doğrudan mod ile de çalışabilir.
+Windows Service üzerinden yönetir.
 
 ## Mimari
 
@@ -23,7 +23,9 @@ Windows Service üzerinden yönetir. Servis çalışmadığında doğrudan mod i
 │  • Güncelleme UI    │  ├ CheckVersion          │  • Süreç yönetimi (kill)  │
 │  • İşlem günlüğü   │  ├ RunUpdate             │  • Setup kopyalama        │
 │  • Ayarlar formu    │  ├ GetStatus             │  • Sessiz kurulum (admin) │
-│  • Tray menüsü      │  └ ReloadConfig          │  • 30 dk periyodik kontrol│
+│  • Tray menüsü      │  ├ ReloadConfig          │  • 30 dk periyodik kontrol│
+│                     │  ├ DownloadUpdate        │  • UAC'sız self-update    │
+│                     │  └ InstallSelfUpdate     │                           │
 └─────────┬───────────┘                          └────────────┬──────────────┘
           │                                                   │
           └──────────── MikroUpdate.Shared ───────────────────┘
@@ -36,7 +38,6 @@ Windows Service üzerinden yönetir. Servis çalışmadığında doğrudan mod i
 | Mod | Koşul | Davranış |
 |-----|-------|----------|
 | **Servis modu** | MikroUpdate Service çalışıyor | Tüm işlemler pipe üzerinden servis tarafından yapılır (admin yetkili) |
-| **Doğrudan mod** | Servis bulunamıyor | Tray app kendi yetkisiyle doğrudan güncelleme yapar (fallback) |
 | **Otomatik mod** | `/auto` parametresi | Sessiz kontrol → güncelleme → Mikro başlatma → çıkış |
 
 ## Hızlı Başlangıç

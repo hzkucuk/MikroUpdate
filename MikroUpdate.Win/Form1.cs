@@ -13,7 +13,6 @@ namespace MikroUpdate.Win;
 public partial class Form1 : Form
 {
     private readonly ConfigService _configService = new();
-    private readonly VersionService _versionService = new();
     private readonly UpdateService _updateService = new();
     private readonly PipeClient _pipeClient = new();
     private readonly FileLogService _fileLog = new();
@@ -57,8 +56,9 @@ public partial class Form1 : Form
             }
             else
             {
-                LogError("MikroUpdate servisi bulunamadı! Güncelleme admin hakları olmadan yapılamaz.");
+                LogError("MikroUpdate servisi çalışmıyor! Güncelleme işlemleri için servis gereklidir.");
                 LogInfo("Servis durumunu kontrol edin: services.msc → MikroUpdateService");
+                SetStatus("Servis gerekli", Color.OrangeRed);
                 ShowTrayBalloon("Servis Hatası",
                     "MikroUpdateService çalışmıyor. Güncelleme için servis gereklidir.",
                     ToolTipIcon.Warning);
@@ -438,18 +438,19 @@ public partial class Form1 : Form
     #region Version Check
 
     /// <summary>
-    /// Versiyon kontrolü — servis varsa pipe üzerinden, yoksa doğrudan dosya sistemi.
+    /// Versiyon kontrolü — servis üzerinden pipe ile yapılır.
     /// </summary>
     private async Task CheckVersionsAsync(CancellationToken cancellationToken = default)
     {
-        if (_serviceAvailable)
+        if (!_serviceAvailable)
         {
-            await CheckVersionsViaServiceAsync(cancellationToken);
+            LogError("Servis çalışmıyor — versiyon kontrolü yapılamıyor.");
+            SetStatus("Servis gerekli", Color.OrangeRed);
+
+            return;
         }
-        else
-        {
-            await CheckVersionsDirectAsync();
-        }
+
+        await CheckVersionsViaServiceAsync(cancellationToken);
     }
 
     private async Task CheckVersionsViaServiceAsync(CancellationToken cancellationToken)
@@ -461,10 +462,10 @@ public partial class Form1 : Form
 
         if (response is null)
         {
-            LogWarning("Servis yanıt vermedi, doğrudan moda geçiliyor...");
-            _fileLog.Warning("Servis pipe yanıt vermedi — doğrudan moda fallback.");
-            _serviceAvailable = false;
-            await CheckVersionsDirectAsync();
+            LogError("Servis yanıt vermedi — versiyon kontrolü başarısız.");
+            _fileLog.Warning("Servis pipe yanıt vermedi.");
+            SetStatus("Bağlantı hatası", Color.OrangeRed);
+            ShowTrayBalloon("Bağlantı Hatası", "Servis ile iletişim kurulamadı.", ToolTipIcon.Error);
 
             return;
         }
@@ -493,82 +494,6 @@ public partial class Form1 : Form
             SetStatus("Sunucu erişilemiyor", Color.Orange);
             LogWarning("Bazı modüllerin sunucu versiyonuna erişilemedi.");
             ShowTrayBalloon("Bağlantı Sorunu", "Sunucu versiyonları okunamadı.", ToolTipIcon.Warning);
-        }
-        else
-        {
-            SetStatus("Güncel", Color.LimeGreen);
-            LogSuccess("Tüm modüller güncel.");
-        }
-    }
-
-    private async Task CheckVersionsDirectAsync()
-    {
-        List<ModuleVersionInfo> moduleVersions = [];
-
-        foreach (UpdateModule module in _config.EnabledModules)
-        {
-            string localPath = Path.Combine(_config.LocalInstallPath, module.ExeFileName);
-            string serverPath = Path.Combine(_config.ServerSharePath, module.ExeFileName);
-            Version? localVersion = null;
-            Version? serverVersion = null;
-
-            try
-            {
-                localVersion = await _versionService.GetVersionAsync(localPath).ConfigureAwait(true);
-            }
-            catch (Exception ex)
-            {
-                LogError($"[{module.Name}] Yerel versiyon okunamadı: {ex.Message}");
-                _fileLog.Error($"Yerel versiyon okuma hatası: {localPath}", ex);
-            }
-
-            try
-            {
-                serverVersion = await _versionService.GetVersionAsync(serverPath).ConfigureAwait(true);
-            }
-            catch (Exception ex)
-            {
-                LogError($"[{module.Name}] Sunucu versiyonu okunamadı: {ex.Message}");
-                _fileLog.Error($"Sunucu versiyon okuma hatası: {serverPath}", ex);
-            }
-
-            bool updateRequired = serverVersion is not null
-                && (localVersion is null || localVersion < serverVersion);
-
-            moduleVersions.Add(new ModuleVersionInfo
-            {
-                ModuleName = module.Name,
-                LocalVersion = localVersion?.ToString(),
-                ServerVersion = serverVersion?.ToString(),
-                UpdateRequired = updateRequired,
-                SourceType = "Yerel",
-                ServerPath = serverPath
-            });
-        }
-
-        DisplayModuleVersions(moduleVersions);
-
-        bool anyUpdate = moduleVersions.Exists(v => v.UpdateRequired);
-        bool anyServerUnavailable = moduleVersions.Exists(v => v.ServerVersion is null);
-        bool allLocal = moduleVersions.TrueForAll(v => v.LocalVersion is not null);
-
-        if (anyServerUnavailable && !anyUpdate)
-        {
-            SetStatus("Sunucu erişilemiyor", Color.Orange);
-            LogWarning("Bazı modüllerin sunucu EXE dosyasına erişilemedi.");
-            ShowTrayBalloon("Bağlantı Sorunu", "Sunucu EXE dosyalarına erişilemiyor.", ToolTipIcon.Warning);
-        }
-        else if (!allLocal && !anyUpdate)
-        {
-            SetStatus("Kurulum gerekli", Color.Red);
-            LogWarning("Bazı modüller yerel kurulumda bulunamadı.");
-        }
-        else if (anyUpdate)
-        {
-            int count = moduleVersions.Count(v => v.UpdateRequired);
-            SetStatus($"{count} modülde güncelleme mevcut!", Color.Red);
-            LogWarning($"{count} modülde güncelleme gerekli.");
-            ShowTrayBalloon("Güncelleme Mevcut", $"{count} modülde güncelleme mevcut.", ToolTipIcon.Warning);
         }
         else
         {
@@ -654,30 +579,23 @@ public partial class Form1 : Form
 
     private async Task RunUpdateAsync(CancellationToken cancellationToken)
     {
-        if (_serviceAvailable)
+        if (!_serviceAvailable)
         {
-            if (_config.UpdateMode is UpdateMode.Online or UpdateMode.Hybrid)
-            {
-                await RunOnlineUpdateViaServiceAsync(cancellationToken);
-            }
-            else
-            {
-                await RunUpdateViaServiceAsync(cancellationToken);
-            }
+            LogError("Güncelleme için MikroUpdate servisi çalışıyor olmalıdır.");
+            SetStatus("Servis gerekli", Color.OrangeRed);
+            ShowTrayBalloon("Servis Gerekli",
+                "Güncelleme için servis çalışıyor olmalıdır.", ToolTipIcon.Error);
+
+            return;
+        }
+
+        if (_config.UpdateMode is UpdateMode.Online or UpdateMode.Hybrid)
+        {
+            await RunOnlineUpdateViaServiceAsync(cancellationToken);
         }
         else
         {
-            if (_config.UpdateMode is UpdateMode.Online)
-            {
-                LogError("Online güncelleme için MikroUpdate servisi çalışıyor olmalıdır.");
-                SetStatus("Servis gerekli", Color.OrangeRed);
-                ShowTrayBalloon("Servis Gerekli",
-                    "Online güncelleme modunda servis çalışıyor olmalıdır.", ToolTipIcon.Error);
-
-                return;
-            }
-
-            await RunUpdateDirectAsync(cancellationToken);
+            await RunUpdateViaServiceAsync(cancellationToken);
         }
     }
 
@@ -693,10 +611,10 @@ public partial class Form1 : Form
 
         if (response is null)
         {
-            LogWarning("Servis yanıt vermedi, doğrudan moda geçiliyor...");
-            _fileLog.Warning("Güncelleme sırasında servis pipe yanıt vermedi — doğrudan moda fallback.");
-            _serviceAvailable = false;
-            await RunUpdateDirectAsync(cancellationToken);
+            LogError("Servis yanıt vermedi — güncelleme başarısız.");
+            _fileLog.Warning("Güncelleme sırasında servis pipe yanıt vermedi.");
+            SetStatus("Bağlantı hatası", Color.OrangeRed);
+            ShowTrayBalloon("Bağlantı Hatası", "Servis ile iletişim kurulamadı.", ToolTipIcon.Error);
 
             return;
         }
@@ -812,191 +730,6 @@ public partial class Form1 : Form
         }
     }
 
-    private async Task RunUpdateDirectAsync(CancellationToken cancellationToken)
-    {
-        // 1. Versiyon kontrol
-        LogInfo("Versiyon kontrol ediliyor (doğrudan mod)...");
-        await CheckVersionsDirectAsync();
-
-        // Güncellemesi gereken modülleri belirle
-        List<UpdateModule> modulesToUpdate = [];
-
-        foreach (UpdateModule module in _config.EnabledModules)
-        {
-            string localPath = Path.Combine(_config.LocalInstallPath, module.ExeFileName);
-            string serverPath = Path.Combine(_config.ServerSharePath, module.ExeFileName);
-
-            try
-            {
-                Version? localVer = await _versionService.GetVersionAsync(localPath).ConfigureAwait(true);
-                Version? serverVer = await _versionService.GetVersionAsync(serverPath).ConfigureAwait(true);
-
-                if (serverVer is not null && (localVer is null || localVer < serverVer))
-                {
-                    modulesToUpdate.Add(module);
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError($"[{module.Name}] Versiyon okuma hatası: {ex.Message}");
-                _fileLog.Error($"Doğrudan güncelleme versiyon okuma hatası: {module.Name}", ex);
-            }
-        }
-
-        if (modulesToUpdate.Count == 0)
-        {
-            LogSuccess("Tüm modüller güncel, güncelleme gerekmiyor.");
-
-            return;
-        }
-
-        LogWarning($"{modulesToUpdate.Count} modül güncellenecek.");
-
-        // 2. İlgili süreçleri kapat
-        HashSet<string> killedProcesses = [];
-
-        foreach (UpdateModule module in modulesToUpdate)
-        {
-            if (killedProcesses.Add(module.ExeFileName))
-            {
-                try
-                {
-                    LogInfo($"{module.ExeFileName} süreci kapatılıyor...");
-                    int killed = _updateService.KillMikroProcess(module.ExeFileName);
-                    LogInfo(killed > 0 ? $"{killed} süreç kapatıldı." : "Çalışan süreç bulunamadı.");
-                }
-                catch (Exception ex)
-                {
-                    LogError($"Süreç kapatma hatası: {ex.Message}");
-                    _fileLog.Error($"Süreç kapatma hatası: {module.ExeFileName}", ex);
-                }
-            }
-        }
-
-        await Task.Delay(1500, cancellationToken);
-
-        // 3. Her modül için setup kopyala ve kur
-        int successCount = 0;
-        int failCount = 0;
-        int totalModules = modulesToUpdate.Count;
-
-        foreach (UpdateModule module in modulesToUpdate)
-        {
-            string serverSetupPath = Path.Combine(_config.SetupFilesPath, module.SetupFileName);
-
-            // Setup kopyala
-            LogInfo($"[{module.Name}] Setup dosyası sunucuda aranıyor: {serverSetupPath}");
-            string? setupPath;
-
-            try
-            {
-                setupPath = _updateService.CopySetupFromServer(serverSetupPath);
-            }
-            catch (Exception ex)
-            {
-                LogError($"[{module.Name}] Setup kopyalama hatası: {ex.Message}");
-                _fileLog.Error($"Setup dosyası sunucudan kopyalanamadı: {module.Name}", ex);
-                failCount++;
-
-                continue;
-            }
-
-            if (string.IsNullOrEmpty(setupPath))
-            {
-                LogError($"[{module.Name}] Setup dosyası sunucuda bulunamadı: {serverSetupPath}");
-                _fileLog.Error($"Setup dosyası bulunamadı: {serverSetupPath}");
-                failCount++;
-
-                continue;
-            }
-
-            LogSuccess($"[{module.Name}] Setup dosyası kopyalandı.");
-
-            // Sessiz kurulum
-            LogInfo($"[{module.Name}] Sessiz kurulum başlatılıyor: {Path.GetFileName(setupPath)}");
-            _prgProgress.Style = ProgressBarStyle.Marquee;
-
-            int exitCode;
-
-            try
-            {
-                exitCode = await _updateService.RunSilentInstallAsync(
-                    setupPath, _config.LocalInstallPath, cancellationToken);
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                _prgProgress.Style = ProgressBarStyle.Blocks;
-                LogError($"[{module.Name}] Kurulum çalıştırma hatası: {ex.Message}");
-                _fileLog.Error($"Sessiz kurulum hatası: {module.Name}", ex);
-                failCount++;
-
-                continue;
-            }
-
-            _prgProgress.Style = ProgressBarStyle.Blocks;
-
-            if (exitCode == 0)
-            {
-                LogSuccess($"[{module.Name}] Kurulum başarıyla tamamlandı.");
-                successCount++;
-            }
-            else
-            {
-                LogError($"[{module.Name}] Kurulum hata kodu: {exitCode}");
-                _fileLog.Error($"{module.Name} sessiz kurulum hata kodu: {exitCode}");
-                failCount++;
-            }
-
-            // İlerleme
-            _prgProgress.Value = (int)((successCount + failCount) * 100.0 / totalModules);
-        }
-
-        _prgProgress.Value = 100;
-
-        // 4. Sonuç
-        if (failCount == 0)
-        {
-            SetStatus("Güncelleme tamamlandı", Color.LimeGreen);
-            LogSuccess($"{successCount} modül başarıyla güncellendi.");
-            ShowTrayBalloon("Güncelleme Tamamlandı", $"{successCount} modül güncellendi.", ToolTipIcon.Info);
-        }
-        else
-        {
-            SetStatus("Kısmi güncelleme", Color.OrangeRed);
-            LogError($"{successCount} başarılı, {failCount} başarısız modül kurulumu.");
-            ShowTrayBalloon("Güncelleme Kısmi", $"{failCount} modül kurulamadı.", ToolTipIcon.Warning);
-        }
-
-        // 5. Kurulum sonrası versiyon kontrol
-        try
-        {
-            await CheckVersionsDirectAsync();
-        }
-        catch (Exception ex)
-        {
-            LogWarning($"Kurulum sonrası versiyon okunamadı: {ex.Message}");
-            _fileLog.Error("Kurulum sonrası versiyon okuma hatası", ex);
-        }
-
-        // 6. Geçici dosyaları temizle
-        try
-        {
-            UpdateService.CleanupTempFiles();
-            LogInfo("Geçici dosyalar temizlendi.");
-        }
-        catch (Exception ex)
-        {
-            LogWarning($"Geçici dosya temizleme hatası: {ex.Message}");
-            _fileLog.Warning($"Geçici dosya temizleme hatası: {ex.Message}");
-        }
-
-        // 7. Otomatik başlatma
-        if (_config.AutoLaunchAfterUpdate && failCount == 0)
-        {
-            LaunchMikroExe();
-        }
-    }
-
     /// <summary>
     /// Konfigürasyondaki ana modül EXE'sini başlatır (güncelleme sonrası otomatik başlatma).
     /// </summary>
@@ -1023,7 +756,7 @@ public partial class Form1 : Form
 
     /// <summary>
     /// Otomatik mod: Versiyon kontrol et, gerekirse güncelle, Mikro'yu başlat.
-    /// Servis varsa pipe üzerinden, yoksa doğrudan mod.
+    /// Servis üzerinden pipe ile otomatik kontrol ve güncelleme.
     /// Kısayol: MikroUpdate.exe /auto
     /// </summary>
     private async Task RunAutoModeAsync()
@@ -1047,7 +780,7 @@ public partial class Form1 : Form
         LogInfo($"Ürün: {_config.MajorVersion} {_config.ProductName} | Modül: {_config.Modules.Count}");
         LogInfo($"Sunucu: {_config.ServerSharePath}");
         LogInfo($"Terminal: {_config.LocalInstallPath}");
-        LogInfo(_serviceAvailable ? "Mod: Servis" : "Mod: Doğrudan");
+        LogInfo(_serviceAvailable ? "Mod: Servis" : "Servis çalışmıyor!");
 
         try
         {
@@ -1060,10 +793,8 @@ public partial class Form1 : Form
             ShowTrayBalloon("Kontrol Hatası", "Versiyon kontrolü başarısız.", ToolTipIcon.Error);
         }
 
-        bool updateNeeded = _serviceAvailable
-            ? _lblStatus.Text.Contains("mevcut", StringComparison.OrdinalIgnoreCase)
-               || _lblStatus.Text.Contains("gerekli", StringComparison.OrdinalIgnoreCase)
-            : await _versionService.IsUpdateRequiredAsync(_config).ConfigureAwait(true);
+        bool updateNeeded = _lblStatus.Text.Contains("mevcut", StringComparison.OrdinalIgnoreCase)
+            || _lblStatus.Text.Contains("gerekli", StringComparison.OrdinalIgnoreCase);
 
         if (!updateNeeded)
         {

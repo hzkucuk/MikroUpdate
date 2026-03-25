@@ -3,6 +3,15 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.23.1] - 2026-03-25
+
+### Temizlik
+- **Do`ğ`rudan mod (fallback) kodu ve d`ö`k`ü`man referansları tamamen kaldırıldı**
+  - `CheckVersionsDirectAsync` ve `RunUpdateDirectAsync` metotları silindi
+  - `_versionService` field'ı kaldırıldı (artık kullanılmıyor)
+  - Servis yanıt vermediğinde do`ğ`rudan moda ge`ç`i`ş` yerine hata mesajı g`ö`steriliyor
+  - README, FEATURES, CHANGELOG d`ö`k`ü`manlarından do`ğ`rudan mod referansları temizlendi
+
 ## [1.23.0] - 2026-03-25
 
 ### Yeni Özellikler
@@ -10,10 +19,16 @@ Format: [Semantic Versioning](https://semver.org/lang/tr/)
   - Tray app indirdiği installer yolunu pipe üzerinden servise gönderiyor (`InstallSelfUpdate` komutu)
   - Servis (SYSTEM yetkileriyle) installer’ı `/SILENT /SUPPRESSMSGBOXES /NOPOSTLAUNCH=1` ile başlatıyor
   - Installer tamamlandıktan sonra tray app, P/Invoke (`WTSQueryUserToken` + `CreateProcessAsUser`) ile kullanıcı masaüstü oturumunda yeniden başlatılıyor
-  - Servis mevcut değilse eski yöntem (doğrudan installer + UAC) fallback olarak korunuyor
+  - Servis mevcut değilse self-update için eski yöntem (doğrudan installer + UAC) fallback olarak korunuyor
   - `ServiceCommand` sınıfına `Data` property ve `InstallSelfUpdate` enum değeri eklendi
   - `PipeClient`’a veri parametreli `SendCommandAsync` overload’ı eklendi
   - Inno Setup’a `/NOPOSTLAUNCH=1` parametre desteği ve `ShouldPostInstallLaunch` kontrol fonksiyonu eklendi
+
+### Kaldırılanlar
+- **Doğrudan mod (fallback) kaldırıldı** — Tüm güncelleme işlemleri artık Windows Service üzerinden yapılıyor
+  - `CheckVersionsDirectAsync` ve `RunUpdateDirectAsync` metotları kaldırıldı
+  - Servis çalışmıyorsa kullanıcıya bilgi mesajı gösterilir, güncelleme engellenir
+  - README, FEATURES, INSTALL dökümanlarından doğrudan mod referansları temizlendi
 
 ## [1.22.2] - 2026-03-25
 

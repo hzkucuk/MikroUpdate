@@ -233,8 +233,6 @@
 - Format: "MikroUpdate — {durum}" (ör: "MikroUpdate — Güncel")
 
 ### Geliştirilmiş Hata Yönetimi
-- **CheckVersionsDirect** — her GetVersion çağrısı ayrı try/catch ile korunur
-- **RunUpdateDirectAsync** — 7 adımın her biri (süreç kapatma, setup kopyalama, kurulum, versiyon kontrol, temizlik) ayrı try/catch ile sarılır
 - **RunAutoModeAsync** — yapılandırma, versiyon kontrol, güncelleme ve başlatma ayrı hata blokları
 - **PipeClient** — timeout ve IO hataları ayrıştırılarak `OnError` callback ile raporlanır
 
@@ -250,15 +248,14 @@
 ### Named Pipe IPC (Inter-Process Communication)
 - **PipeProtocol** — 4-byte length prefix + UTF-8 JSON mesajlaşma
 - Maksimum 1 MB payload koruması
-- Tray app → Servis komutları: `CheckVersion`, `RunUpdate`, `GetStatus`, `ReloadConfig`
+- Tray app → Servis komutları: `CheckVersion`, `RunUpdate`, `GetStatus`, `ReloadConfig`, `DownloadUpdate`, `InstallSelfUpdate`
 - Servis → Tray app yanıtları: `ServiceResponse` (Success, Status, Message, Versions)
 - 5 saniye bağlantı zaman aşımı
 
-### Servis / Doğrudan Mod Fallback
+### Servis Zorunluluğu
 - Uygulama başlangıcında servis erişilebilirliği otomatik algılanır
-- **Servis modu**: Tüm işlemler admin yetkili servis üzerinden yapılır
-- **Doğrudan mod**: Servis bulunamazsa tray app kendi yetkisiyle doğrudan güncelleme yapar
-- Servis yanıt vermezse otomatik olarak doğrudan moda geçiş
+- Tüm güncelleme işlemleri admin yetkili servis üzerinden yapılır
+- Servis çalışmıyorsa kullanıcıya bilgi mesajı gösterilir
 - Ayar değişikliklerinde servise `ReloadConfig` komutu gönderilir
 
 ### Ortak Kütüphane (MikroUpdate.Shared)
