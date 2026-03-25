@@ -3,6 +3,19 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.25.2] - 2026-03-26
+
+### Duzeltmeler
+- **SERVISiN BASLAMAMA SORUNUNUN KOK NEDENi DUZELTILDI** — ISS installer `config.json` dosyasina yol degerlerini (`\\SERVER\MikroV16xx`, `C:\Mikro\v16xx`) JSON-escape etmeden yaziyordu. `\M`, `\v` gibi gecersiz escape karakterleri System.Text.Json'in JsonException firlatmasina ve servisin cokmesine neden oluyordu
+- **ISS JsonEscapeStr fonksiyonu eklendi** — Tum yol degerleri (ServerSharePath, LocalInstallPath, SetupFilesPath, CdnBaseUrl, ProxyAddress) artik JSON'a yazilmadan once backslash-escape ediliyor
+- **ConfigService JSON tamir mekanizmasi** — Mevcut bozuk config.json dosyalari otomatik tamir ediliyor: deserialize basarisiz olursa `\` -> `\\` donusumu yapilip tekrar deneniyor, basarili olursa config duzgun formatta geri yaziliyor
+
+### Teknik
+- ISS: `JsonEscapeStr()` fonksiyonu eklendi — `StringChangeEx(Result, '\', '\\', True)`
+- ISS: `GenerateConfigJson` icindeki tum string degerler `JsonEscapeStr()` ile sarmalandi
+- Service ConfigService.Load(): try/catch JsonException -> repair -> retry -> SaveRepaired
+- Win ConfigService.Load(): ayni repair mekanizmasi -> Save ile kalici duzeltme
+
 ## [1.25.1] - 2026-03-26
 
 ### Duzeltmeler

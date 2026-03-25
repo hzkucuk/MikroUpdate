@@ -24,6 +24,7 @@ public sealed class ConfigService
 
     /// <summary>
     /// Yapılandırma dosyasını yükler. Dosya yoksa varsayılan ayarlarla döner.
+    /// JSON hatası varsa backslash escape sorununu tamir edip yeniden dener.
     /// </summary>
     public UpdateConfig Load()
     {
@@ -33,7 +34,32 @@ public sealed class ConfigService
         }
 
         string json = File.ReadAllText(ConfigFilePath);
-        return JsonSerializer.Deserialize<UpdateConfig>(json, JsonOptions) ?? new UpdateConfig();
+
+        try
+        {
+            return JsonSerializer.Deserialize<UpdateConfig>(json, JsonOptions) ?? new UpdateConfig();
+        }
+        catch (JsonException)
+        {
+            // ISS installer yol değerlerindeki backslash'ları JSON-escape etmeden yazmış olabilir.
+            // Tüm \ karakterlerini \\ ile değiştirerek tamir et.
+            string repaired = json.Replace(@"\", @"\\");
+
+            try
+            {
+                UpdateConfig config = JsonSerializer.Deserialize<UpdateConfig>(repaired, JsonOptions)
+                    ?? new UpdateConfig();
+
+                // Tamir edilen config'i kalıcı olarak düzgün JSON formatında kaydet
+                Save(config);
+
+                return config;
+            }
+            catch (JsonException)
+            {
+                return new UpdateConfig();
+            }
+        }
     }
 
     /// <summary>

@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.25.1"
+#define MyAppVersion "1.25.2"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -290,6 +290,13 @@ begin
   StringChangeEx(Tmp, OldMikro, NewMikro, True);
   StringChangeEx(Tmp, OldTag, NewTag, True);
   SetupFilesPathEdit.Text := Tmp;
+end;
+
+{ JSON string değerlerinde backslash'ları escape eder: \ → \\ }
+function JsonEscapeStr(const Value: String): String;
+begin
+  Result := Value;
+  StringChangeEx(Result, '\', '\\', True);
 end;
 
 function BoolToStr(Value: Boolean): String;
@@ -593,7 +600,7 @@ begin
 
   { ProxyAddress boş değilse JSON'a ekle }
   if Length(ExistingProxyAddress) > 0 then
-    ProxyLine := '  "ProxyAddress": "' + ExistingProxyAddress + '",' + #13#10
+    ProxyLine := '  "ProxyAddress": "' + JsonEscapeStr(ExistingProxyAddress) + '",' + #13#10
   else
     ProxyLine := '  "ProxyAddress": "",' + #13#10;
 
@@ -601,13 +608,13 @@ begin
     '{' + #13#10 +
     '  "MajorVersion": "' + MajorVersionCombo.Items[MajorVersionCombo.ItemIndex] + '",' + #13#10 +
     '  "ProductName": "' + ProductCombo.Items[ProductCombo.ItemIndex] + '",' + #13#10 +
-    '  "ServerSharePath": "' + ServerPathEdit.Text + '",' + #13#10 +
-    '  "LocalInstallPath": "' + LocalPathEdit.Text + '",' + #13#10 +
-    '  "SetupFilesPath": "' + SetupFilesPathEdit.Text + '",' + #13#10 +
+    '  "ServerSharePath": "' + JsonEscapeStr(ServerPathEdit.Text) + '",' + #13#10 +
+    '  "LocalInstallPath": "' + JsonEscapeStr(LocalPathEdit.Text) + '",' + #13#10 +
+    '  "SetupFilesPath": "' + JsonEscapeStr(SetupFilesPathEdit.Text) + '",' + #13#10 +
     '  "AutoLaunchAfterUpdate": ' + BoolToStr(ExistingAutoLaunch) + ',' + #13#10 +
     '  "CheckIntervalMinutes": ' + IntToStr(ExistingCheckInterval) + ',' + #13#10 +
     '  "UpdateMode": "' + UpdateMode + '",' + #13#10 +
-    '  "CdnBaseUrl": "' + ExistingCdnBaseUrl + '",' + #13#10 +
+    '  "CdnBaseUrl": "' + JsonEscapeStr(ExistingCdnBaseUrl) + '",' + #13#10 +
     ProxyLine +
     '  "HttpTimeoutSeconds": ' + IntToStr(ExistingHttpTimeout) + ',' + #13#10 +
     '  "Modules": [' + #13#10 +
