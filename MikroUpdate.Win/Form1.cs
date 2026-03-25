@@ -73,8 +73,8 @@ public partial class Form1 : Form
                 await CheckVersionsAsync();
             }
 
-            // Arka planda uygulama güncellemesi kontrol et
-            _ = CheckSelfUpdateAsync();
+            // Arka planda uygulama güncellemesi kontrol et (periyodik)
+            _ = StartSelfUpdateLoopAsync();
         }
         catch (Exception ex)
         {
@@ -1236,10 +1236,43 @@ public partial class Form1 : Form
     #region Self-Update
 
     /// <summary>
-    /// GitHub'dan uygulama güncellemesi kontrol eder.
-    /// Yeni sürüm varsa tray bildirimi gösterir.
+    /// Periyodik self-update kontrolünü başlatır.
+    /// İlk kontrol hemen, sonraki kontroller CheckIntervalMinutes aralığında yapılır.
     /// </summary>
-    private async Task CheckSelfUpdateAsync()
+    private async Task StartSelfUpdateLoopAsync()
+    {
+        // İlk kontrol
+        await CheckAndApplySelfUpdateAsync();
+
+        // Auto mode'da form kapanacağı için periyodik kontrole gerek yok
+        if (_autoMode)
+        {
+            return;
+        }
+
+        // Periyodik kontrol
+        int intervalMinutes = Math.Max(_config.CheckIntervalMinutes, 5);
+
+        while (!(_cts?.Token.IsCancellationRequested ?? true))
+        {
+            try
+            {
+                await Task.Delay(TimeSpan.FromMinutes(intervalMinutes), _cts!.Token);
+                await CheckAndApplySelfUpdateAsync();
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// GitHub'dan uygulama güncellemesi kontrol eder.
+    /// AutoSelfUpdate aktifse otomatik indirir ve kurar.
+    /// Değilse sadece tray bildirimi gösterir.
+    /// </summary>
+    private async Task CheckAndApplySelfUpdateAsync()
     {
         try
         {
@@ -1247,16 +1280,27 @@ public partial class Form1 : Form
 
             if (release is null)
             {
+                LogSuccess("MikroUpdate zaten güncel.");
+
                 return;
             }
 
             LogInfo($"Yeni MikroUpdate sürümü mevcut: v{release.LatestVersion} (mevcut: v{release.CurrentVersion})");
             _fileLog.Info($"Yeni uygulama sürümü: v{release.LatestVersion}");
 
-            ShowTrayBalloon(
-                "MikroUpdate Güncellemesi",
-                $"Yeni sürüm v{release.LatestVersion} mevcut. Menüden güncelleyebilirsiniz.",
-                ToolTipIcon.Info);
+            if (!_config.AutoSelfUpdate)
+            {
+                // Sadece bildirim göster — kullanıcı menüden güncelleyecek
+                ShowTrayBalloon(
+                    "MikroUpdate Güncellemesi",
+                    $"Yeni sürüm v{release.LatestVersion} mevcut. Menüden güncelleyebilirsiniz.",
+                    ToolTipIcon.Info);
+
+                return;
+            }
+
+            // Otomatik güncelleme — kullanıcıya sormadan indir ve kur
+            await DownloadAndInstallSelfUpdateAsync(release);
         }
         catch (Exception ex)
         {
@@ -1265,7 +1309,68 @@ public partial class Form1 : Form
     }
 
     /// <summary>
-    /// Yeni sürümü indirip sessiz kurulum başlatır.
+    /// Güncellemeyi indirip sessiz kurulumu başlatır (kullanıcıya sormadan).
+    /// BtnSelfUpdate_Click ile ortak mantık kullanır.
+    /// </summary>
+    private async Task DownloadAndInstallSelfUpdateAsync(ReleaseInfo release)
+    {
+        LogInfo($"Güncelleme indiriliyor: v{release.LatestVersion}...");
+        ShowDownloadPanel();
+        _downloadPanel.ModuleName = "MikroUpdate";
+        _downloadPanel.Invalidate();
+
+        Progress<int> progress = new(percent =>
+        {
+            _downloadPanel.Percentage = Math.Clamp(percent, 0, 100);
+            _downloadPanel.Invalidate();
+        });
+
+        string installerPath = await _selfUpdateService.DownloadInstallerAsync(release, progress);
+
+        HideDownloadPanel();
+        LogSuccess($"İndirme tamamlandı: {Path.GetFileName(installerPath)}");
+        LogInfo("Installer başlatılıyor...");
+
+        _fileLog.Info($"Self-update installer başlatılıyor: {installerPath}");
+
+        _serviceAvailable = await _pipeClient.IsServiceRunningAsync();
+        _fileLog.Info($"Self-update öncesi servis durumu: {(_serviceAvailable ? "aktif" : "pasif")}");
+
+        _selfUpdateInProgress = true;
+
+        if (_serviceAvailable)
+        {
+            LogInfo("Servis üzerinden sessiz kurulum başlatılıyor (UAC'sız)...");
+
+            using CancellationTokenSource pipeCts = new(TimeSpan.FromSeconds(15));
+            ServiceResponse? response = await _pipeClient.SendCommandAsync(
+                CommandType.InstallSelfUpdate, installerPath, pipeCts.Token);
+
+            if (response is not null && response.Success)
+            {
+                _fileLog.Info("Self-update servise devredildi, uygulama kapatılıyor.");
+                Application.Exit();
+
+                return;
+            }
+
+            _selfUpdateInProgress = false;
+            string errorMsg = response?.Message ?? "Servis yanıt vermedi.";
+            _fileLog.Warning($"Servis üzerinden self-update başarısız: {errorMsg}");
+            LogError($"Self-update başarısız: {errorMsg}");
+            ShowTrayBalloon("Self-Update Hatası",
+                $"Servis üzerinden güncelleme yapılamadı: {errorMsg}\nLütfen tekrar deneyin.",
+                ToolTipIcon.Error);
+        }
+        else
+        {
+            LogInfo("Servis mevcut değil, doğrudan kurulum başlatılıyor (UAC gerekli)...");
+            SelfUpdateService.LaunchInstaller(installerPath);
+        }
+    }
+
+    /// <summary>
+    /// Yeni sürümü kontrol eder, kullanıcıya sorar ve kurulumu başlatır.
     /// </summary>
     private async void BtnSelfUpdate_Click(object? sender, EventArgs e)
     {
@@ -1300,74 +1405,7 @@ public partial class Form1 : Form
                 return;
             }
 
-            LogInfo($"Güncelleme indiriliyor: v{release.LatestVersion}...");
-            ShowDownloadPanel();
-            _downloadPanel.ModuleName = "MikroUpdate";
-            _downloadPanel.Invalidate();
-
-            Progress<int> progress = new(percent =>
-            {
-                _downloadPanel.Percentage = Math.Clamp(percent, 0, 100);
-                _downloadPanel.Invalidate();
-            });
-
-            string installerPath = await _selfUpdateService.DownloadInstallerAsync(release, progress);
-
-            HideDownloadPanel();
-            LogSuccess($"İndirme tamamlandı: {Path.GetFileName(installerPath)}");
-            LogInfo("Installer başlatılıyor...");
-
-            _fileLog.Info($"Self-update installer başlatılıyor: {installerPath}");
-
-            // Servis durumunu yeniden kontrol et — uygulama başlangıcında servis henüz
-            // hazır olmayabilir (pipe timeout), ancak şimdi çalışıyor olabilir.
-            _serviceAvailable = await _pipeClient.IsServiceRunningAsync();
-            _fileLog.Info($"Self-update öncesi servis durumu: {(_serviceAvailable ? "aktif" : "pasif")}");
-
-            // Restart Manager WM_CLOSE göndermeden ÖNCE flag'i set et,
-            // aksi halde OnFormClosing kapatmayı iptal edip tray'e minimize eder.
-            _selfUpdateInProgress = true;
-
-            // Servis mevcutsa pipe üzerinden UAC'sız kurulum, yoksa doğrudan (UAC'li)
-            if (_serviceAvailable)
-            {
-                LogInfo("Servis üzerinden sessiz kurulum başlatılıyor (UAC'sız)...");
-
-                // Pipe yanıtı için 15sn timeout — servis installer'ı başlattıktan sonra
-                // Restart Manager servisi kapatabilir, sonsuz beklemeyi önle
-                using CancellationTokenSource pipeCts = new(TimeSpan.FromSeconds(15));
-                ServiceResponse? response = await _pipeClient.SendCommandAsync(
-                    CommandType.InstallSelfUpdate, installerPath, pipeCts.Token);
-
-                if (response is not null && response.Success)
-                {
-                    _fileLog.Info("Self-update servise devredildi, uygulama kapatılıyor.");
-
-                    // Servis Session 0'da (SYSTEM) çalıştığı için installer da Session 0'da başlar.
-                    // Restart Manager cross-session WM_CLOSE gönderemez — app kendisi kapanmalı.
-                    // _selfUpdateInProgress = true olduğu için OnFormClosing izin verecek.
-                    Application.Exit();
-
-                    return;
-                }
-                else
-                {
-                    // Servis mevcutken UAC'li fallback yapma — hata göster
-                    _selfUpdateInProgress = false;
-                    string errorMsg = response?.Message ?? "Servis yanıt vermedi.";
-                    _fileLog.Warning($"Servis üzerinden self-update başarısız: {errorMsg}");
-                    LogError($"Self-update başarısız: {errorMsg}");
-                    ShowTrayBalloon("Self-Update Hatası",
-                        $"Servis üzerinden güncelleme yapılamadı: {errorMsg}\nLütfen tekrar deneyin.",
-                        ToolTipIcon.Error);
-                }
-            }
-            else
-            {
-                // Servis yok — UAC'li doğrudan kurulum (son çare)
-                LogInfo("Servis mevcut değil, doğrudan kurulum başlatılıyor (UAC gerekli)...");
-                SelfUpdateService.LaunchInstaller(installerPath);
-            }
+            await DownloadAndInstallSelfUpdateAsync(release);
         }
         catch (Exception ex)
         {

@@ -37,6 +37,7 @@ partial class SettingsForm
         _nudCheckInterval = new NumericUpDown();
         _lblCheckIntervalUnit = new Label();
         _chkAutoLaunch = new CheckBox();
+        _chkAutoSelfUpdate = new CheckBox();
         _lblUpdateMode = new Label();
         _cboUpdateMode = new ComboBox();
         _lblCdnBaseUrl = new Label();
@@ -90,25 +91,27 @@ partial class SettingsForm
         _tlpMain.Controls.Add(_nudCheckInterval, 1, 5);
         _tlpMain.Controls.Add(_lblCheckIntervalUnit, 2, 5);
         _tlpMain.Controls.Add(_chkAutoLaunch, 0, 6);
-        _tlpMain.Controls.Add(_lblUpdateMode, 0, 7);
-        _tlpMain.Controls.Add(_cboUpdateMode, 1, 7);
-        _tlpMain.Controls.Add(_lblCdnBaseUrl, 0, 8);
-        _tlpMain.Controls.Add(_txtCdnBaseUrl, 1, 8);
-        _tlpMain.Controls.Add(_lblProxyAddress, 0, 9);
-        _tlpMain.Controls.Add(_txtProxyAddress, 1, 9);
-        _tlpMain.Controls.Add(_lblHttpTimeout, 0, 10);
-        _tlpMain.Controls.Add(_nudHttpTimeout, 1, 10);
-        _tlpMain.Controls.Add(_lblHttpTimeoutUnit, 2, 10);
-        _tlpMain.Controls.Add(_lblModulesCaption, 0, 11);
-        _tlpMain.Controls.Add(_btnResetModules, 2, 11);
-        _tlpMain.Controls.Add(_dgvModules, 0, 12);
-        _tlpMain.Controls.Add(_pnlComputed, 0, 13);
-        _tlpMain.Controls.Add(_flpButtons, 0, 14);
+        _tlpMain.Controls.Add(_chkAutoSelfUpdate, 0, 7);
+        _tlpMain.Controls.Add(_lblUpdateMode, 0, 8);
+        _tlpMain.Controls.Add(_cboUpdateMode, 1, 8);
+        _tlpMain.Controls.Add(_lblCdnBaseUrl, 0, 9);
+        _tlpMain.Controls.Add(_txtCdnBaseUrl, 1, 9);
+        _tlpMain.Controls.Add(_lblProxyAddress, 0, 10);
+        _tlpMain.Controls.Add(_txtProxyAddress, 1, 10);
+        _tlpMain.Controls.Add(_lblHttpTimeout, 0, 11);
+        _tlpMain.Controls.Add(_nudHttpTimeout, 1, 11);
+        _tlpMain.Controls.Add(_lblHttpTimeoutUnit, 2, 11);
+        _tlpMain.Controls.Add(_lblModulesCaption, 0, 12);
+        _tlpMain.Controls.Add(_btnResetModules, 2, 12);
+        _tlpMain.Controls.Add(_dgvModules, 0, 13);
+        _tlpMain.Controls.Add(_pnlComputed, 0, 14);
+        _tlpMain.Controls.Add(_flpButtons, 0, 15);
         _tlpMain.Dock = DockStyle.Fill;
         _tlpMain.Location = new Point(0, 0);
         _tlpMain.Name = "_tlpMain";
         _tlpMain.Padding = new Padding(16, 16, 16, 12);
-        _tlpMain.RowCount = 15;
+        _tlpMain.RowCount = 16;
+        _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.RowStyles.Add(new RowStyle());
@@ -318,6 +321,20 @@ partial class SettingsForm
         _chkAutoLaunch.Size = new Size(264, 19);
         _chkAutoLaunch.TabIndex = 9;
         _chkAutoLaunch.Text = "Güncelleme sonrası Mikro'yu otomatik başlat";
+        // 
+        // _chkAutoSelfUpdate
+        // 
+        _chkAutoSelfUpdate.AccessibleName = "Otomatik uygulama güncellemesi";
+        _chkAutoSelfUpdate.AutoSize = true;
+        _chkAutoSelfUpdate.Checked = true;
+        _chkAutoSelfUpdate.CheckState = CheckState.Checked;
+        _tlpMain.SetColumnSpan(_chkAutoSelfUpdate, 3);
+        _chkAutoSelfUpdate.Location = new Point(19, 223);
+        _chkAutoSelfUpdate.Margin = new Padding(3, 3, 3, 3);
+        _chkAutoSelfUpdate.Name = "_chkAutoSelfUpdate";
+        _chkAutoSelfUpdate.Size = new Size(310, 19);
+        _chkAutoSelfUpdate.TabIndex = 10;
+        _chkAutoSelfUpdate.Text = "MikroUpdate güncellemelerini otomatik indir ve kur";
         // 
         // _lblUpdateMode
         // 
@@ -663,6 +680,7 @@ partial class SettingsForm
     private NumericUpDown _nudCheckInterval;
     private Label _lblCheckIntervalUnit;
     private CheckBox _chkAutoLaunch;
+    private CheckBox _chkAutoSelfUpdate;
     private Label _lblModulesCaption;
     private Button _btnResetModules;
     private DataGridView _dgvModules;

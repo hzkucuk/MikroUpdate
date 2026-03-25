@@ -26,6 +26,9 @@ public sealed class UpdateConfig
     /// <summary>Güncelleme sonrası Mikro'yu otomatik başlat.</summary>
     public bool AutoLaunchAfterUpdate { get; set; } = true;
 
+    /// <summary>MikroUpdate yeni sürümlerini otomatik indir ve kur. Varsayılan: true.</summary>
+    public bool AutoSelfUpdate { get; set; } = true;
+
     /// <summary>Periyodik versiyon kontrol aralığı (dakika). Varsayılan: 30.</summary>
     public int CheckIntervalMinutes { get; set; } = 30;
 

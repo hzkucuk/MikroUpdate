@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.25.5"
+#define MyAppVersion "1.26.0"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -121,6 +121,7 @@ var
   ChkBeyanname: TNewCheckBox;
   { Mevcut config.json'dan korunan, UI'da olmayan alanlar }
   ExistingAutoLaunch: Boolean;
+  ExistingAutoSelfUpdate: Boolean;
   ExistingCheckInterval: Integer;
   ExistingCdnBaseUrl: String;
   ExistingProxyAddress: String;
@@ -316,6 +317,7 @@ begin
   ExistingConfigLoaded := False;
   { Varsayılan değerler }
   ExistingAutoLaunch := True;
+  ExistingAutoSelfUpdate := True;
   ExistingCheckInterval := 30;
   ExistingCdnBaseUrl := 'https://cdn-mikro.atros.com.tr/mikro';
   ExistingProxyAddress := '';
@@ -369,6 +371,7 @@ begin
 
   { UI'da olmayan alanları koru }
   ExistingAutoLaunch := GetJsonBoolValue(Json, 'AutoLaunchAfterUpdate', True);
+  ExistingAutoSelfUpdate := GetJsonBoolValue(Json, 'AutoSelfUpdate', True);
   ExistingCheckInterval := GetJsonIntValue(Json, 'CheckIntervalMinutes', 30);
 
   Val := GetJsonStringValue(Json, 'CdnBaseUrl');
@@ -612,6 +615,7 @@ begin
     '  "LocalInstallPath": "' + JsonEscapeStr(LocalPathEdit.Text) + '",' + #13#10 +
     '  "SetupFilesPath": "' + JsonEscapeStr(SetupFilesPathEdit.Text) + '",' + #13#10 +
     '  "AutoLaunchAfterUpdate": ' + BoolToStr(ExistingAutoLaunch) + ',' + #13#10 +
+    '  "AutoSelfUpdate": ' + BoolToStr(ExistingAutoSelfUpdate) + ',' + #13#10 +
     '  "CheckIntervalMinutes": ' + IntToStr(ExistingCheckInterval) + ',' + #13#10 +
     '  "UpdateMode": "' + UpdateMode + '",' + #13#10 +
     '  "CdnBaseUrl": "' + JsonEscapeStr(ExistingCdnBaseUrl) + '",' + #13#10 +

@@ -55,6 +55,7 @@ public partial class SettingsForm : Form
         _txtSetupFilesPath.Text = _config.SetupFilesPath;
         _nudCheckInterval.Value = Math.Clamp(_config.CheckIntervalMinutes, 1, 1440);
         _chkAutoLaunch.Checked = _config.AutoLaunchAfterUpdate;
+        _chkAutoSelfUpdate.Checked = _config.AutoSelfUpdate;
         _cboUpdateMode.SelectedItem = _config.UpdateMode.ToString();
         _txtCdnBaseUrl.Text = _config.CdnBaseUrl;
         _txtProxyAddress.Text = _config.ProxyAddress;
@@ -78,6 +79,7 @@ public partial class SettingsForm : Form
             SetupFilesPath = _txtSetupFilesPath.Text.Trim(),
             CheckIntervalMinutes = (int)_nudCheckInterval.Value,
             AutoLaunchAfterUpdate = _chkAutoLaunch.Checked,
+            AutoSelfUpdate = _chkAutoSelfUpdate.Checked,
             UpdateMode = Enum.TryParse<UpdateMode>(_cboUpdateMode.SelectedItem?.ToString(), out UpdateMode mode)
                 ? mode : UpdateMode.Local,
             CdnBaseUrl = _txtCdnBaseUrl.Text.Trim(),

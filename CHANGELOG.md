@@ -3,6 +3,20 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.26.0] - 2026-03-26
+
+### Yeni Ozellikler
+- **Otomatik Self-Update** — MikroUpdate yeni surumleri periyodik olarak kontrol edilir ve `AutoSelfUpdate` ayari aktifse otomatik indirilip kurulur (kullaniciya sormadan)
+- `UpdateConfig.AutoSelfUpdate` ozelligi eklendi (varsayilan: `true`)
+- Ayarlar formuna "MikroUpdate guncellemelerini otomatik indir ve kur" secenegi eklendi
+- Periyodik self-update dongusu: ilk kontrol baslangicta, sonraki kontroller `CheckIntervalMinutes` araliginda
+- `BtnSelfUpdate_Click` ve otomatik guncelleme ortak `DownloadAndInstallSelfUpdateAsync` metodunu kullaniyor
+
+### Teknik
+- Form1: `StartSelfUpdateLoopAsync()` periyodik dongu, `CheckAndApplySelfUpdateAsync()` kontrol + karar, `DownloadAndInstallSelfUpdateAsync()` indirme + kurulum
+- SettingsForm.Designer.cs: `_chkAutoSelfUpdate` checkbox eklendi (row 7)
+- ISS: `ExistingAutoSelfUpdate` degiskeni, `LoadExistingConfig` ve `GenerateConfigJson` guncellendi
+
 ## [1.25.5] - 2026-03-26
 
 ### Test
