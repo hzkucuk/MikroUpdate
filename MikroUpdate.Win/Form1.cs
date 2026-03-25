@@ -442,6 +442,9 @@ public partial class Form1 : Form
     /// </summary>
     private async Task CheckVersionsAsync(CancellationToken cancellationToken = default)
     {
+        // Servis durumunu yeniden kontrol et (başlangıçta hazır olmamış olabilir)
+        _serviceAvailable = await _pipeClient.IsServiceRunningAsync(cancellationToken);
+
         if (!_serviceAvailable)
         {
             LogError("Servis çalışmıyor — versiyon kontrolü yapılamıyor.");
@@ -579,6 +582,9 @@ public partial class Form1 : Form
 
     private async Task RunUpdateAsync(CancellationToken cancellationToken)
     {
+        // Servis durumunu yeniden kontrol et (başlangıçta hazır olmamış olabilir)
+        _serviceAvailable = await _pipeClient.IsServiceRunningAsync(cancellationToken);
+
         if (!_serviceAvailable)
         {
             LogError("Güncelleme için MikroUpdate servisi çalışıyor olmalıdır.");
@@ -1309,6 +1315,11 @@ public partial class Form1 : Form
             LogInfo("Installer başlatılıyor...");
 
             _fileLog.Info($"Self-update installer başlatılıyor: {installerPath}");
+
+            // Servis durumunu yeniden kontrol et — uygulama başlangıcında servis henüz
+            // hazır olmayabilir (pipe timeout), ancak şimdi çalışıyor olabilir.
+            _serviceAvailable = await _pipeClient.IsServiceRunningAsync();
+            _fileLog.Info($"Self-update öncesi servis durumu: {(_serviceAvailable ? "aktif" : "pasif")}");
 
             // Restart Manager WM_CLOSE göndermeden ÖNCE flag'i set et,
             // aksi halde OnFormClosing kapatmayı iptal edip tray'e minimize eder.

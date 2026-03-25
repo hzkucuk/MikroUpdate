@@ -3,6 +3,11 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.23.6] - 2026-03-25
+
+### Duzeltmeler
+- **Servis durumu yeniden kontrol** — Self-update, versiyon kontrol ve guncelleme oncesi servis durumu yeniden kontrol ediliyor. Uygulama baslangiçta servis hazir degilse bile sonradan baglanti kurulabiliyor, UAC fallback onleniyor.
+
 ## [1.23.5] - 2026-03-25
 
 ### Test
