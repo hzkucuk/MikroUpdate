@@ -799,6 +799,20 @@ public sealed class UpdateWorker : BackgroundService
         {
             _logger.LogError(ex, "Self-update hatası.");
             TryDeleteRestartFlag();
+
+            // Hata durumunda client'a yanıt göndermeyi dene — yoksa tray app sonsuza kadar bekler
+            try
+            {
+                if (pipeServer.IsConnected)
+                {
+                    await SendFinalResponseAsync(pipeServer, false, ServiceStatus.Error,
+                        $"Self-update hatası: {ex.Message}", stoppingToken);
+                }
+            }
+            catch
+            {
+                // Pipe zaten kopmuş olabilir, yutulabilir
+            }
         }
     }
 

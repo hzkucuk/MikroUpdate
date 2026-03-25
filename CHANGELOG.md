@@ -3,6 +3,13 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.23.4] - 2026-03-25
+
+### Duzeltmeler
+- **Self-update installer indirme yolu degistirildi** — `%TEMP%` yerine `%ProgramData%\MikroUpdate\Updates\` kullaniliyor, SYSTEM servisi dosyaya erisebiliyor
+- **Servis hata yaniti eklendi** — `HandleInstallSelfUpdateAsync` exception durumunda pipe uzerinden hata yaniti gonderiyor, tray app asili kalmiyor
+- **UAC fallback kaldirildi** — Servis mevcutken pipe basarisiz olursa hata mesaji gosteriliyor, otomatik UAC'li kuruluma dusmuyor
+
 ## [1.23.3] - 2026-03-25
 
 ### Duzeltmeler

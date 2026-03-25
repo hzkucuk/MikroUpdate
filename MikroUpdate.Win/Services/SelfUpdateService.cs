@@ -92,7 +92,11 @@ public sealed class SelfUpdateService : IDisposable
     {
         ArgumentNullException.ThrowIfNull(releaseInfo);
 
-        string tempDir = Path.Combine(Path.GetTempPath(), "MikroUpdate_Update");
+        // ProgramData altına indir — hem kullanıcı hem SYSTEM (servis) erişebilir.
+        // ISS'de {commonappdata}\MikroUpdate everyone-modify olarak ayarlanmış.
+        string tempDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+            "MikroUpdate", "Updates");
         Directory.CreateDirectory(tempDir);
         string installerPath = Path.Combine(tempDir, releaseInfo.InstallerFileName);
 

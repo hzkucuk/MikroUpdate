@@ -1331,13 +1331,20 @@ public partial class Form1 : Form
                 }
                 else
                 {
+                    // Servis mevcutken UAC'li fallback yapma — hata göster
+                    _selfUpdateInProgress = false;
                     string errorMsg = response?.Message ?? "Servis yanıt vermedi.";
-                    _fileLog.Warning($"Servis üzerinden self-update başarısız: {errorMsg}, doğrudan başlatılıyor.");
-                    SelfUpdateService.LaunchInstaller(installerPath);
+                    _fileLog.Warning($"Servis üzerinden self-update başarısız: {errorMsg}");
+                    LogError($"Self-update başarısız: {errorMsg}");
+                    ShowTrayBalloon("Self-Update Hatası",
+                        $"Servis üzerinden güncelleme yapılamadı: {errorMsg}\nLütfen tekrar deneyin.",
+                        ToolTipIcon.Error);
                 }
             }
             else
             {
+                // Servis yok — UAC'li doğrudan kurulum (son çare)
+                LogInfo("Servis mevcut değil, doğrudan kurulum başlatılıyor (UAC gerekli)...");
                 SelfUpdateService.LaunchInstaller(installerPath);
             }
         }
