@@ -3,6 +3,13 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.23.2] - 2026-03-25
+
+### Düzeltmeler
+- **Self-update race condition düzeltildi** — `_selfUpdateInProgress` flag'i pipe komutundan once set ediliyor, Restart Manager WM_CLOSE gonderdiginde app tray'e minimize yerine kapanabiliyor
+- **Pipe timeout eklendi** — `InstallSelfUpdate` komutu icin 15sn timeout, servis yanit vermezse sonsuz bekleme onlendi
+- **Kapatma sebebi loglaniyor** — `OnFormClosing`'de `CloseReason` log'a yaziliyor
+
 ## [1.23.1] - 2026-03-25
 
 ### Temizlik

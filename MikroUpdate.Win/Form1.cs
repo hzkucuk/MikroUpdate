@@ -86,8 +86,8 @@ public partial class Form1 : Form
 
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
-        // Self-update sırasında Restart Manager WM_CLOSE gönderir.
-        // CloseReason.UserClosing olarak gelir — bu durumda kapatmaya izin ver.
+        // Sadece kullanıcı X butonuna tıklarsa tray'e minimize et.
+        // Self-update, force exit, Windows shutdown veya Restart Manager kapatırsa izin ver.
         if (e.CloseReason == CloseReason.UserClosing && !_forceExit && !_selfUpdateInProgress)
         {
             e.Cancel = true;
@@ -99,7 +99,7 @@ public partial class Form1 : Form
         _cts?.Cancel();
         _cts?.Dispose();
         _selfUpdateService.Dispose();
-        _fileLog.Info("Uygulama kapatılıyor.");
+        _fileLog.Info($"Uygulama kapatılıyor. Sebep: {e.CloseReason}");
         _fileLog.Dispose();
         _notifyIcon.Visible = false;
         base.OnFormClosing(e);
@@ -1310,29 +1310,34 @@ public partial class Form1 : Form
 
             _fileLog.Info($"Self-update installer başlatılıyor: {installerPath}");
 
+            // Restart Manager WM_CLOSE göndermeden ÖNCE flag'i set et,
+            // aksi halde OnFormClosing kapatmayı iptal edip tray'e minimize eder.
+            _selfUpdateInProgress = true;
+
             // Servis mevcutsa pipe üzerinden UAC'sız kurulum, yoksa doğrudan (UAC'li)
             if (_serviceAvailable)
             {
                 LogInfo("Servis üzerinden sessiz kurulum başlatılıyor (UAC'sız)...");
+
+                // Pipe yanıtı için 15sn timeout — servis installer'ı başlattıktan sonra
+                // Restart Manager servisi kapatabilir, sonsuz beklemeyi önle
+                using CancellationTokenSource pipeCts = new(TimeSpan.FromSeconds(15));
                 ServiceResponse? response = await _pipeClient.SendCommandAsync(
-                    CommandType.InstallSelfUpdate, installerPath);
+                    CommandType.InstallSelfUpdate, installerPath, pipeCts.Token);
 
                 if (response is not null && response.Success)
                 {
-                    _selfUpdateInProgress = true;
                     _fileLog.Info("Self-update servise devredildi, uygulama kapatılıyor.");
                 }
                 else
                 {
                     string errorMsg = response?.Message ?? "Servis yanıt vermedi.";
                     _fileLog.Warning($"Servis üzerinden self-update başarısız: {errorMsg}, doğrudan başlatılıyor.");
-                    _selfUpdateInProgress = true;
                     SelfUpdateService.LaunchInstaller(installerPath);
                 }
             }
             else
             {
-                _selfUpdateInProgress = true;
                 SelfUpdateService.LaunchInstaller(installerPath);
             }
         }
