@@ -3,6 +3,16 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.22.2] - 2026-03-25
+
+### Düzeltmeler
+- **Servis durdurulduğunda tray menü durumu güncellenmiyor hatası düzeltildi**
+  - `UpdateServiceStatus` içinde `ServiceController.Refresh()` eklenerek stale (önbellekli) durum sorunu giderildi
+  - `RunScCommandAsync` artık `sc.exe` çıkış kodunu kontrol ediyor; yetki hatası gibi başarısızlıklar sessizce yutulmak yerine kullanıcıya bildiriliyor
+  - `RunServiceCommandAsync` ve `TsmServiceRestart_Click` içinde `WaitForServiceStatusAsync` ile servisin hedef duruma geçmesi bekleniyor
+  - Hata durumunda da `UpdateServiceStatus()` çağrılarak menünün her zaman güncel kalması sağlandı
+  - `catch (InvalidOperationException)` yerine `catch (Exception)` ile `Win32Exception` gibi yakalanmayan hatalar da ele alındı
+
 ## [1.22.1] - 2025-07-22
 
 ### Düzeltmeler

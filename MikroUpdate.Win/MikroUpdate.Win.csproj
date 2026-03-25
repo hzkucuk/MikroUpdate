@@ -7,10 +7,10 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>1.22.1</Version>
-    <AssemblyVersion>1.22.1</AssemblyVersion>
-    <FileVersion>1.22.1</FileVersion>
-    <ApplicationVersion>1.22.1</ApplicationVersion>
+    <Version>1.22.2</Version>
+    <AssemblyVersion>1.22.2</AssemblyVersion>
+    <FileVersion>1.22.2</FileVersion>
+    <ApplicationVersion>1.22.2</ApplicationVersion>
     <Product>MikroUpdate</Product>
     <Description>Mikro ERP otomatik güncelleme sistemi</Description>
     <ApplicationIcon>app.ico</ApplicationIcon>

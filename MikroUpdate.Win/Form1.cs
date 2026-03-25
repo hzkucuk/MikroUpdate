@@ -34,6 +34,7 @@ public partial class Form1 : Form
         _pipeClient.OnError = message => _fileLog.Warning(message);
 
         string version = GetAppVersion();
+        Text = $"MikroUpdate v{version}";
         _notifyIcon.Text = $"MikroUpdate v{version}";
         _ctxTray.Renderer = new VersionSidebarRenderer($"MikroUpdate v{version}");
 
@@ -185,6 +186,7 @@ public partial class Form1 : Form
         try
         {
             using ServiceController sc = new(ServiceName);
+            sc.Refresh();
             ServiceControllerStatus status = sc.Status;
 
             _tsmServiceStatus.Text = status switch
@@ -201,7 +203,7 @@ public partial class Form1 : Form
             _tsmServiceStop.Enabled = status == ServiceControllerStatus.Running;
             _tsmServiceRestart.Enabled = status == ServiceControllerStatus.Running;
         }
-        catch (InvalidOperationException)
+        catch (Exception)
         {
             _tsmServiceStatus.Text = "Servis: ✖ Kurulu değil";
             _tsmServiceStart.Enabled = false;
@@ -231,9 +233,11 @@ public partial class Form1 : Form
         {
             LogInfo("Servis yeniden başlatılıyor...");
             await RunScCommandAsync("stop");
-            await Task.Delay(2000);
+            await WaitForServiceStatusAsync(ServiceControllerStatus.Stopped);
             await RunScCommandAsync("start");
+            await WaitForServiceStatusAsync(ServiceControllerStatus.Running);
 
+            UpdateServiceStatus();
             LogSuccess("Servis yeniden başlatıldı.");
             ShowTrayBalloon("Servis", "MikroUpdateService yeniden başlatıldı.", ToolTipIcon.Info);
 
@@ -242,6 +246,7 @@ public partial class Form1 : Form
         }
         catch (Exception ex)
         {
+            UpdateServiceStatus();
             LogError($"Servis yeniden başlatma hatası: {ex.Message}");
             _fileLog.Error("Servis yeniden başlatma hatası", ex);
         }
@@ -256,13 +261,18 @@ public partial class Form1 : Form
         {
             LogInfo(startMessage);
             await RunScCommandAsync(command);
+
+            // Servisin hedef duruma geçmesini bekle
+            await WaitForServiceStatusAsync(
+                command == "stop" ? ServiceControllerStatus.Stopped : ServiceControllerStatus.Running);
+
+            UpdateServiceStatus();
             LogSuccess(successMessage);
             ShowTrayBalloon("Servis", successMessage, ToolTipIcon.Info);
 
             // Pipe bağlantısını yeniden kontrol et
             if (command == "start")
             {
-                await Task.Delay(1500);
                 _serviceAvailable = await _pipeClient.IsServiceRunningAsync();
             }
             else if (command == "stop")
@@ -272,6 +282,7 @@ public partial class Form1 : Form
         }
         catch (Exception ex)
         {
+            UpdateServiceStatus();
             LogError($"Servis komutu hatası ({command}): {ex.Message}");
             _fileLog.Error($"Servis {command} hatası", ex);
         }
@@ -292,7 +303,33 @@ public partial class Form1 : Form
         };
 
         process.Start();
+        string output = await process.StandardOutput.ReadToEndAsync().ConfigureAwait(true);
         await process.WaitForExitAsync().ConfigureAwait(true);
+
+        if (process.ExitCode != 0)
+        {
+            throw new InvalidOperationException(
+                $"sc.exe {command} başarısız (çıkış kodu: {process.ExitCode}): {output.Trim()}");
+        }
+    }
+
+    /// <summary>
+    /// Servisin belirtilen duruma geçmesini bekler (UI thread'i bloklamadan).
+    /// </summary>
+    private static async Task WaitForServiceStatusAsync(ServiceControllerStatus targetStatus)
+    {
+        await Task.Run(() =>
+        {
+            try
+            {
+                using ServiceController sc = new(ServiceName);
+                sc.WaitForStatus(targetStatus, TimeSpan.FromSeconds(10));
+            }
+            catch (System.ServiceProcess.TimeoutException)
+            {
+                // Zaman aşımı — menü bir sonraki açılışta güncel durumu gösterecek
+            }
+        }).ConfigureAwait(true);
     }
 
     #endregion
