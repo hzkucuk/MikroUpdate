@@ -3,6 +3,11 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.23.3] - 2026-03-25
+
+### Duzeltmeler
+- **Tek ornek (single-instance) kontrolu eklendi** — Uygulama birden fazla kez calistirildiginda ikinci ornek sessizce kapanir, cift tray icon sorunu onlendi
+
 ## [1.23.2] - 2026-03-25
 
 ### Düzeltmeler

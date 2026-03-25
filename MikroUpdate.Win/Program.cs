@@ -2,6 +2,9 @@ namespace MikroUpdate.Win;
 
 internal static class Program
 {
+    /// <summary>Uygulama genelinde tek örnek garantisi için Mutex adı.</summary>
+    private const string MutexName = "Global\\MikroUpdate_SingleInstance_21CEB31C";
+
     /// <summary>
     /// MikroUpdate giriş noktası.
     /// Kullanım: MikroUpdate.exe [/auto]
@@ -11,6 +14,14 @@ internal static class Program
     [STAThread]
     static void Main(string[] args)
     {
+        using Mutex mutex = new(true, MutexName, out bool isNewInstance);
+
+        if (!isNewInstance)
+        {
+            // Zaten çalışan bir örnek var — çift tray icon'u önle
+            return;
+        }
+
         ApplicationConfiguration.Initialize();
         Application.SetColorMode(SystemColorMode.System);
 
