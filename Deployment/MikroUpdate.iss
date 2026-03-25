@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.23.9"
+#define MyAppVersion "1.24.0"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -645,6 +645,7 @@ procedure InstallAndStartService;
 var
   ResultCode: Integer;
   BinPath: String;
+  RetryCount: Integer;
 begin
   BinPath := ExpandConstant('{app}\Service\MikroUpdate.Service.exe');
 
@@ -653,16 +654,35 @@ begin
     { Upgrade: servisi durdur, sil, yeniden oluştur (dosyalar güncellenmiş olabilir) }
     Log('MikroUpdateService zaten mevcut — yeniden oluşturuluyor...');
     Exec('sc.exe', 'stop MikroUpdateService', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Log(Format('sc stop sonuç: %d', [ResultCode]));
     Sleep(2000);
     Exec('sc.exe', 'delete MikroUpdateService', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-    Sleep(1000);
+    Log(Format('sc delete sonuç: %d', [ResultCode]));
+
+    { Servis tamamen silinene kadar bekle (max 10 saniye) }
+    RetryCount := 0;
+    while IsServiceInstalled and (RetryCount < 10) do
+    begin
+      Log(Format('Servis hâlâ mevcut, bekleniyor... (%d/10)', [RetryCount + 1]));
+      Sleep(1000);
+      RetryCount := RetryCount + 1;
+    end;
+
+    if IsServiceInstalled then
+      Log('UYARI: Servis 10 saniye sonra hâlâ silinmemiş!');
   end;
 
   { Servisi oluştur }
-  Exec('sc.exe',
+  if not Exec('sc.exe',
     Format('create MikroUpdateService binPath= "%s" start= auto DisplayName= "MikroUpdate Güncelleme Servisi"', [BinPath]),
-    '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  Log(Format('sc create sonuç: %d', [ResultCode]));
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  begin
+    Log(Format('sc create BAŞARISIZ (Exec hata): %d', [ResultCode]));
+  end
+  else
+  begin
+    Log(Format('sc create sonuç: %d', [ResultCode]));
+  end;
 
   { Açıklamasını ayarla }
   Exec('sc.exe',
@@ -676,8 +696,14 @@ begin
   Log(Format('sc failure sonuç: %d', [ResultCode]));
 
   { Servisi başlat }
-  Exec('sc.exe', 'start MikroUpdateService', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  Log(Format('sc start sonuç: %d', [ResultCode]));
+  if not Exec('sc.exe', 'start MikroUpdateService', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  begin
+    Log(Format('sc start BAŞARISIZ (Exec hata): %d', [ResultCode]));
+  end
+  else
+  begin
+    Log(Format('sc start sonuç: %d', [ResultCode]));
+  end;
 
   { Kurulum doğrulama }
   if IsServiceInstalled then

@@ -3,6 +3,17 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.24.0] - 2026-03-26
+
+### Yenilikler
+- **Pipe olusturma fallback mekanizmasi** — PipeSecurity ACL basarisiz olursa servis temel pipe ile calismaya devam eder, crash onlenir
+- **ISS servis kurulum retry dongusu** — sc delete sonrasi max 10sn bekleyerek servisin tamamen silinmesini garanti eder
+- **ISS gelismis loglama** — sc stop/delete/create/start islemlerinin ResultCode degerleri loglanir
+
+### Duzeltmeler
+- Servis runtime'da PipeSecurity tipleri yuklenemezse crash yerine graceful fallback
+- ISS'de sc delete ile sc create arasi yetersiz bekleme suresi (1sn → max 10sn retry)
+
 ## [1.23.9] - 2026-03-26
 
 ### Test

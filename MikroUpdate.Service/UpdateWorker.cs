@@ -104,24 +104,7 @@ public sealed class UpdateWorker : BackgroundService
         {
             try
             {
-                // SYSTEM olarak çalışırken tüm kullanıcıların pipe'a bağlanabilmesini sağla
-#pragma warning disable CA1416 // Windows-only servis — platform uyumluluğu garantili
-                PipeSecurity pipeSecurity = new();
-                pipeSecurity.AddAccessRule(new PipeAccessRule(
-                    new SecurityIdentifier(WellKnownSidType.WorldSid, null),
-                    PipeAccessRights.ReadWrite,
-                    AccessControlType.Allow));
-
-                await using NamedPipeServerStream pipeServer = NamedPipeServerStreamAcl.Create(
-                    PipeConstants.PipeName,
-                    PipeDirection.InOut,
-                    NamedPipeServerStream.MaxAllowedServerInstances,
-                    PipeTransmissionMode.Byte,
-                    PipeOptions.Asynchronous,
-                    inBufferSize: 0,
-                    outBufferSize: 0,
-                    pipeSecurity);
-#pragma warning restore CA1416
+                await using NamedPipeServerStream pipeServer = CreatePipeServer();
 
                 await pipeServer.WaitForConnectionAsync(stoppingToken).ConfigureAwait(false);
                 _logger.LogDebug("Pipe bağlantısı alındı.");
@@ -137,6 +120,51 @@ public sealed class UpdateWorker : BackgroundService
                 _logger.LogError(ex, "Pipe sunucu hatası.");
                 await Task.Delay(1000, stoppingToken).ConfigureAwait(false);
             }
+        }
+    }
+
+    /// <summary>
+    /// Named Pipe oluşturur. Önce PipeSecurity ACL ile dener (tüm kullanıcılar erişebilir),
+    /// başarısız olursa temel constructor'a düşer (yalnızca admin/SYSTEM erişebilir).
+    /// </summary>
+    private NamedPipeServerStream CreatePipeServer()
+    {
+        try
+        {
+            // SYSTEM olarak çalışırken tüm kullanıcıların pipe'a bağlanabilmesini sağla
+#pragma warning disable CA1416 // Windows-only servis — platform uyumluluğu garantili
+            PipeSecurity pipeSecurity = new();
+            pipeSecurity.AddAccessRule(new PipeAccessRule(
+                new SecurityIdentifier(WellKnownSidType.WorldSid, null),
+                PipeAccessRights.ReadWrite,
+                AccessControlType.Allow));
+
+            NamedPipeServerStream server = NamedPipeServerStreamAcl.Create(
+                PipeConstants.PipeName,
+                PipeDirection.InOut,
+                NamedPipeServerStream.MaxAllowedServerInstances,
+                PipeTransmissionMode.Byte,
+                PipeOptions.Asynchronous,
+                inBufferSize: 0,
+                outBufferSize: 0,
+                pipeSecurity);
+#pragma warning restore CA1416
+
+            _logger.LogDebug("Pipe oluşturuldu (ACL: Everyone ReadWrite).");
+            return server;
+        }
+        catch (Exception ex)
+        {
+            // PipeSecurity tipleri runtime'da yoksa veya ACL oluşturulamazsa
+            // temel pipe ile devam et — en azından servis çalışır
+            _logger.LogWarning(ex, "PipeSecurity ile pipe oluşturulamadı, temel pipe kullanılıyor.");
+
+            return new NamedPipeServerStream(
+                PipeConstants.PipeName,
+                PipeDirection.InOut,
+                NamedPipeServerStream.MaxAllowedServerInstances,
+                PipeTransmissionMode.Byte,
+                PipeOptions.Asynchronous);
         }
     }
 
