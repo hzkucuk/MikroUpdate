@@ -3,6 +3,22 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.25.0] - 2026-03-26
+
+### Yenilikler
+- **Birlesik tanisal log sistemi** — Service ve Tray App ayni RollingFileLogger altyapisini kullaniyor
+- **Gunluk rotasyon + boyut limiti** — Her log dosyasi max ~5 MB, gun degistiginde veya boyut asildiginda segment olusturulur
+- **Otomatik eski log temizligi** — 7 gunden eski log dosyalari otomatik silinir, disk alani korunur
+- **Service dosya loglama** — Artik tum ILogger cikisi Event Log'a ek olarak `ProgramData\MikroUpdate\logs\Service_YYYY-MM-DD.log` dosyasina da yaziliyor
+- **Tray App log altyapisi yenilendi** — FileLogService artik paylasilan RollingFileLogger kullaniyor, `App_YYYY-MM-DD.log` olarak yaziliyor
+
+### Teknik
+- Yeni: `MikroUpdate.Shared/Logging/RollingFileLogger.cs` — Thread-safe cekirdek log yazici
+- Yeni: `MikroUpdate.Shared/Logging/DiagnosticFileLoggerProvider.cs` — ILoggerProvider adaptoru (DI entegrasyonu)
+- Yeni: `MikroUpdate.Shared/Logging/DiagnosticLoggerExtensions.cs` — `AddDiagnosticFileLogger()` uzanti metodu
+- Yeni: `Microsoft.Extensions.Logging` NuGet bagimliligi (Shared projesine)
+- Degisiklik: `FileLogService.cs` artik RollingFileLogger'a delege ediyor (public API degismedi)
+
 ## [1.24.0] - 2026-03-26
 
 ### Yenilikler

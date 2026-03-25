@@ -1,55 +1,27 @@
+using MikroUpdate.Shared.Logging;
+
 namespace MikroUpdate.Win.Services;
 
 /// <summary>
 /// Dosya tabanlı log servisi.
-/// Günlük rotasyonlu log dosyalarını %ProgramData%\MikroUpdate\logs\ dizinine yazar.
+/// Paylaşılan RollingFileLogger altyapısını kullanır.
+/// Günlük rotasyon, ~5 MB boyut limiti ve 7 gün saklama süresi ile çalışır.
 /// </summary>
 public sealed class FileLogService : IDisposable
 {
-    private static readonly string LogDirectory = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-        "MikroUpdate", "logs");
-
-    private readonly Lock _lock = new();
-    private StreamWriter? _writer;
-    private string _currentDate = string.Empty;
-    private bool _disposed;
+    private readonly RollingFileLogger _logger = new("App");
 
     /// <summary>
     /// Log dizininin tam yolunu döner.
     /// </summary>
-    public static string GetLogDirectory() => LogDirectory;
+    public static string GetLogDirectory() => new RollingFileLogger("App").LogDirectory;
 
     /// <summary>
     /// Belirtilen seviye ve mesajı log dosyasına yazar.
     /// </summary>
     public void Write(LogLevel level, string message)
     {
-        if (_disposed || string.IsNullOrWhiteSpace(message))
-        {
-            return;
-        }
-
-        string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-        string line = $"[{timestamp}] [{level}] {message}";
-
-        lock (_lock)
-        {
-            try
-            {
-                EnsureWriter();
-                _writer?.WriteLine(line);
-                _writer?.Flush();
-            }
-            catch (IOException)
-            {
-                // Dosya yazım hatası — UI log zaten devam ediyor, sessizce geç
-            }
-            catch (UnauthorizedAccessException)
-            {
-                // Yetkisizlik — sessizce geç
-            }
-        }
+        _logger.Write(level.ToString(), "App", message);
     }
 
     /// <summary>
@@ -83,39 +55,7 @@ public sealed class FileLogService : IDisposable
 
     public void Dispose()
     {
-        if (_disposed)
-        {
-            return;
-        }
-
-        _disposed = true;
-
-        lock (_lock)
-        {
-            _writer?.Dispose();
-            _writer = null;
-        }
-    }
-
-    private void EnsureWriter()
-    {
-        string today = DateTime.Now.ToString("yyyy-MM-dd");
-
-        if (_writer is not null && _currentDate == today)
-        {
-            return;
-        }
-
-        _writer?.Dispose();
-        Directory.CreateDirectory(LogDirectory);
-
-        string logFilePath = Path.Combine(LogDirectory, $"MikroUpdate_{today}.log");
-        _writer = new StreamWriter(logFilePath, append: true, encoding: System.Text.Encoding.UTF8)
-        {
-            AutoFlush = false
-        };
-
-        _currentDate = today;
+        _logger.Dispose();
     }
 }
 
