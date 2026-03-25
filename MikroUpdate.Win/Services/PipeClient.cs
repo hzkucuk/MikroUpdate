@@ -25,6 +25,21 @@ public sealed class PipeClient
         CommandType command,
         CancellationToken cancellationToken = default)
     {
+        return await SendCommandAsync(command, data: null, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Servise ek veri ile birlikte komut gönderir ve yanıt alır.
+    /// </summary>
+    /// <param name="command">Gönderilecek komut türü.</param>
+    /// <param name="data">Komut ile birlikte gönderilecek ek veri (ör. dosya yolu).</param>
+    /// <param name="cancellationToken">İptal tokenı.</param>
+    /// <returns>Servis yanıtı veya bağlantı hatası durumunda null.</returns>
+    public async Task<ServiceResponse?> SendCommandAsync(
+        CommandType command,
+        string? data,
+        CancellationToken cancellationToken = default)
+    {
         try
         {
             await using NamedPipeClientStream pipeClient = new(
@@ -37,7 +52,7 @@ public sealed class PipeClient
                 PipeConstants.ConnectionTimeoutMs, cancellationToken).ConfigureAwait(false);
 
             // Komutu gönder (length-prefixed)
-            ServiceCommand serviceCommand = new() { Command = command };
+            ServiceCommand serviceCommand = new() { Command = command, Data = data };
             await PipeProtocol.WriteMessageAsync(pipeClient, serviceCommand, cancellationToken)
                 .ConfigureAwait(false);
 

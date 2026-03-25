@@ -1579,8 +1579,31 @@ public partial class Form1 : Form
 
             _fileLog.Info($"Self-update installer başlatılıyor: {installerPath}");
 
-            _selfUpdateInProgress = true;
-            SelfUpdateService.LaunchInstaller(installerPath);
+            // Servis mevcutsa pipe üzerinden UAC'sız kurulum, yoksa doğrudan (UAC'li)
+            if (_serviceAvailable)
+            {
+                LogInfo("Servis üzerinden sessiz kurulum başlatılıyor (UAC'sız)...");
+                ServiceResponse? response = await _pipeClient.SendCommandAsync(
+                    CommandType.InstallSelfUpdate, installerPath);
+
+                if (response is not null && response.Success)
+                {
+                    _selfUpdateInProgress = true;
+                    _fileLog.Info("Self-update servise devredildi, uygulama kapatılıyor.");
+                }
+                else
+                {
+                    string errorMsg = response?.Message ?? "Servis yanıt vermedi.";
+                    _fileLog.Warning($"Servis üzerinden self-update başarısız: {errorMsg}, doğrudan başlatılıyor.");
+                    _selfUpdateInProgress = true;
+                    SelfUpdateService.LaunchInstaller(installerPath);
+                }
+            }
+            else
+            {
+                _selfUpdateInProgress = true;
+                SelfUpdateService.LaunchInstaller(installerPath);
+            }
         }
         catch (Exception ex)
         {

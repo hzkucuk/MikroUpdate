@@ -3,6 +3,18 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.23.0] - 2026-03-25
+
+### Yeni Özellikler
+- **UAC’sız self-update** — MikroUpdate güncellemesi artık Windows Service üzerinden sessizce yapılıyor, admin onayı (UAC prompt) görünmüyor
+  - Tray app indirdiği installer yolunu pipe üzerinden servise gönderiyor (`InstallSelfUpdate` komutu)
+  - Servis (SYSTEM yetkileriyle) installer’ı `/SILENT /SUPPRESSMSGBOXES /NOPOSTLAUNCH=1` ile başlatıyor
+  - Installer tamamlandıktan sonra tray app, P/Invoke (`WTSQueryUserToken` + `CreateProcessAsUser`) ile kullanıcı masaüstü oturumunda yeniden başlatılıyor
+  - Servis mevcut değilse eski yöntem (doğrudan installer + UAC) fallback olarak korunuyor
+  - `ServiceCommand` sınıfına `Data` property ve `InstallSelfUpdate` enum değeri eklendi
+  - `PipeClient`’a veri parametreli `SendCommandAsync` overload’ı eklendi
+  - Inno Setup’a `/NOPOSTLAUNCH=1` parametre desteği ve `ShouldPostInstallLaunch` kontrol fonksiyonu eklendi
+
 ## [1.22.2] - 2026-03-25
 
 ### Düzeltmeler

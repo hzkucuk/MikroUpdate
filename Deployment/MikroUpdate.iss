@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.22.2"
+#define MyAppVersion "1.23.0"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -82,7 +82,8 @@ Name: "startuptask"; Description: "Windows başlangıcında otomatik çalıştı
 Filename: "{app}\Win\{#MyAppExeName}"; Description: "MikroUpdate'i şimdi başlat"; Flags: nowait postinstall skipifsilent unchecked
 
 ; Sessiz kurulum sonrası uygulamayı otomatik başlat (self-update için)
-Filename: "{app}\Win\{#MyAppExeName}"; Flags: nowait postinstall skipifnotsilent runasoriginaluser
+; /NOPOSTLAUNCH=1 parametresi verildiğinde atlanır (servis kendisi başlatır)
+Filename: "{app}\Win\{#MyAppExeName}"; Flags: nowait postinstall skipifnotsilent runasoriginaluser; Check: ShouldPostInstallLaunch
 
 ; ============================================================
 ;  Kaldırma: Süreç ve Servis Temizliği
@@ -691,6 +692,16 @@ begin
     WriteConfigFile;
     InstallAndStartService;
   end;
+end;
+
+{ ============================================================ }
+{  /NOPOSTLAUNCH=1: Servis üzerinden self-update yapıldığında       }
+{  installer'dan app başlatmayı engeller (servis kendisi başlatır)  }
+{ ============================================================ }
+
+function ShouldPostInstallLaunch: Boolean;
+begin
+  Result := ExpandConstant('{param:NOPOSTLAUNCH|0}') <> '1';
 end;
 
 { ============================================================ }

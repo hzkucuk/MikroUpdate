@@ -18,7 +18,10 @@ public enum CommandType
     ReloadConfig,
 
     /// <summary>CDN'den güncelleme indir ve kur (online mod).</summary>
-    DownloadUpdate
+    DownloadUpdate,
+
+    /// <summary>Tray app'in indirdiği self-update installer'ı servisten çalıştır (UAC'sız).</summary>
+    InstallSelfUpdate
 }
 
 /// <summary>
@@ -28,4 +31,7 @@ public sealed class ServiceCommand
 {
     /// <summary>Komut türü.</summary>
     public CommandType Command { get; set; }
+
+    /// <summary>Komut ile birlikte gönderilecek ek veri (ör. installer dosya yolu).</summary>
+    public string? Data { get; set; }
 }

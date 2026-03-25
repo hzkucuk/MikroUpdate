@@ -1,5 +1,15 @@
 # Özellikler
 
+## v1.23.0
+
+### UAC’sız Self-Update
+- **MikroUpdate güncellemesi admin onayı olmadan (UAC’sız) yapılıyor:**
+  - Tray app installer’ı indirir, servis pipe üzerinden `InstallSelfUpdate` komutuyla başlatır
+  - Windows Service (SYSTEM) installer’ı sessiz çalıştırır — UAC prompt görünmez
+  - Installer sonrası tray app, `CreateProcessAsUser` P/Invoke ile kullanıcı oturumunda otomatik yeniden başlatılır
+  - Servis yoksa eski yöntem (UAC’li doğrudan başlatma) fallback olarak çalışır
+  - Inno Setup `/NOPOSTLAUNCH=1` parametresi ile Session 0 sorunu çözüldü
+
 ## v1.21.0
 
 ### Kaynak Türü Bilgilendirme
