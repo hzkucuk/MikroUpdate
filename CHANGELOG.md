@@ -3,6 +3,17 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.21.1] - 2025-07-22
+
+### Düzeltmeler
+- **Async performans iyileştirmesi** — UI thread donmasını önlemek için versiyon kontrol fonksiyonları asenkron yapıldı
+  - `VersionService.GetVersion` → `GetVersionAsync` (Task.Run ile UNC ağ I/O)
+  - `VersionService.GetModuleVersions` → `GetModuleVersionsAsync`
+  - `VersionService.IsUpdateRequired` → `IsUpdateRequiredAsync`
+  - `Form1.CheckVersionsDirect` → `CheckVersionsDirectAsync`
+  - `RunUpdateDirectAsync` içindeki sync versiyon kontrolleri async'e çevrildi
+  - Yavaş UNC ağ yollarında UI donma riski giderildi
+
 ## [1.21.0] - 2025-07-21
 
 ### Eklenenler

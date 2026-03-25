@@ -13,30 +13,39 @@ namespace MikroUpdate.Win.Services;
 public sealed class VersionService
 {
     /// <summary>
-    /// Belirtilen EXE dosyasının versiyonunu okur.
+    /// Belirtilen EXE dosyasının versiyonunu asenkron olarak okur.
+    /// UNC ağ yollarında UI thread'i bloke etmemek için Task.Run kullanır.
     /// </summary>
     /// <returns>Versiyon bilgisi veya dosya bulunamazsa null.</returns>
-    public Version? GetVersion(string exePath)
+    public async Task<Version?> GetVersionAsync(string exePath)
     {
-        if (string.IsNullOrWhiteSpace(exePath) || !File.Exists(exePath))
+        if (string.IsNullOrWhiteSpace(exePath))
         {
             return null;
         }
 
-        FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(exePath);
-
-        if (string.IsNullOrWhiteSpace(versionInfo.FileVersion))
+        return await Task.Run(() =>
         {
-            return null;
-        }
+            if (!File.Exists(exePath))
+            {
+                return null;
+            }
 
-        return Version.TryParse(versionInfo.FileVersion, out Version? version) ? version : null;
+            FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(exePath);
+
+            if (string.IsNullOrWhiteSpace(versionInfo.FileVersion))
+            {
+                return null;
+            }
+
+            return Version.TryParse(versionInfo.FileVersion, out Version? version) ? version : null;
+        }).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Tüm aktif modüller için versiyon bilgilerini toplar.
+    /// Tüm aktif modüller için versiyon bilgilerini asenkron olarak toplar.
     /// </summary>
-    public List<ModuleVersionInfo> GetModuleVersions(UpdateConfig config)
+    public async Task<List<ModuleVersionInfo>> GetModuleVersionsAsync(UpdateConfig config)
     {
         ArgumentNullException.ThrowIfNull(config);
 
@@ -47,8 +56,8 @@ public sealed class VersionService
             string localPath = Path.Combine(config.LocalInstallPath, module.ExeFileName);
             string serverPath = Path.Combine(config.ServerSharePath, module.ExeFileName);
 
-            Version? localVersion = GetVersion(localPath);
-            Version? serverVersion = GetVersion(serverPath);
+            Version? localVersion = await GetVersionAsync(localPath).ConfigureAwait(false);
+            Version? serverVersion = await GetVersionAsync(serverPath).ConfigureAwait(false);
 
             bool updateRequired = serverVersion is not null
                 && (localVersion is null || localVersion < serverVersion);
@@ -66,14 +75,14 @@ public sealed class VersionService
     }
 
     /// <summary>
-    /// Herhangi bir aktif modülde güncelleme gerekli mi kontrol eder.
+    /// Herhangi bir aktif modülde güncelleme gerekli mi asenkron kontrol eder.
     /// </summary>
     /// <returns>En az bir modülde güncelleme gerekli ise true.</returns>
-    public bool IsUpdateRequired(UpdateConfig config)
+    public async Task<bool> IsUpdateRequiredAsync(UpdateConfig config)
     {
         ArgumentNullException.ThrowIfNull(config);
 
-        List<ModuleVersionInfo> versions = GetModuleVersions(config);
+        List<ModuleVersionInfo> versions = await GetModuleVersionsAsync(config).ConfigureAwait(false);
 
         return versions.Exists(v => v.UpdateRequired);
     }

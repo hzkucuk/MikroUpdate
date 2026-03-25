@@ -414,7 +414,7 @@ public partial class Form1 : Form
         }
         else
         {
-            CheckVersionsDirect();
+            await CheckVersionsDirectAsync();
         }
     }
 
@@ -430,7 +430,7 @@ public partial class Form1 : Form
             LogWarning("Servis yanıt vermedi, doğrudan moda geçiliyor...");
             _fileLog.Warning("Servis pipe yanıt vermedi — doğrudan moda fallback.");
             _serviceAvailable = false;
-            CheckVersionsDirect();
+            await CheckVersionsDirectAsync();
 
             return;
         }
@@ -467,7 +467,7 @@ public partial class Form1 : Form
         }
     }
 
-    private void CheckVersionsDirect()
+    private async Task CheckVersionsDirectAsync()
     {
         List<ModuleVersionInfo> moduleVersions = [];
 
@@ -480,7 +480,7 @@ public partial class Form1 : Form
 
             try
             {
-                localVersion = _versionService.GetVersion(localPath);
+                localVersion = await _versionService.GetVersionAsync(localPath).ConfigureAwait(true);
             }
             catch (Exception ex)
             {
@@ -490,7 +490,7 @@ public partial class Form1 : Form
 
             try
             {
-                serverVersion = _versionService.GetVersion(serverPath);
+                serverVersion = await _versionService.GetVersionAsync(serverPath).ConfigureAwait(true);
             }
             catch (Exception ex)
             {
@@ -782,7 +782,7 @@ public partial class Form1 : Form
     {
         // 1. Versiyon kontrol
         LogInfo("Versiyon kontrol ediliyor (doğrudan mod)...");
-        CheckVersionsDirect();
+        await CheckVersionsDirectAsync();
 
         // Güncellemesi gereken modülleri belirle
         List<UpdateModule> modulesToUpdate = [];
@@ -794,8 +794,8 @@ public partial class Form1 : Form
 
             try
             {
-                Version? localVer = _versionService.GetVersion(localPath);
-                Version? serverVer = _versionService.GetVersion(serverPath);
+                Version? localVer = await _versionService.GetVersionAsync(localPath).ConfigureAwait(true);
+                Version? serverVer = await _versionService.GetVersionAsync(serverPath).ConfigureAwait(true);
 
                 if (serverVer is not null && (localVer is null || localVer < serverVer))
                 {
@@ -936,7 +936,7 @@ public partial class Form1 : Form
         // 5. Kurulum sonrası versiyon kontrol
         try
         {
-            CheckVersionsDirect();
+            await CheckVersionsDirectAsync();
         }
         catch (Exception ex)
         {
@@ -1026,7 +1026,7 @@ public partial class Form1 : Form
         bool updateNeeded = _serviceAvailable
             ? _lblStatus.Text.Contains("mevcut", StringComparison.OrdinalIgnoreCase)
                || _lblStatus.Text.Contains("gerekli", StringComparison.OrdinalIgnoreCase)
-            : _versionService.IsUpdateRequired(_config);
+            : await _versionService.IsUpdateRequiredAsync(_config).ConfigureAwait(true);
 
         if (!updateNeeded)
         {
