@@ -22,6 +22,7 @@ public partial class Form1 : Form
     private UpdateConfig _config = new();
     private CancellationTokenSource? _cts;
     private bool _forceExit;
+    private bool _selfUpdateInProgress;
     private bool _serviceAvailable;
 
     private DownloadProgressPanel _downloadPanel;
@@ -84,8 +85,9 @@ public partial class Form1 : Form
 
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
-        // Çarpı butonuna basıldığında tray'e küçült, çıkış menüsü ile kapat
-        if (e.CloseReason == CloseReason.UserClosing && !_forceExit)
+        // Self-update sırasında Restart Manager WM_CLOSE gönderir.
+        // CloseReason.UserClosing olarak gelir — bu durumda kapatmaya izin ver.
+        if (e.CloseReason == CloseReason.UserClosing && !_forceExit && !_selfUpdateInProgress)
         {
             e.Cancel = true;
             MinimizeToTray();
@@ -1540,6 +1542,7 @@ public partial class Form1 : Form
 
             _fileLog.Info($"Self-update installer başlatılıyor: {installerPath}");
 
+            _selfUpdateInProgress = true;
             SelfUpdateService.LaunchInstaller(installerPath);
         }
         catch (Exception ex)

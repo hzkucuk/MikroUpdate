@@ -3,6 +3,14 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.22.1] - 2025-07-22
+
+### Düzeltmeler
+- **Self-update yeni versiyon yüklenmiyor hatası düzeltildi** — Installer sessiz modda çalıştığında Restart Manager (RM) uygulamayı kapatamıyor, dosyalar kilitli kalıyordu
+  - `OnFormClosing` artık self-update sırasında RM close isteklerine izin veriyor (`_selfUpdateInProgress` bayrağı)
+  - `PrepareToInstall`’da servis dosya kopyalama öncesi durduruluyor (dosya kilidi önleme)
+  - `RestartApplications=no` ile `[Run]` girişleriyle çift başlatma riski giderildi
+
 ## [1.22.0] - 2025-07-22
 
 ### Değiştirilenler

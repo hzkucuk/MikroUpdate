@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.22.0"
+#define MyAppVersion "1.22.1"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -27,7 +27,7 @@ PrivilegesRequired=admin
 MinVersion=10.0
 WizardStyle=modern
 CloseApplications=force
-RestartApplications=yes
+RestartApplications=no
 SetupIconFile=..\MikroUpdate.Win\app.ico
 UninstallDisplayIcon={app}\Win\{#MyAppExeName}
 
@@ -735,6 +735,15 @@ var
   ResultCode: Integer;
 begin
   Result := '';
+
+  { Upgrade: Servisi durdur — dosyalar kilitli kalmasın }
+  if IsServiceInstalled then
+  begin
+    Log('PrepareToInstall: MikroUpdateService durduruluyor...');
+    Exec('sc.exe', 'stop MikroUpdateService', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Sleep(3000);
+    Log(Format('PrepareToInstall: sc stop sonuç: %d', [ResultCode]));
+  end;
 
   if IsDotNet10DesktopInstalled then
   begin
