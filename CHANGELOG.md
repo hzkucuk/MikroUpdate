@@ -3,6 +3,16 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.27.0] - 2026-03-27
+
+### Refactoring
+- **Form1.cs god-class parçalama** (1423 → 1005 satır)
+  - `DownloadProgressPanel` → `Controls/DownloadProgressPanel.cs` — custom-painted indirme ilerleme paneli
+  - `VersionSidebarRenderer` → `Controls/VersionSidebarRenderer.cs` — tray menü sidebar renderer
+- **UpdateWorker.cs god-class parçalama** (1022 → 743 satır)
+  - `SelfUpdateHandler` → `Services/SelfUpdateHandler.cs` — restart flag yönetimi, tray app yeniden başlatma, CheckPendingAppRestart
+- Toplam: ~700 satır 3 odaklı dosyaya ayrıştırıldı, davranış değişikliği yok
+
 ## [1.26.4] - 2026-03-27
 
 ### Düzeltmeler

@@ -20,6 +20,7 @@ public sealed class UpdateWorker : BackgroundService
     private readonly ConfigService _configService = new();
     private readonly VersionService _versionService = new();
     private readonly UpdateService _updateService = new();
+    private SelfUpdateHandler? _selfUpdateHandler;
     private OnlineVersionService? _onlineVersionService;
     private DownloadService? _downloadService;
     private UpdateConfig _config = new();
@@ -34,6 +35,7 @@ public sealed class UpdateWorker : BackgroundService
     {
         ArgumentNullException.ThrowIfNull(logger);
         _logger = logger;
+        _selfUpdateHandler = new SelfUpdateHandler(logger);
     }
 
     /// <summary>
@@ -84,7 +86,7 @@ public sealed class UpdateWorker : BackgroundService
             _config.UpdateMode == UpdateMode.Local ? _config.ServerSharePath : _config.CdnBaseUrl);
 
         // Self-update sonrası bekleyen tray app restart kontrolü
-        await CheckPendingAppRestartAsync(stoppingToken).ConfigureAwait(false);
+        await _selfUpdateHandler.CheckPendingAppRestartAsync(stoppingToken).ConfigureAwait(false);
 
         // Pipe sunucusu ve periyodik kontrol paralel çalışır
         Task pipeTask = RunPipeServerAsync(stoppingToken);
@@ -747,15 +749,6 @@ public sealed class UpdateWorker : BackgroundService
     #region Self-Update
 
     /// <summary>
-    /// ProgramData altındaki restart flag dosyasının yolu.
-    /// Self-update installer tamamlandıktan sonra tray app'i yeniden başlatmak için kullanılır.
-    /// </summary>
-    private static string RestartFlagPath =>
-        Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-            "MikroUpdate", "pending_restart.flag");
-
-    /// <summary>
     /// Tray app'in indirdiği self-update installer'ını SYSTEM yetkileriyle (UAC'sız) çalıştırır.
     /// Installer tamamlandıktan sonra tray app yeniden başlatılmak üzere flag dosyası yazılır.
     /// </summary>
@@ -785,17 +778,7 @@ public sealed class UpdateWorker : BackgroundService
             string trayAppPath = Path.Combine(appDir, "MikroUpdate.exe");
 
             // 3. Restart flag dosyasını yaz (installer tamamlandıktan sonra kullanılacak)
-            string flagDir = Path.GetDirectoryName(RestartFlagPath)!;
-
-            if (!Directory.Exists(flagDir))
-            {
-                Directory.CreateDirectory(flagDir);
-            }
-
-            await File.WriteAllTextAsync(RestartFlagPath, trayAppPath, stoppingToken)
-                .ConfigureAwait(false);
-
-            _logger.LogInformation("Restart flag yazıldı: {FlagPath}", RestartFlagPath);
+            await _selfUpdateHandler.WriteFlagAsync(trayAppPath, stoppingToken);
 
             // 4. Yanıtı gönder (pipe üzerinden tray app'e bildir — tray app kapanacak)
             await SendFinalResponseAsync(pipeServer, true, ServiceStatus.Installing,
@@ -821,7 +804,7 @@ public sealed class UpdateWorker : BackgroundService
             if (process is null)
             {
                 _logger.LogError("Self-update installer process başlatılamadı.");
-                TryDeleteRestartFlag();
+                _selfUpdateHandler.TryDeleteRestartFlag();
 
                 return;
             }
@@ -832,7 +815,7 @@ public sealed class UpdateWorker : BackgroundService
             if (process.ExitCode != 0)
             {
                 _logger.LogError("Self-update installer hata ile sonlandı. ExitCode: {ExitCode}", process.ExitCode);
-                TryDeleteRestartFlag();
+                _selfUpdateHandler.TryDeleteRestartFlag();
 
                 return;
             }
@@ -840,12 +823,12 @@ public sealed class UpdateWorker : BackgroundService
             _logger.LogInformation("Self-update installer başarıyla tamamlandı.");
 
             // 7. Tray app'i kullanıcı oturumunda yeniden başlat
-            LaunchTrayAppInUserSession(trayAppPath);
+            _selfUpdateHandler.LaunchTrayAppInUserSession(trayAppPath);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Self-update hatası.");
-            TryDeleteRestartFlag();
+            _selfUpdateHandler.TryDeleteRestartFlag();
 
             // Hata durumunda client'a yanıt göndermeyi dene — yoksa tray app sonsuza kadar bekler
             try
@@ -860,131 +843,6 @@ public sealed class UpdateWorker : BackgroundService
             {
                 // Pipe zaten kopmuş olabilir, yutulabilir
             }
-        }
-    }
-
-    /// <summary>
-    /// Servis başlangıcında bekleyen restart flag'i kontrol eder.
-    /// Installer tamamlandıktan sonra servis yeniden başlatıldıysa tray app'i kullanıcı oturumunda başlatır.
-    /// Installer hâlâ çalışıyor olabileceği için gecikme ve yeniden deneme mekanizması içerir.
-    /// </summary>
-    private async Task CheckPendingAppRestartAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            if (!File.Exists(RestartFlagPath))
-            {
-                _logger.LogDebug("Bekleyen restart flag yok, devam ediliyor.");
-
-                return;
-            }
-
-            string flagContent = File.ReadAllText(RestartFlagPath).Trim();
-            _logger.LogInformation(
-                "Bekleyen restart flag bulundu: {FlagPath}, İçerik: {Content}",
-                RestartFlagPath, flagContent);
-
-            // Installer hâlâ çalışıyor olabilir — sistemin oturmasını bekle
-            _logger.LogInformation("Installer'ın tamamlanması bekleniyor (5 saniye)...");
-            await Task.Delay(5000, cancellationToken).ConfigureAwait(false);
-
-            // Retry mekanizması: kullanıcı oturumu token'ı henüz hazır olmayabilir
-            const int maxRetries = 3;
-
-            for (int attempt = 1; attempt <= maxRetries; attempt++)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                _logger.LogInformation(
-                    "Tray app başlatma denemesi {Attempt}/{MaxRetries}",
-                    attempt, maxRetries);
-
-                bool launched = LaunchTrayAppInUserSession(flagContent);
-
-                if (launched)
-                {
-                    _logger.LogInformation(
-                        "Tray app başarıyla başlatıldı (deneme {Attempt}/{MaxRetries}).",
-                        attempt, maxRetries);
-
-                    return;
-                }
-
-                if (attempt < maxRetries)
-                {
-                    int delaySeconds = attempt * 5;
-                    _logger.LogWarning(
-                        "Tray app başlatılamadı (deneme {Attempt}/{MaxRetries}), {Delay} saniye sonra tekrar denenecek.",
-                        attempt, maxRetries, delaySeconds);
-
-                    await Task.Delay(delaySeconds * 1000, cancellationToken).ConfigureAwait(false);
-                }
-                else
-                {
-                    _logger.LogError(
-                        "Tray app {MaxRetries} denemede de başlatılamadı.", maxRetries);
-                }
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogWarning("Tray app restart kontrolü iptal edildi.");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Bekleyen restart kontrolü hatası.");
-        }
-        finally
-        {
-            TryDeleteRestartFlag();
-        }
-    }
-
-    /// <summary>
-    /// Tray app'i aktif kullanıcı oturumunda başlatır.
-    /// </summary>
-    /// <param name="flagContent">Flag dosyasından okunan tray app yolu.</param>
-    /// <returns>Başlatma başarılı ise true.</returns>
-    private bool LaunchTrayAppInUserSession(string flagContent)
-    {
-        string trayAppPath = flagContent;
-
-        if (string.IsNullOrWhiteSpace(trayAppPath) || !File.Exists(trayAppPath))
-        {
-            // Fallback: servis dizininden tahmin et
-            string serviceDir = AppContext.BaseDirectory;
-            trayAppPath = Path.GetFullPath(Path.Combine(serviceDir, "..", "Win", "MikroUpdate.exe"));
-            _logger.LogInformation(
-                "Flag içeriği geçersiz, fallback yol kullanılıyor: {Path}", trayAppPath);
-        }
-
-        if (!File.Exists(trayAppPath))
-        {
-            _logger.LogError("Tray app bulunamadı: {Path}", trayAppPath);
-
-            return false;
-        }
-
-        _logger.LogInformation("Tray app başlatılıyor: {Path}", trayAppPath);
-
-        return UserSessionLauncher.LaunchInUserSession(trayAppPath, _logger);
-    }
-
-    /// <summary>
-    /// Restart flag dosyasını güvenli şekilde siler.
-    /// </summary>
-    private void TryDeleteRestartFlag()
-    {
-        try
-        {
-            if (File.Exists(RestartFlagPath))
-            {
-                File.Delete(RestartFlagPath);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Restart flag dosyası silinemedi: {Path}", RestartFlagPath);
         }
     }
 
