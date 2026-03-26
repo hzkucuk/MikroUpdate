@@ -5,9 +5,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>1.26.3</Version>
-    <AssemblyVersion>1.26.3</AssemblyVersion>
-    <FileVersion>1.26.3</FileVersion>
+    <Version>1.26.4</Version>
+    <AssemblyVersion>1.26.4</AssemblyVersion>
+    <FileVersion>1.26.4</FileVersion>
     <Product>MikroUpdate Service</Product>
     <Description>Mikro ERP güncelleme Windows servisi</Description>
   </PropertyGroup>

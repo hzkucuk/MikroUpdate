@@ -3,6 +3,16 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.26.4] - 2026-03-27
+
+### Düzeltmeler
+- **Self-update sonrası tray app başlatma — kapsamlı Win32 API düzeltmeleri**
+  - `SecurityIdentification` → `SecurityImpersonation` — kullanıcı oturumu için doğru token seviyesi
+  - `CreateProcessAsUserW` raw nint overload — Win32 lpCommandLine writable buffer gerektirir, string marshalling read-only buffer oluşturuyordu
+  - `WaitForSingleObject` ile process hayatta kalma kontrolü (2sn) — başlayıp hemen çöken process tespiti
+  - `explorer.exe` fallback — CreateProcessAsUser başarısız olursa shell üzerinden başlatma
+  - `Program.cs` diagnostik log — `ProgramData\MikroUpdate\logs\trayapp_launch.log` ile başlatma/mutex/çıkış takibi
+
 ## [1.26.3] - 2026-03-26
 
 ### Test
