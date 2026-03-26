@@ -58,7 +58,7 @@ internal static partial class UserSessionLauncher
             // 3. Token'ı duplicate et (CreateProcessAsUser için gerekli)
             if (!DuplicateTokenEx(
                     userToken,
-                    0, // MAXIMUM_ALLOWED
+                    MAXIMUM_ALLOWED,
                     nint.Zero,
                     SecurityImpersonationLevel.SecurityIdentification,
                     TokenType.TokenPrimary,
@@ -86,16 +86,21 @@ internal static partial class UserSessionLauncher
                 STARTUPINFO startupInfo = new()
                 {
                     cb = Marshal.SizeOf<STARTUPINFO>(),
-                    lpDesktop = desktopPtr
+                    lpDesktop = desktopPtr,
+                    dwFlags = STARTF_USESHOWWINDOW,
+                    wShowWindow = SW_SHOWNORMAL
                 };
 
                 uint creationFlags = CREATE_UNICODE_ENVIRONMENT | CREATE_NEW_CONSOLE;
 
                 // 6. Kullanıcı oturumunda process başlat
+                // lpCommandLine: exe yolunu tırnak içinde ver (boşluk içeren yollar için)
+                string commandLine = $"\"{exePath}\"";
+
                 if (!CreateProcessAsUser(
                         duplicateToken,
                         exePath,
-                        null,
+                        commandLine,
                         nint.Zero,
                         nint.Zero,
                         false,
@@ -157,6 +162,9 @@ internal static partial class UserSessionLauncher
 
     private const uint CREATE_UNICODE_ENVIRONMENT = 0x00000400;
     private const uint CREATE_NEW_CONSOLE = 0x00000010;
+    private const uint MAXIMUM_ALLOWED = 0x02000000;
+    private const int STARTF_USESHOWWINDOW = 0x00000001;
+    private const short SW_SHOWNORMAL = 1;
 
     private enum SecurityImpersonationLevel
     {

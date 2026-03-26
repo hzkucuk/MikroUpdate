@@ -3,6 +3,14 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.26.2] - 2026-03-26
+
+### Düzeltmeler
+- **Self-update sonrası tray app başlatılamıyordu** — servis yeni başlatıldığında installer henüz tamamlanmamış olabiliyordu
+  - `CheckPendingAppRestart` async yapıldı: 5sn başlangıç gecikmesi + 3 deneme (5/10/15sn aralıkla)
+  - `UserSessionLauncher.CreateProcessAsUser` düzeltmeleri: `MAXIMUM_ALLOWED` token erişimi, `STARTF_USESHOWWINDOW` + `SW_SHOWNORMAL`, doğru command line
+  - Detaylı diagnostik loglama eklendi
+
 ## [1.26.1] - 2026-03-26
 
 ### Test

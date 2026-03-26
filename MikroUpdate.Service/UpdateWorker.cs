@@ -84,7 +84,7 @@ public sealed class UpdateWorker : BackgroundService
             _config.UpdateMode == UpdateMode.Local ? _config.ServerSharePath : _config.CdnBaseUrl);
 
         // Self-update sonrası bekleyen tray app restart kontrolü
-        CheckPendingAppRestart();
+        await CheckPendingAppRestartAsync(stoppingToken).ConfigureAwait(false);
 
         // Pipe sunucusu ve periyodik kontrol paralel çalışır
         Task pipeTask = RunPipeServerAsync(stoppingToken);
@@ -840,7 +840,7 @@ public sealed class UpdateWorker : BackgroundService
             _logger.LogInformation("Self-update installer başarıyla tamamlandı.");
 
             // 7. Tray app'i kullanıcı oturumunda yeniden başlat
-            LaunchTrayAppInUserSession();
+            LaunchTrayAppInUserSession(trayAppPath);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -866,66 +866,108 @@ public sealed class UpdateWorker : BackgroundService
     /// <summary>
     /// Servis başlangıcında bekleyen restart flag'i kontrol eder.
     /// Installer tamamlandıktan sonra servis yeniden başlatıldıysa tray app'i kullanıcı oturumunda başlatır.
+    /// Installer hâlâ çalışıyor olabileceği için gecikme ve yeniden deneme mekanizması içerir.
     /// </summary>
-    private void CheckPendingAppRestart()
+    private async Task CheckPendingAppRestartAsync(CancellationToken cancellationToken)
     {
         try
         {
             if (!File.Exists(RestartFlagPath))
             {
+                _logger.LogDebug("Bekleyen restart flag yok, devam ediliyor.");
+
                 return;
             }
 
-            _logger.LogInformation("Bekleyen restart flag bulundu: {FlagPath}", RestartFlagPath);
-            LaunchTrayAppInUserSession();
+            string flagContent = File.ReadAllText(RestartFlagPath).Trim();
+            _logger.LogInformation(
+                "Bekleyen restart flag bulundu: {FlagPath}, İçerik: {Content}",
+                RestartFlagPath, flagContent);
+
+            // Installer hâlâ çalışıyor olabilir — sistemin oturmasını bekle
+            _logger.LogInformation("Installer'ın tamamlanması bekleniyor (5 saniye)...");
+            await Task.Delay(5000, cancellationToken).ConfigureAwait(false);
+
+            // Retry mekanizması: kullanıcı oturumu token'ı henüz hazır olmayabilir
+            const int maxRetries = 3;
+
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                _logger.LogInformation(
+                    "Tray app başlatma denemesi {Attempt}/{MaxRetries}",
+                    attempt, maxRetries);
+
+                bool launched = LaunchTrayAppInUserSession(flagContent);
+
+                if (launched)
+                {
+                    _logger.LogInformation(
+                        "Tray app başarıyla başlatıldı (deneme {Attempt}/{MaxRetries}).",
+                        attempt, maxRetries);
+
+                    return;
+                }
+
+                if (attempt < maxRetries)
+                {
+                    int delaySeconds = attempt * 5;
+                    _logger.LogWarning(
+                        "Tray app başlatılamadı (deneme {Attempt}/{MaxRetries}), {Delay} saniye sonra tekrar denenecek.",
+                        attempt, maxRetries, delaySeconds);
+
+                    await Task.Delay(delaySeconds * 1000, cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    _logger.LogError(
+                        "Tray app {MaxRetries} denemede de başlatılamadı.", maxRetries);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("Tray app restart kontrolü iptal edildi.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Bekleyen restart kontrolü hatası.");
-            TryDeleteRestartFlag();
-        }
-    }
-
-    /// <summary>
-    /// Tray app'i aktif kullanıcı oturumunda başlatır ve flag dosyasını temizler.
-    /// </summary>
-    private void LaunchTrayAppInUserSession()
-    {
-        try
-        {
-            string trayAppPath = File.Exists(RestartFlagPath)
-                ? File.ReadAllText(RestartFlagPath).Trim()
-                : string.Empty;
-
-            if (string.IsNullOrWhiteSpace(trayAppPath) || !File.Exists(trayAppPath))
-            {
-                // Fallback: servis dizininden tahmin et
-                string serviceDir = AppContext.BaseDirectory;
-                trayAppPath = Path.GetFullPath(Path.Combine(serviceDir, "..", "Win", "MikroUpdate.exe"));
-            }
-
-            if (!File.Exists(trayAppPath))
-            {
-                _logger.LogError("Tray app bulunamadı: {Path}", trayAppPath);
-
-                return;
-            }
-
-            bool launched = UserSessionLauncher.LaunchInUserSession(trayAppPath, _logger);
-
-            if (launched)
-            {
-                _logger.LogInformation("Tray app kullanıcı oturumunda yeniden başlatıldı.");
-            }
-            else
-            {
-                _logger.LogWarning("Tray app kullanıcı oturumunda başlatılamadı.");
-            }
         }
         finally
         {
             TryDeleteRestartFlag();
         }
+    }
+
+    /// <summary>
+    /// Tray app'i aktif kullanıcı oturumunda başlatır.
+    /// </summary>
+    /// <param name="flagContent">Flag dosyasından okunan tray app yolu.</param>
+    /// <returns>Başlatma başarılı ise true.</returns>
+    private bool LaunchTrayAppInUserSession(string flagContent)
+    {
+        string trayAppPath = flagContent;
+
+        if (string.IsNullOrWhiteSpace(trayAppPath) || !File.Exists(trayAppPath))
+        {
+            // Fallback: servis dizininden tahmin et
+            string serviceDir = AppContext.BaseDirectory;
+            trayAppPath = Path.GetFullPath(Path.Combine(serviceDir, "..", "Win", "MikroUpdate.exe"));
+            _logger.LogInformation(
+                "Flag içeriği geçersiz, fallback yol kullanılıyor: {Path}", trayAppPath);
+        }
+
+        if (!File.Exists(trayAppPath))
+        {
+            _logger.LogError("Tray app bulunamadı: {Path}", trayAppPath);
+
+            return false;
+        }
+
+        _logger.LogInformation("Tray app başlatılıyor: {Path}", trayAppPath);
+
+        return UserSessionLauncher.LaunchInUserSession(trayAppPath, _logger);
     }
 
     /// <summary>
