@@ -3,6 +3,11 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.26.3] - 2026-03-26
+
+### Test
+- v1.26.2 self-update tray app fix test release'i — icerik degisikligi yok, sadece versiyon bump
+
 ## [1.26.2] - 2026-03-26
 
 ### Düzeltmeler
