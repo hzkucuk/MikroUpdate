@@ -123,6 +123,7 @@ partial class SettingsForm
         _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.RowStyles.Add(new RowStyle());
+        _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         _tlpMain.RowStyles.Add(new RowStyle());
         _tlpMain.RowStyles.Add(new RowStyle());

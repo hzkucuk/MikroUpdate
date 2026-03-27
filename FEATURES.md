@@ -5,6 +5,7 @@
 ### Installer Config Sayfa Düzeltmeleri
 - **JSON backslash unescape desteği:** config.json'dan okunan yollar artık `\\` yerine `\` olarak gösterilir
 - **Client Setup Args otomatik üretim:** UI alanı kaldırıldı, ürüne (Jump/Fly) göre otomatik oluşturulur
+- **Ayarlar formu düğme layout düzeltmesi:** TLP yüzde satırı grid'e taşındı, Kaydet/İptal/Varsayılan düğmeleri her zaman görünür
 
 ## v1.27.2
 

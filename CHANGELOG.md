@@ -8,6 +8,7 @@ Format: [Semantic Versioning](https://semver.org/lang/tr/)
 ### Düzeltilen
 - **Installer yol alanlarında çift backslash hatası** — config.json'dan okunan `\\` escape'leri artık UI'da düzgün gösterilir (`JsonUnescapeStr`)
 - **Client Setup Args alanı kaldırıldı** — Sayfa alanı taşması nedeniyle UI'dan çıkarıldı, ürüne göre otomatik üretilir
+- **Ayarlar formu düğme layout düzeltmesi** — TLP satır yüzdesi Modüller başlığından DataGridView'e taşındı, düğmeler artık görünür
 
 ## [1.27.2] - 2026-03-27
 
