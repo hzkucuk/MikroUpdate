@@ -38,7 +38,7 @@ public partial class Form1 : Form
         _notifyIcon.Text = $"MikroUpdate v{version}";
         _ctxTray.Renderer = new VersionSidebarRenderer($"MikroUpdate v{version}");
 
-        _trayIconManager = new TrayIconManager(_notifyIcon, Icon);
+        _trayIconManager = new TrayIconManager(_notifyIcon, Icon ?? SystemIcons.Application);
         _trayIconManager.ServiceStatusChanged += OnServiceStatusChanged;
 
         InitializeDownloadUI();
