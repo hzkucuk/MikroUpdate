@@ -3,6 +3,13 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.27.4] - 2026-03-27
+
+### Düzeltilen
+- **Client Setup Args alanı installer sayfasında görünür** — Kompakt layout (52→42px satır aralığı) ile sayfa alanına sığdırıldı
+- Ürün değiştiğinde (Jump/Fly) argümanlar otomatik güncellenir
+- Mevcut config.json'dan argümanlar okunur, yoksa ürüne göre otomatik üretilir
+
 ## [1.27.3] - 2026-03-27
 
 ### Düzeltilen

@@ -1,5 +1,12 @@
 # Özellikler
 
+## v1.27.4
+
+### Installer Client Setup Args Alanı
+- **Client Setup Argümanları alanı installer config sayfasında görünür:** `/COMPONENTS`, `/TASKS`, `/LANG`, `/TYPE` opsiyonları kullanıcı tarafından düzenlenebilir
+- **Kompakt layout:** Satır aralığı 52→42px'e düşürülerek tüm alanlar sayfaya sığdırıldı
+- **Ürün değişikliğinde otomatik güncelleme:** Jump↔Fly seçildiğinde args otomatik yeniden üretilir
+
 ## v1.27.3
 
 ### Installer Config Sayfa Düzeltmeleri

@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.27.3"
+#define MyAppVersion "1.27.4"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -116,6 +116,7 @@ var
   ServerPathEdit: TNewEdit;
   LocalPathEdit: TNewEdit;
   SetupFilesPathEdit: TNewEdit;
+  ClientSetupArgsEdit: TNewEdit;
   ChkClient: TNewCheckBox;
   ChkEDefter: TNewCheckBox;
   ChkBeyanname: TNewCheckBox;
@@ -130,7 +131,6 @@ var
   { Modül bazlı ek kurulum argümanları }
   ExistingEDefterSetupArgs: String;
   ExistingBeyannameSetupArgs: String;
-  ExistingClientSetupArgs: String;
 
 { ============================================================ }
 {  JSON Yardımcı Fonksiyonları (basit anahtar-değer çıkarma)    }
@@ -337,6 +337,16 @@ begin
   Result := '/LANG=tr /TYPE=custom /COMPONENTS="main,main\efatura,main\tuik,main\kep,' + ProductComp + '" /TASKS="desktopicon"';
 end;
 
+procedure UpdateClientSetupArgs;
+begin
+  ClientSetupArgsEdit.Text := GetDefaultClientSetupArgs;
+end;
+
+procedure OnProductChange(Sender: TObject);
+begin
+  UpdateClientSetupArgs;
+end;
+
 { JSON string değerlerinde backslash'ları escape eder: \ → \\ }
 function JsonEscapeStr(const Value: String): String;
 begin
@@ -375,7 +385,6 @@ begin
   ExistingHttpTimeout := 0;
   ExistingEDefterSetupArgs := '';
   ExistingBeyannameSetupArgs := '';
-  ExistingClientSetupArgs := '';
 
   ConfigPath := ExpandConstant('{commonappdata}\MikroUpdate\config.json');
   if not FileExists(ConfigPath) then
@@ -441,7 +450,10 @@ begin
   { Modül bazlı SetupArgs değerlerini oku }
   ExistingEDefterSetupArgs := JsonUnescapeStr(GetModuleSetupArgs(Json, 'e-Defter'));
   ExistingBeyannameSetupArgs := JsonUnescapeStr(GetModuleSetupArgs(Json, 'Beyanname'));
-  ExistingClientSetupArgs := JsonUnescapeStr(GetModuleSetupArgs(Json, 'Client'));
+
+  Val := JsonUnescapeStr(GetModuleSetupArgs(Json, 'Client'));
+  if Length(Val) > 0 then
+    ClientSetupArgsEdit.Text := Val;
 
   Log(Format('Config yüklendi: %s %s, Modüller: e-Defter=%s Beyanname=%s', [MajorVersionCombo.Items[MajorVersionCombo.ItemIndex], ProductCombo.Items[ProductCombo.ItemIndex], BoolToStr(ChkEDefter.Checked), BoolToStr(ChkBeyanname.Checked)]));
 end;
@@ -456,7 +468,7 @@ begin
     'Mikro ERP Yapılandırması',
     'Güncelleme için sürüm, ürün ve sunucu bilgilerini girin.');
 
-  TopPos := 8;
+  TopPos := 4;
 
   { Ana Sürüm Seçimi }
   LabelMajorVersion := TNewStaticText.Create(ConfigPage);
@@ -467,7 +479,7 @@ begin
 
   MajorVersionCombo := TNewComboBox.Create(ConfigPage);
   MajorVersionCombo.Parent := ConfigPage.Surface;
-  MajorVersionCombo.Top := TopPos + 20;
+  MajorVersionCombo.Top := TopPos + 16;
   MajorVersionCombo.Left := 0;
   MajorVersionCombo.Width := ConfigPage.SurfaceWidth div 2;
   MajorVersionCombo.Style := csDropDownList;
@@ -485,15 +497,16 @@ begin
 
   ProductCombo := TNewComboBox.Create(ConfigPage);
   ProductCombo.Parent := ConfigPage.Surface;
-  ProductCombo.Top := TopPos + 20;
+  ProductCombo.Top := TopPos + 16;
   ProductCombo.Left := (ConfigPage.SurfaceWidth div 2) + 12;
   ProductCombo.Width := (ConfigPage.SurfaceWidth div 2) - 12;
   ProductCombo.Style := csDropDownList;
   ProductCombo.Items.Add('Jump');
   ProductCombo.Items.Add('Fly');
   ProductCombo.ItemIndex := 0;
+  ProductCombo.OnChange := @OnProductChange;
 
-  TopPos := TopPos + 52;
+  TopPos := TopPos + 42;
 
   { Güncelleme Modu Seçimi }
   with TNewStaticText.Create(ConfigPage) do
@@ -506,7 +519,7 @@ begin
 
   UpdateModeCombo := TNewComboBox.Create(ConfigPage);
   UpdateModeCombo.Parent := ConfigPage.Surface;
-  UpdateModeCombo.Top := TopPos + 20;
+  UpdateModeCombo.Top := TopPos + 16;
   UpdateModeCombo.Left := 0;
   UpdateModeCombo.Width := ConfigPage.SurfaceWidth;
   UpdateModeCombo.Style := csDropDownList;
@@ -515,7 +528,7 @@ begin
   UpdateModeCombo.Items.Add('Hybrid');
   UpdateModeCombo.ItemIndex := 0;  { Varsayılan: Local }
 
-  TopPos := TopPos + 52;
+  TopPos := TopPos + 42;
 
   { Sunucu Paylaşım Yolu }
   LabelServer := TNewStaticText.Create(ConfigPage);
@@ -526,12 +539,12 @@ begin
 
   ServerPathEdit := TNewEdit.Create(ConfigPage);
   ServerPathEdit.Parent := ConfigPage.Surface;
-  ServerPathEdit.Top := TopPos + 20;
+  ServerPathEdit.Top := TopPos + 16;
   ServerPathEdit.Left := 0;
   ServerPathEdit.Width := ConfigPage.SurfaceWidth;
   ServerPathEdit.Text := '\\SERVER\MikroV16xx';
 
-  TopPos := TopPos + 52;
+  TopPos := TopPos + 42;
 
   { Terminal Kurulum Yolu }
   LabelLocal := TNewStaticText.Create(ConfigPage);
@@ -542,12 +555,12 @@ begin
 
   LocalPathEdit := TNewEdit.Create(ConfigPage);
   LocalPathEdit.Parent := ConfigPage.Surface;
-  LocalPathEdit.Top := TopPos + 20;
+  LocalPathEdit.Top := TopPos + 16;
   LocalPathEdit.Left := 0;
   LocalPathEdit.Width := ConfigPage.SurfaceWidth;
   LocalPathEdit.Text := 'C:\Mikro\v16xx';
 
-  TopPos := TopPos + 52;
+  TopPos := TopPos + 42;
 
   { Setup Dosyaları Yolu }
   LabelSetupPath := TNewStaticText.Create(ConfigPage);
@@ -558,12 +571,12 @@ begin
 
   SetupFilesPathEdit := TNewEdit.Create(ConfigPage);
   SetupFilesPathEdit.Parent := ConfigPage.Surface;
-  SetupFilesPathEdit.Top := TopPos + 20;
+  SetupFilesPathEdit.Top := TopPos + 16;
   SetupFilesPathEdit.Left := 0;
   SetupFilesPathEdit.Width := ConfigPage.SurfaceWidth;
   SetupFilesPathEdit.Text := '\\SERVER\MikroV16xx\CLIENT';
 
-  TopPos := TopPos + 52;
+  TopPos := TopPos + 42;
 
   { Modül Seçimi }
   with TNewStaticText.Create(ConfigPage) do
@@ -574,7 +587,7 @@ begin
     Left := 0;
   end;
 
-  TopPos := TopPos + 20;
+  TopPos := TopPos + 18;
 
   ChkClient := TNewCheckBox.Create(ConfigPage);
   ChkClient.Parent := ConfigPage.Surface;
@@ -600,6 +613,25 @@ begin
   ChkBeyanname.Width := ConfigPage.SurfaceWidth div 3;
   ChkBeyanname.Caption := 'Beyanname';
   ChkBeyanname.Checked := False;
+
+  TopPos := TopPos + 26;
+
+  { Client Setup Ek Argümanlar }
+  with TNewStaticText.Create(ConfigPage) do
+  begin
+    Parent := ConfigPage.Surface;
+    Caption := 'Client Setup Argümanları (Inno Setup opsiyonları):';
+    Top := TopPos;
+    Left := 0;
+  end;
+
+  ClientSetupArgsEdit := TNewEdit.Create(ConfigPage);
+  ClientSetupArgsEdit.Parent := ConfigPage.Surface;
+  ClientSetupArgsEdit.Top := TopPos + 16;
+  ClientSetupArgsEdit.Left := 0;
+  ClientSetupArgsEdit.Width := ConfigPage.SurfaceWidth;
+  { Varsayılan olarak ürüne uygun argümanlar }
+  UpdateClientSetupArgs;
 
   { Mevcut config.json varsa UI'yi senkronize et }
   LoadExistingConfig;
@@ -639,7 +671,7 @@ begin
     '      "SetupFileName": "' + Prefix + '_' + Ver + '_Client_Setupx064.exe",' + #13#10 +
     '      "ExeFileName": "' + ClientExe + '",' + #13#10 +
     '      "Enabled": true,' + #13#10 +
-    '      "SetupArgs": "' + JsonEscapeStr(GetDefaultClientSetupArgs) + '"' + #13#10 +
+    '      "SetupArgs": "' + JsonEscapeStr(ClientSetupArgsEdit.Text) + '"' + #13#10 +
     '    },' + #13#10 +
     '    {' + #13#10 +
     '      "Name": "e-Defter",' + #13#10 +
