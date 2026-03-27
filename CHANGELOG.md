@@ -3,6 +3,14 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.27.1] - 2026-03-27
+
+### Eklenen
+- **Tray icon servis durum göstergesi** — Servis çalışırken yeşil, durduğunda kırmızı yanıp sönen durum noktası
+  - `TrayIconManager` → `Controls/TrayIconManager.cs` — GDI+ overlay icon, blink timer, periyodik servis polling
+  - Servis durumu değiştiğinde otomatik balloon bildirim ve log
+  - 10 saniye aralıklı otomatik servis durum kontrolü
+
 ## [1.27.0] - 2026-03-27
 
 ### Refactoring

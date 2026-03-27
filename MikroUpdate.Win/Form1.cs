@@ -25,6 +25,7 @@ public partial class Form1 : Form
     private bool _serviceAvailable;
 
     private DownloadProgressPanel _downloadPanel;
+    private readonly TrayIconManager _trayIconManager;
 
     public Form1(bool autoMode = false)
     {
@@ -36,6 +37,9 @@ public partial class Form1 : Form
         Text = $"MikroUpdate v{version}";
         _notifyIcon.Text = $"MikroUpdate v{version}";
         _ctxTray.Renderer = new VersionSidebarRenderer($"MikroUpdate v{version}");
+
+        _trayIconManager = new TrayIconManager(_notifyIcon, Icon);
+        _trayIconManager.ServiceStatusChanged += OnServiceStatusChanged;
 
         InitializeDownloadUI();
         LoadConfig();
@@ -49,6 +53,7 @@ public partial class Form1 : Form
         {
             _serviceAvailable = await _pipeClient.IsServiceRunningAsync();
             UpdateServiceStatus();
+            _trayIconManager.Start();
 
             if (_serviceAvailable)
             {
@@ -59,9 +64,6 @@ public partial class Form1 : Form
                 LogError("MikroUpdate servisi çalışmıyor! Güncelleme işlemleri için servis gereklidir.");
                 LogInfo("Servis durumunu kontrol edin: services.msc → MikroUpdateService");
                 SetStatus("Servis gerekli", Color.OrangeRed);
-                ShowTrayBalloon("Servis Hatası",
-                    "MikroUpdateService çalışmıyor. Güncelleme için servis gereklidir.",
-                    ToolTipIcon.Warning);
             }
 
             if (_autoMode)
@@ -98,6 +100,7 @@ public partial class Form1 : Form
 
         _cts?.Cancel();
         _cts?.Dispose();
+        _trayIconManager.Dispose();
         _selfUpdateService.Dispose();
         _fileLog.Info($"Uygulama kapatılıyor. Sebep: {e.CloseReason}");
         _fileLog.Dispose();
@@ -212,6 +215,29 @@ public partial class Form1 : Form
         }
     }
 
+    /// <summary>
+    /// TrayIconManager tarafından servis durumu değiştiğinde çağrılır.
+    /// </summary>
+    private void OnServiceStatusChanged(bool isRunning)
+    {
+        _serviceAvailable = isRunning;
+        UpdateServiceStatus();
+
+        if (isRunning)
+        {
+            LogSuccess("Servis tekrar çalışıyor.");
+            ShowTrayBalloon("Servis Aktif", "MikroUpdateService çalışıyor.", ToolTipIcon.Info);
+        }
+        else
+        {
+            LogError("Servis durdu!");
+            SetStatus("Servis gerekli", Color.OrangeRed);
+            ShowTrayBalloon("Servis Hatası",
+                "MikroUpdateService çalışmıyor. Güncelleme için servis gereklidir.",
+                ToolTipIcon.Warning);
+        }
+    }
+
     private void CtxTray_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
     {
         UpdateServiceStatus();
@@ -238,6 +264,7 @@ public partial class Form1 : Form
             await WaitForServiceStatusAsync(ServiceControllerStatus.Running);
 
             UpdateServiceStatus();
+            _trayIconManager.Refresh();
             LogSuccess("Servis yeniden başlatıldı.");
             ShowTrayBalloon("Servis", "MikroUpdateService yeniden başlatıldı.", ToolTipIcon.Info);
 
@@ -267,6 +294,7 @@ public partial class Form1 : Form
                 command == "stop" ? ServiceControllerStatus.Stopped : ServiceControllerStatus.Running);
 
             UpdateServiceStatus();
+            _trayIconManager.Refresh();
             LogSuccess(successMessage);
             ShowTrayBalloon("Servis", successMessage, ToolTipIcon.Info);
 

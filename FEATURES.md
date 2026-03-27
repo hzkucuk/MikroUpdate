@@ -1,5 +1,16 @@
 # Özellikler
 
+## v1.27.1
+
+### Tray Icon Servis Durum Göstergesi
+- **Servis durumuna göre dinamik tray icon renk değişimi:**
+  - Servis çalışıyorken: yeşil durum noktası (sağ alt köşe overlay)
+  - Servis durduğunda: kırmızı yanıp sönen durum noktası (600ms blink)
+  - 10 saniye aralıklı otomatik servis durum polling
+  - Durum değişikliğinde otomatik balloon bildirim ve log
+  - `TrayIconManager` → `Controls/TrayIconManager.cs` — GDI+ overlay icon oluşturma, blink/poll timer yönetimi
+  - Servis start/stop/restart komutları sonrası anında icon güncelleme
+
 ## v1.23.0
 
 ### UAC’sız Self-Update
