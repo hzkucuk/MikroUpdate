@@ -69,16 +69,26 @@ public sealed class UpdateService
     /// Sessiz kurulum çalıştırır (Inno Setup).
     /// /SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART parametreleriyle çalışır.
     /// </summary>
+    /// <param name="setupFilePath">Setup dosyasının tam yolu.</param>
+    /// <param name="installDirectory">Kurulum hedef dizini.</param>
+    /// <param name="extraArgs">Ek Inno Setup argümanları (ör: /MERGETASKS=...). Boş ise eklenmez.</param>
+    /// <param name="cancellationToken">İptal jetonu.</param>
     /// <returns>Kurulum sürecinin çıkış kodu (0 = başarılı).</returns>
     public async Task<int> RunSilentInstallAsync(
         string setupFilePath,
         string installDirectory,
+        string? extraArgs = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(setupFilePath);
         ArgumentNullException.ThrowIfNull(installDirectory);
 
         string arguments = $"/SP- /DIR=\"{installDirectory}\" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART";
+
+        if (!string.IsNullOrWhiteSpace(extraArgs))
+        {
+            arguments = $"{arguments} {extraArgs}";
+        }
 
         using Process process = new()
         {

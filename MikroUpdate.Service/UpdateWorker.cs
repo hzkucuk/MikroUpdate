@@ -394,7 +394,7 @@ public sealed class UpdateWorker : BackgroundService
                 _currentStatus = ServiceStatus.Installing;
                 _statusMessage = $"{module.Name} kurulumu yapılıyor...";
                 int exitCode = await _updateService.RunSilentInstallAsync(
-                    setupPath, _config.LocalInstallPath, stoppingToken).ConfigureAwait(false);
+                    setupPath, _config.LocalInstallPath, module.SetupArgs, stoppingToken).ConfigureAwait(false);
 
                 if (exitCode == 0)
                 {
@@ -623,7 +623,7 @@ public sealed class UpdateWorker : BackgroundService
                 await SendProgressAsync(pipeServer, _statusMessage, stoppingToken);
 
                 int exitCode = await _updateService.RunSilentInstallAsync(
-                    setupPath, _config.LocalInstallPath, stoppingToken).ConfigureAwait(false);
+                    setupPath, _config.LocalInstallPath, module.SetupArgs, stoppingToken).ConfigureAwait(false);
 
                 if (exitCode == 0)
                 {

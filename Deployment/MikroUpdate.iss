@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.27.1"
+#define MyAppVersion "1.27.2"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -116,6 +116,7 @@ var
   ServerPathEdit: TNewEdit;
   LocalPathEdit: TNewEdit;
   SetupFilesPathEdit: TNewEdit;
+  ClientSetupArgsEdit: TNewEdit;
   ChkClient: TNewCheckBox;
   ChkEDefter: TNewCheckBox;
   ChkBeyanname: TNewCheckBox;
@@ -127,6 +128,9 @@ var
   ExistingProxyAddress: String;
   ExistingHttpTimeout: Integer;
   ExistingConfigLoaded: Boolean;
+  { Modül bazlı ek kurulum argümanları }
+  ExistingEDefterSetupArgs: String;
+  ExistingBeyannameSetupArgs: String;
 
 { ============================================================ }
 {  JSON Yardımcı Fonksiyonları (basit anahtar-değer çıkarma)    }
@@ -238,6 +242,33 @@ begin
   Result := Pos('true', Lowercase(Sub)) > 0;
 end;
 
+function GetModuleSetupArgs(const Json, ModuleName: String): String;
+var
+  SearchKey, Sub: String;
+  StartPos, ArgsPos, QuoteStart, QuoteEnd: Integer;
+begin
+  Result := '';
+  SearchKey := '"Name": "' + ModuleName + '"';
+  StartPos := Pos(SearchKey, Json);
+  if StartPos = 0 then
+    Exit;
+
+  { Moduel blogundan SetupArgs degerini oku }
+  Sub := Copy(Json, StartPos, 500);
+  ArgsPos := Pos('"SetupArgs"', Sub);
+  if ArgsPos = 0 then
+    Exit;
+
+  Sub := Copy(Sub, ArgsPos + Length('"SetupArgs"'), 300);
+  QuoteStart := Pos('"', Sub);
+  if QuoteStart = 0 then
+    Exit;
+  Sub := Copy(Sub, QuoteStart + 1, Length(Sub));
+  QuoteEnd := Pos('"', Sub);
+  if QuoteEnd > 1 then
+    Result := Copy(Sub, 1, QuoteEnd - 1);
+end;
+
 function SetComboByValue(Combo: TNewComboBox; const Value: String): Boolean;
 var
   I: Integer;
@@ -315,13 +346,15 @@ var
   Json: String;
 begin
   ExistingConfigLoaded := False;
-  { Varsayılan değerler }
+  { Varsayilan degerler }
   ExistingAutoLaunch := True;
   ExistingAutoSelfUpdate := True;
   ExistingCheckInterval := 30;
   ExistingCdnBaseUrl := 'https://cdn-mikro.atros.com.tr/mikro';
   ExistingProxyAddress := '';
   ExistingHttpTimeout := 0;
+  ExistingEDefterSetupArgs := '';
+  ExistingBeyannameSetupArgs := '';
 
   ConfigPath := ExpandConstant('{commonappdata}\MikroUpdate\config.json');
   if not FileExists(ConfigPath) then
@@ -383,6 +416,11 @@ begin
     ExistingProxyAddress := Val;
 
   ExistingHttpTimeout := GetJsonIntValue(Json, 'HttpTimeoutSeconds', 0);
+
+  { Modül bazlı SetupArgs değerlerini oku }
+  ExistingEDefterSetupArgs := GetModuleSetupArgs(Json, 'e-Defter');
+  ExistingBeyannameSetupArgs := GetModuleSetupArgs(Json, 'Beyanname');
+  ClientSetupArgsEdit.Text := GetModuleSetupArgs(Json, 'Client');
 
   Log(Format('Config yüklendi: %s %s, Modüller: e-Defter=%s Beyanname=%s', [MajorVersionCombo.Items[MajorVersionCombo.ItemIndex], ProductCombo.Items[ProductCombo.ItemIndex], BoolToStr(ChkEDefter.Checked), BoolToStr(ChkBeyanname.Checked)]));
 end;
@@ -542,7 +580,25 @@ begin
   ChkBeyanname.Caption := 'Beyanname';
   ChkBeyanname.Checked := False;
 
-  { Mevcut config.json varsa UI'yı senkronize et }
+  TopPos := TopPos + 30;
+
+  { Client Setup Ek Argumanlar }
+  with TNewStaticText.Create(ConfigPage) do
+  begin
+    Parent := ConfigPage.Surface;
+    Caption := 'Client Setup Ek Argumanlar (opsiyonel):';
+    Top := TopPos;
+    Left := 0;
+  end;
+
+  ClientSetupArgsEdit := TNewEdit.Create(ConfigPage);
+  ClientSetupArgsEdit.Parent := ConfigPage.Surface;
+  ClientSetupArgsEdit.Top := TopPos + 20;
+  ClientSetupArgsEdit.Left := 0;
+  ClientSetupArgsEdit.Width := ConfigPage.SurfaceWidth;
+  ClientSetupArgsEdit.Text := '';
+
+  { Mevcut config.json varsa UI'yi senkronize et }
   LoadExistingConfig;
 end;
 
@@ -579,19 +635,22 @@ begin
     '      "Name": "Client",' + #13#10 +
     '      "SetupFileName": "' + Prefix + '_' + Ver + '_Client_Setupx064.exe",' + #13#10 +
     '      "ExeFileName": "' + ClientExe + '",' + #13#10 +
-    '      "Enabled": true' + #13#10 +
+    '      "Enabled": true,' + #13#10 +
+    '      "SetupArgs": "' + JsonEscapeStr(ClientSetupArgsEdit.Text) + '"' + #13#10 +
     '    },' + #13#10 +
     '    {' + #13#10 +
     '      "Name": "e-Defter",' + #13#10 +
     '      "SetupFileName": "' + Prefix + '_' + Ver + '_eDefter_Setupx064.exe",' + #13#10 +
     '      "ExeFileName": "' + EDeftExe + '",' + #13#10 +
-    '      "Enabled": ' + BoolToStr(ChkEDefter.Checked) + #13#10 +
+    '      "Enabled": ' + BoolToStr(ChkEDefter.Checked) + ',' + #13#10 +
+    '      "SetupArgs": "' + JsonEscapeStr(ExistingEDefterSetupArgs) + '"' + #13#10 +
     '    },' + #13#10 +
     '    {' + #13#10 +
     '      "Name": "Beyanname",' + #13#10 +
     '      "SetupFileName": "' + Ver + '_BEYANNAME_Setupx064.exe",' + #13#10 +
     '      "ExeFileName": "BEYANNAME.EXE",' + #13#10 +
-    '      "Enabled": ' + BoolToStr(ChkBeyanname.Checked) + #13#10 +
+    '      "Enabled": ' + BoolToStr(ChkBeyanname.Checked) + ',' + #13#10 +
+    '      "SetupArgs": "' + JsonEscapeStr(ExistingBeyannameSetupArgs) + '"' + #13#10 +
     '    }';
 end;
 

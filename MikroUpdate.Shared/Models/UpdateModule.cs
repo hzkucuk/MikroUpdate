@@ -17,4 +17,10 @@ public sealed class UpdateModule
 
     /// <summary>Modül güncelleme için aktif mi.</summary>
     public bool Enabled { get; set; } = true;
+
+    /// <summary>
+    /// Sessiz kurulumda ek Inno Setup argümanları (ör: "/MERGETASKS=desktopicon,sqlcomponent").
+    /// Boş ise sadece varsayılan parametreler kullanılır.
+    /// </summary>
+    public string SetupArgs { get; set; } = string.Empty;
 }

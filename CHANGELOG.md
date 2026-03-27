@@ -3,6 +3,14 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.27.2] - 2026-03-27
+
+### Eklenen
+- **Modül bazlı setup argümanları** — Her modüle özel Inno Setup ek argüman desteği (`SetupArgs`)
+  - Client Setup için kurulum sayfasında yapılandırılabilir alan
+  - Tüm ek seçenekleri seçili kurulabilme (ör: `/MERGETASKS=...` veya `/TYPE=full`)
+  - Mevcut config.json'dan `SetupArgs` korunur
+
 ## [1.27.1] - 2026-03-27
 
 ### Eklenen
