@@ -3,6 +3,12 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.27.3] - 2026-03-27
+
+### Düzeltilen
+- **Installer yol alanlarında çift backslash hatası** — config.json'dan okunan `\\` escape'leri artık UI'da düzgün gösterilir (`JsonUnescapeStr`)
+- **Client Setup Args alanı kaldırıldı** — Sayfa alanı taşması nedeniyle UI'dan çıkarıldı, ürüne göre otomatik üretilir
+
 ## [1.27.2] - 2026-03-27
 
 ### Eklenen

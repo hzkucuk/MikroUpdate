@@ -1,11 +1,16 @@
 # Özellikler
 
+## v1.27.3
+
+### Installer Config Sayfa Düzeltmeleri
+- **JSON backslash unescape desteği:** config.json'dan okunan yollar artık `\\` yerine `\` olarak gösterilir
+- **Client Setup Args otomatik üretim:** UI alanı kaldırıldı, ürüne (Jump/Fly) göre otomatik oluşturulur
+
 ## v1.27.2
 
 ### Modül Bazlı Setup Argümanları
 - **Her modüle özel Inno Setup ek argüman desteği (`SetupArgs`):**
-  - Client Setup için kurulum sayfasında yapılandırılabilir metin alanı
-  - Mikro Client Setup'ın opsiyonel bileşenlerini sessiz kurulumda seçebilme (ör: `/MERGETASKS=...`, `/TYPE=full`)
+  - Mikro Client Setup'ın opsiyonel bileşenlerini sessiz kurulumda seçebilme
   - `config.json`'da modül bazlı `SetupArgs` alanı korunur
   - Hem Local hem Online güncelleme akışlarında ek argümanlar geçirilir
 

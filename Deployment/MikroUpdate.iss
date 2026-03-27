@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.27.2"
+#define MyAppVersion "1.27.3"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -116,7 +116,6 @@ var
   ServerPathEdit: TNewEdit;
   LocalPathEdit: TNewEdit;
   SetupFilesPathEdit: TNewEdit;
-  ClientSetupArgsEdit: TNewEdit;
   ChkClient: TNewCheckBox;
   ChkEDefter: TNewCheckBox;
   ChkBeyanname: TNewCheckBox;
@@ -131,6 +130,7 @@ var
   { Modül bazlı ek kurulum argümanları }
   ExistingEDefterSetupArgs: String;
   ExistingBeyannameSetupArgs: String;
+  ExistingClientSetupArgs: String;
 
 { ============================================================ }
 {  JSON Yardımcı Fonksiyonları (basit anahtar-değer çıkarma)    }
@@ -337,21 +337,18 @@ begin
   Result := '/LANG=tr /TYPE=custom /COMPONENTS="main,main\efatura,main\tuik,main\kep,' + ProductComp + '" /TASKS="desktopicon"';
 end;
 
-procedure UpdateClientSetupArgs;
-begin
-  ClientSetupArgsEdit.Text := GetDefaultClientSetupArgs;
-end;
-
-procedure OnProductChange(Sender: TObject);
-begin
-  UpdateClientSetupArgs;
-end;
-
 { JSON string değerlerinde backslash'ları escape eder: \ → \\ }
 function JsonEscapeStr(const Value: String): String;
 begin
   Result := Value;
   StringChangeEx(Result, '\', '\\', True);
+end;
+
+{ JSON string değerlerinde escape'leri geri alır: \\ → \ }
+function JsonUnescapeStr(const Value: String): String;
+begin
+  Result := Value;
+  StringChangeEx(Result, '\\', '\', True);
 end;
 
 function BoolToStr(Value: Boolean): String;
@@ -378,6 +375,7 @@ begin
   ExistingHttpTimeout := 0;
   ExistingEDefterSetupArgs := '';
   ExistingBeyannameSetupArgs := '';
+  ExistingClientSetupArgs := '';
 
   ConfigPath := ExpandConstant('{commonappdata}\MikroUpdate\config.json');
   if not FileExists(ConfigPath) then
@@ -409,15 +407,15 @@ begin
   if Length(Val) > 0 then
     SetComboByValue(UpdateModeCombo, Val);
 
-  Val := GetJsonStringValue(Json, 'ServerSharePath');
+  Val := JsonUnescapeStr(GetJsonStringValue(Json, 'ServerSharePath'));
   if Length(Val) > 0 then
     ServerPathEdit.Text := Val;
 
-  Val := GetJsonStringValue(Json, 'LocalInstallPath');
+  Val := JsonUnescapeStr(GetJsonStringValue(Json, 'LocalInstallPath'));
   if Length(Val) > 0 then
     LocalPathEdit.Text := Val;
 
-  Val := GetJsonStringValue(Json, 'SetupFilesPath');
+  Val := JsonUnescapeStr(GetJsonStringValue(Json, 'SetupFilesPath'));
   if Length(Val) > 0 then
     SetupFilesPathEdit.Text := Val;
 
@@ -430,20 +428,20 @@ begin
   ExistingAutoSelfUpdate := GetJsonBoolValue(Json, 'AutoSelfUpdate', True);
   ExistingCheckInterval := GetJsonIntValue(Json, 'CheckIntervalMinutes', 30);
 
-  Val := GetJsonStringValue(Json, 'CdnBaseUrl');
+  Val := JsonUnescapeStr(GetJsonStringValue(Json, 'CdnBaseUrl'));
   if Length(Val) > 0 then
     ExistingCdnBaseUrl := Val;
 
-  Val := GetJsonStringValue(Json, 'ProxyAddress');
+  Val := JsonUnescapeStr(GetJsonStringValue(Json, 'ProxyAddress'));
   if Length(Val) > 0 then
     ExistingProxyAddress := Val;
 
   ExistingHttpTimeout := GetJsonIntValue(Json, 'HttpTimeoutSeconds', 0);
 
   { Modül bazlı SetupArgs değerlerini oku }
-  ExistingEDefterSetupArgs := GetModuleSetupArgs(Json, 'e-Defter');
-  ExistingBeyannameSetupArgs := GetModuleSetupArgs(Json, 'Beyanname');
-  ClientSetupArgsEdit.Text := GetModuleSetupArgs(Json, 'Client');
+  ExistingEDefterSetupArgs := JsonUnescapeStr(GetModuleSetupArgs(Json, 'e-Defter'));
+  ExistingBeyannameSetupArgs := JsonUnescapeStr(GetModuleSetupArgs(Json, 'Beyanname'));
+  ExistingClientSetupArgs := JsonUnescapeStr(GetModuleSetupArgs(Json, 'Client'));
 
   Log(Format('Config yüklendi: %s %s, Modüller: e-Defter=%s Beyanname=%s', [MajorVersionCombo.Items[MajorVersionCombo.ItemIndex], ProductCombo.Items[ProductCombo.ItemIndex], BoolToStr(ChkEDefter.Checked), BoolToStr(ChkBeyanname.Checked)]));
 end;
@@ -494,7 +492,6 @@ begin
   ProductCombo.Items.Add('Jump');
   ProductCombo.Items.Add('Fly');
   ProductCombo.ItemIndex := 0;
-  ProductCombo.OnChange := @OnProductChange;
 
   TopPos := TopPos + 52;
 
@@ -604,25 +601,6 @@ begin
   ChkBeyanname.Caption := 'Beyanname';
   ChkBeyanname.Checked := False;
 
-  TopPos := TopPos + 30;
-
-  { Client Setup Ek Argumanlar }
-  with TNewStaticText.Create(ConfigPage) do
-  begin
-    Parent := ConfigPage.Surface;
-    Caption := 'Client Setup Ek Argumanlar (opsiyonel):';
-    Top := TopPos;
-    Left := 0;
-  end;
-
-  ClientSetupArgsEdit := TNewEdit.Create(ConfigPage);
-  ClientSetupArgsEdit.Parent := ConfigPage.Surface;
-  ClientSetupArgsEdit.Top := TopPos + 20;
-  ClientSetupArgsEdit.Left := 0;
-  ClientSetupArgsEdit.Width := ConfigPage.SurfaceWidth;
-  { Varsayilan olarak urune uygun argumanlar }
-  UpdateClientSetupArgs;
-
   { Mevcut config.json varsa UI'yi senkronize et }
   LoadExistingConfig;
 end;
@@ -661,7 +639,7 @@ begin
     '      "SetupFileName": "' + Prefix + '_' + Ver + '_Client_Setupx064.exe",' + #13#10 +
     '      "ExeFileName": "' + ClientExe + '",' + #13#10 +
     '      "Enabled": true,' + #13#10 +
-    '      "SetupArgs": "' + JsonEscapeStr(ClientSetupArgsEdit.Text) + '"' + #13#10 +
+    '      "SetupArgs": "' + JsonEscapeStr(GetDefaultClientSetupArgs) + '"' + #13#10 +
     '    },' + #13#10 +
     '    {' + #13#10 +
     '      "Name": "e-Defter",' + #13#10 +
