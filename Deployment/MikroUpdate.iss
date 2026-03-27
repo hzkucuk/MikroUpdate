@@ -324,6 +324,29 @@ begin
   SetupFilesPathEdit.Text := Tmp;
 end;
 
+{ Urune gore Client Setup argumanlarini olusturur }
+function GetDefaultClientSetupArgs: String;
+var
+  ProductComp: String;
+begin
+  if ProductCombo.Items[ProductCombo.ItemIndex] = 'Fly' then
+    ProductComp := 'mikrofly'
+  else
+    ProductComp := 'mikrojump';
+
+  Result := '/LANG=tr /TYPE=custom /COMPONENTS="main,main\efatura,main\tuik,main\kep,' + ProductComp + '" /TASKS="desktopicon"';
+end;
+
+procedure UpdateClientSetupArgs;
+begin
+  ClientSetupArgsEdit.Text := GetDefaultClientSetupArgs;
+end;
+
+procedure OnProductChange(Sender: TObject);
+begin
+  UpdateClientSetupArgs;
+end;
+
 { JSON string değerlerinde backslash'ları escape eder: \ → \\ }
 function JsonEscapeStr(const Value: String): String;
 begin
@@ -471,6 +494,7 @@ begin
   ProductCombo.Items.Add('Jump');
   ProductCombo.Items.Add('Fly');
   ProductCombo.ItemIndex := 0;
+  ProductCombo.OnChange := @OnProductChange;
 
   TopPos := TopPos + 52;
 
@@ -596,7 +620,8 @@ begin
   ClientSetupArgsEdit.Top := TopPos + 20;
   ClientSetupArgsEdit.Left := 0;
   ClientSetupArgsEdit.Width := ConfigPage.SurfaceWidth;
-  ClientSetupArgsEdit.Text := '';
+  { Varsayilan olarak urune uygun argumanlar }
+  UpdateClientSetupArgs;
 
   { Mevcut config.json varsa UI'yi senkronize et }
   LoadExistingConfig;

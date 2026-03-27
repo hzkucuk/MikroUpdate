@@ -89,6 +89,7 @@ public sealed class UpdateConfig
         bool isFly = productName.Equals("Fly", StringComparison.OrdinalIgnoreCase);
         string ver = majorVersion.Equals("V17", StringComparison.OrdinalIgnoreCase) ? "v17xx" : "v16xx";
         string productPrefix = isFly ? "Fly" : "Jump";
+        string productComponent = isFly ? "mikrofly" : "mikrojump";
 
         return
         [
@@ -97,7 +98,8 @@ public sealed class UpdateConfig
                 Name = "Client",
                 SetupFileName = $"{productPrefix}_{ver}_Client_Setupx064.exe",
                 ExeFileName = isFly ? "MikroFly.EXE" : "MikroJump.EXE",
-                Enabled = true
+                Enabled = true,
+                SetupArgs = $"/LANG=tr /TYPE=custom /COMPONENTS=\"main,main\\efatura,main\\tuik,main\\kep,{productComponent}\" /TASKS=\"desktopicon\""
             },
             new UpdateModule
             {
