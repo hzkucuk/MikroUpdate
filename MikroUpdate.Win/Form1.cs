@@ -18,6 +18,9 @@ public partial class Form1 : Form
     private readonly FileLogService _fileLog = new();
     private readonly SelfUpdateService _selfUpdateService = new();
     private readonly bool _autoMode;
+    private readonly bool _startMinimized;
+    private bool _hasBeenShown;
+    private bool _onShownExecuted;
     private UpdateConfig _config = new();
     private CancellationTokenSource? _cts;
     private bool _forceExit;
@@ -27,10 +30,11 @@ public partial class Form1 : Form
     private DownloadProgressPanel _downloadPanel;
     private readonly TrayIconManager _trayIconManager;
 
-    public Form1(bool autoMode = false)
+    public Form1(bool autoMode = false, bool startMinimized = false)
     {
         InitializeComponent();
         _autoMode = autoMode;
+        _startMinimized = startMinimized;
         _pipeClient.OnError = message => _fileLog.Warning(message);
 
         string version = GetAppVersion();
@@ -45,8 +49,26 @@ public partial class Form1 : Form
         LoadConfig();
     }
 
+    protected override void SetVisibleCore(bool value)
+    {
+        if (!_hasBeenShown && _startMinimized)
+        {
+            _hasBeenShown = true;
+            base.SetVisibleCore(false);
+            CreateHandle();
+            BeginInvoke(() => OnShown(EventArgs.Empty));
+
+            return;
+        }
+
+        base.SetVisibleCore(value);
+    }
+
     protected override async void OnShown(EventArgs e)
     {
+        if (_onShownExecuted) return;
+        _onShownExecuted = true;
+
         base.OnShown(e);
 
         try
@@ -835,29 +857,9 @@ public partial class Form1 : Form
 
         if (!updateNeeded)
         {
-            LogSuccess("Terminal güncel. Mikro başlatılıyor...");
-
-            try
-            {
-                if (File.Exists(_config.LocalExePath))
-                {
-                    _updateService.LaunchMikro(_config.LocalExePath);
-                }
-                else
-                {
-                    LogWarning("Mikro EXE bulunamadı: " + _config.LocalExePath);
-                    _fileLog.Warning($"Otomatik mod — Mikro EXE bulunamadı: {_config.LocalExePath}");
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError($"Otomatik mod Mikro başlatma hatası: {ex.Message}");
-                _fileLog.Error("Otomatik mod Mikro başlatma hatası", ex);
-            }
-
-            await Task.Delay(2000);
-            _forceExit = true;
-            Close();
+            LogSuccess("Terminal güncel.");
+            LogInfo("Tray'de çalışmaya devam ediliyor.");
+            ShowTrayBalloon("MikroUpdate", "Terminal güncel. Arka planda çalışıyor.", ToolTipIcon.Info);
 
             return;
         }
@@ -879,9 +881,7 @@ public partial class Form1 : Form
 
         LogInfo("═══ Otomatik mod tamamlandı ═══");
         _fileLog.Info("═══ Otomatik mod tamamlandı ═══");
-        await Task.Delay(3000);
-        _forceExit = true;
-        Close();
+        ShowTrayBalloon("MikroUpdate", "Güncelleme tamamlandı. Arka planda çalışıyor.", ToolTipIcon.Info);
     }
 
     #endregion
@@ -1027,12 +1027,6 @@ public partial class Form1 : Form
     {
         // İlk kontrol
         await CheckAndApplySelfUpdateAsync();
-
-        // Auto mode'da form kapanacağı için periyodik kontrole gerek yok
-        if (_autoMode)
-        {
-            return;
-        }
 
         // Periyodik kontrol
         int intervalMinutes = Math.Max(_config.CheckIntervalMinutes, 5);

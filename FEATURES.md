@@ -325,8 +325,9 @@
 - Balloon tip bildirimleri
 
 ### Otomatik Mod
-- `MikroUpdate.exe /auto` ile sessiz çalışma
-- Versiyon kontrol → güncelleme → Mikro başlatma → otomatik kapanma
+- `MikroUpdate.exe /auto` ile sessiz çalışma — tray'e küçültülmüş başlar
+- Versiyon kontrol → güncelleme → tray'de çalışmaya devam etme
+- `--minimized` argümanı ile bağımsız tray başlatma desteği
 
 ### Ayarlar Formu
 - Ürün seçimi (Jump/Fly)

@@ -3,6 +3,14 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.27.5] - 2026-03-29
+
+### Düzeltilen
+- **Başlangıçta tray'e küçültme** — `/auto` modunda form artık gizli başlar (`SetVisibleCore` override), UI çökme sorunu giderildi
+- **Auto mode tray'de kalır** — Uygulama işini bitirdikten sonra kapanmak yerine tray icon'da çalışmaya devam eder
+- **Mikro EXE otomatik başlatma kaldırıldı** — Auto mode artık Mikro'yu otomatik çalıştırmaz, sadece versiyon kontrol/güncelleme yapar
+- **Servis tray app restart** — `UserSessionLauncher` argüman desteği eklendi, self-update sonrası `--minimized` ile gizli başlatılır
+
 ## [1.27.4] - 2026-03-27
 
 ### Düzeltilen

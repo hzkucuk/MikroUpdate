@@ -12,8 +12,9 @@ internal static class Program
 
     /// <summary>
     /// MikroUpdate giriş noktası.
-    /// Kullanım: MikroUpdate.exe [/auto]
-    ///   /auto : Sessiz modda versiyon kontrol, güncelleme ve Mikro başlatma.
+    /// Kullanım: MikroUpdate.exe [/auto] [/minimized]
+    ///   /auto      : Sessiz modda versiyon kontrol, güncelleme ve Mikro başlatma — tray'de kalır.
+    ///   /minimized : Tray'e küçültülmüş başlat (form görünmez).
     ///   (parametresiz) : Ayar ve güncelleme arayüzünü açar.
     /// </summary>
     [STAThread]
@@ -40,7 +41,11 @@ internal static class Program
             a.Equals("/auto", StringComparison.OrdinalIgnoreCase) ||
             a.Equals("--auto", StringComparison.OrdinalIgnoreCase));
 
-        Application.Run(new Form1(autoMode));
+        bool startMinimized = autoMode || args.Any(a =>
+            a.Equals("/minimized", StringComparison.OrdinalIgnoreCase) ||
+            a.Equals("--minimized", StringComparison.OrdinalIgnoreCase));
+
+        Application.Run(new Form1(autoMode, startMinimized));
 
         WriteDiagLog("Application.Run tamamlandı, çıkılıyor.");
     }

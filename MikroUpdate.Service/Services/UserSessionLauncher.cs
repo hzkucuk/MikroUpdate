@@ -18,7 +18,7 @@ internal static partial class UserSessionLauncher
     /// <param name="exePath">Çalıştırılacak uygulamanın tam yolu.</param>
     /// <param name="logger">Loglama için ILogger instance'ı.</param>
     /// <returns>İşlem başarılı ise true.</returns>
-    public static bool LaunchInUserSession(string exePath, ILogger logger)
+    public static bool LaunchInUserSession(string exePath, ILogger logger, string? arguments = null)
     {
         ArgumentNullException.ThrowIfNull(logger);
 
@@ -29,10 +29,10 @@ internal static partial class UserSessionLauncher
             return false;
         }
 
-        logger.LogInformation("LaunchInUserSession başlatılıyor. Exe: {ExePath}", exePath);
+        logger.LogInformation("LaunchInUserSession başlatılıyor. Exe: {ExePath}, Args: {Args}", exePath, arguments ?? "(yok)");
 
         // Yöntem 1: CreateProcessAsUser ile doğrudan başlat
-        bool launched = TryCreateProcessAsUser(exePath, logger);
+        bool launched = TryCreateProcessAsUser(exePath, logger, arguments);
 
         if (launched)
         {
@@ -49,7 +49,7 @@ internal static partial class UserSessionLauncher
     /// CreateProcessAsUser ile kullanıcı oturumunda process başlatır.
     /// Win32 API'nin lpCommandLine parametresi writable buffer gerektirir.
     /// </summary>
-    private static bool TryCreateProcessAsUser(string exePath, ILogger logger)
+    private static bool TryCreateProcessAsUser(string exePath, ILogger logger, string? arguments = null)
     {
         nint userToken = nint.Zero;
         nint duplicateToken = nint.Zero;
@@ -109,7 +109,9 @@ internal static partial class UserSessionLauncher
             }
 
             // 5. Writable buffer'lar hazırla (Win32 CreateProcessAsUser lpCommandLine'ı değiştirebilir)
-            string cmdLine = $"\"{exePath}\"";
+            string cmdLine = string.IsNullOrEmpty(arguments)
+                ? $"\"{exePath}\""
+                : $"\"{exePath}\" {arguments}";
             cmdLinePtr = Marshal.StringToHGlobalUni(cmdLine);
             desktopPtr = Marshal.StringToHGlobalUni("winsta0\\default");
 
@@ -120,12 +122,14 @@ internal static partial class UserSessionLauncher
                 workDirPtr = Marshal.StringToHGlobalUni(workDir);
             }
 
+            bool hideWindow = arguments?.Contains("--minimized", StringComparison.OrdinalIgnoreCase) == true;
+
             STARTUPINFO startupInfo = new()
             {
                 cb = Marshal.SizeOf<STARTUPINFO>(),
                 lpDesktop = desktopPtr,
                 dwFlags = STARTF_USESHOWWINDOW,
-                wShowWindow = SW_SHOWNORMAL
+                wShowWindow = hideWindow ? SW_HIDE : SW_SHOWNORMAL
             };
 
             uint creationFlags = CREATE_UNICODE_ENVIRONMENT | CREATE_NEW_CONSOLE;
@@ -289,6 +293,7 @@ internal static partial class UserSessionLauncher
     private const uint CREATE_NEW_CONSOLE = 0x00000010;
     private const uint MAXIMUM_ALLOWED = 0x02000000;
     private const int STARTF_USESHOWWINDOW = 0x00000001;
+    private const short SW_HIDE = 0;
     private const short SW_SHOWNORMAL = 1;
     private const uint WAIT_OBJECT_0 = 0x00000000;
 

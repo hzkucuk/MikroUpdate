@@ -139,7 +139,7 @@ internal sealed class SelfUpdateHandler(ILogger logger)
 
         logger.LogInformation("Tray app başlatılıyor: {Path}", trayAppPath);
 
-        return UserSessionLauncher.LaunchInUserSession(trayAppPath, logger);
+        return UserSessionLauncher.LaunchInUserSession(trayAppPath, logger, "--minimized");
     }
 
     /// <summary>
