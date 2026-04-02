@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.27.5"
+#define MyAppVersion "1.28.0"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -524,7 +524,6 @@ begin
   UpdateModeCombo.Width := ConfigPage.SurfaceWidth;
   UpdateModeCombo.Style := csDropDownList;
   UpdateModeCombo.Items.Add('Local');
-  UpdateModeCombo.Items.Add('Online');
   UpdateModeCombo.Items.Add('Hybrid');
   UpdateModeCombo.ItemIndex := 0;  { Varsayılan: Local }
 

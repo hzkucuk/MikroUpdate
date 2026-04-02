@@ -3,6 +3,13 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.28.0] - 2026-03-30
+
+### Değişen
+- **Online güncelleme modu kaldırıldı** — Hybrid mod, Online modun tüm işlevselliğini kapsadığından gereksiz Online seçeneği temizlendi
+- Güncelleme modu seçenekleri artık: **Local** (varsayılan) ve **Hybrid** (yerel → CDN fallback)
+- Installer, SettingsForm ve servis kodundan tüm Online referansları temizlendi
+
 ## [1.27.5] - 2026-03-29
 
 ### Düzeltilen

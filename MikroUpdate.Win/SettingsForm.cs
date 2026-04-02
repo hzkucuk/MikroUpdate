@@ -285,7 +285,7 @@ public partial class SettingsForm : Form
     /// </summary>
     private void UpdateOnlineFieldsVisibility()
     {
-        bool isOnlineCapable = _cboUpdateMode.SelectedItem?.ToString() is "Online" or "Hybrid";
+        bool isOnlineCapable = _cboUpdateMode.SelectedItem?.ToString() is "Hybrid";
 
         _lblCdnBaseUrl.Visible = isOnlineCapable;
         _txtCdnBaseUrl.Visible = isOnlineCapable;

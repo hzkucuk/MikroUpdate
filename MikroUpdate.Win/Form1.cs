@@ -167,7 +167,6 @@ public partial class Form1 : Form
 
             string modeLabel = _config.UpdateMode switch
             {
-                UpdateMode.Online => "🌐 Online",
                 UpdateMode.Hybrid => "🔀 Hybrid",
                 _ => "📁 Yerel"
             };
@@ -648,7 +647,7 @@ public partial class Form1 : Form
             return;
         }
 
-        if (_config.UpdateMode is UpdateMode.Online or UpdateMode.Hybrid)
+        if (_config.UpdateMode is UpdateMode.Hybrid)
         {
             await RunOnlineUpdateViaServiceAsync(cancellationToken);
         }

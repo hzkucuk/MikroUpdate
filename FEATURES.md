@@ -1,5 +1,12 @@
 # Özellikler
 
+## v1.28.0
+
+### Online Mod Kaldırıldı
+- **Güncelleme modu sadeleştirildi:** Local ve Hybrid — Online modu Hybrid tarafından tamamen kapsandığı için kaldırıldı
+- **Hybrid mod:** Sunucu erişilebilirse yerel ağdan, erişilemezse CDN'den güncelleme yapar
+- **Local varsayılan:** Air-gapped ağlar için sadece yerel sunucu üzerinden güncelleme
+
 ## v1.27.4
 
 ### Installer Client Setup Args Alanı

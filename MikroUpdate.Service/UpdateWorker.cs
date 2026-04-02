@@ -83,7 +83,7 @@ public sealed class UpdateWorker : BackgroundService
             _config.ProductName,
             _config.Modules.Count,
             _config.UpdateMode,
-            _config.UpdateMode == UpdateMode.Local ? _config.ServerSharePath : _config.CdnBaseUrl);
+            _config.UpdateMode == UpdateMode.Hybrid ? $"{_config.ServerSharePath} → {_config.CdnBaseUrl}" : _config.ServerSharePath);
 
         // Self-update sonrası bekleyen tray app restart kontrolü
         await _selfUpdateHandler.CheckPendingAppRestartAsync(stoppingToken).ConfigureAwait(false);
@@ -260,33 +260,14 @@ public sealed class UpdateWorker : BackgroundService
                         };
                     }
 
-                    _moduleVersions = await _onlineVersionService
-                        .GetOnlineModuleVersionsAsync(_config, stoppingToken).ConfigureAwait(false);
-                }
-            }
-            else if (_config.UpdateMode == UpdateMode.Online)
-            {
-                _logger.LogDebug("Online versiyon kontrolü başlatılıyor...");
-
-                if (_onlineVersionService is null)
-                {
-                    _logger.LogError("OnlineVersionService başlatılmamış — online kontrol yapılamıyor.");
-
-                    return new ServiceResponse
+                        _moduleVersions = await _onlineVersionService
+                                .GetOnlineModuleVersionsAsync(_config, stoppingToken).ConfigureAwait(false);
+                        }
+                    }
+                    else
                     {
-                        Success = false,
-                        Status = ServiceStatus.Error,
-                        Message = "Online servis başlatılmamış."
-                    };
-                }
-
-                _moduleVersions = await _onlineVersionService
-                    .GetOnlineModuleVersionsAsync(_config, stoppingToken).ConfigureAwait(false);
-            }
-            else
-            {
-                _moduleVersions = _versionService.GetModuleVersions(_config);
-            }
+                        _moduleVersions = _versionService.GetModuleVersions(_config);
+                    }
 
             _updateRequired = _moduleVersions.Exists(v => v.UpdateRequired);
 

@@ -11,9 +11,6 @@ public enum UpdateMode
     /// <summary>Sadece yerel ağ (UNC path) üzerinden kontrol ve kurulum.</summary>
     Local,
 
-    /// <summary>Sadece CDN üzerinden HTTP ile kontrol ve indirme.</summary>
-    Online,
-
     /// <summary>Önce yerel ağı dene, erişilemezse CDN'ye düş.</summary>
     Hybrid
 }
