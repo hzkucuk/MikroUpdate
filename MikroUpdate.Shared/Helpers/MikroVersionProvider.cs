@@ -101,6 +101,7 @@ public sealed class MikroVersionProvider
 
     /// <summary>
     /// Belirtilen ürün, sürüm ve modül için setup dosya adını döner.
+    /// Setup dosya adı pattern'i JSON tanımından okunur.
     /// </summary>
     public string? GetSetupFileName(string productName, string majorVersion, string moduleName)
     {
@@ -109,12 +110,13 @@ public sealed class MikroVersionProvider
 
         string versionTag = !string.IsNullOrEmpty(verDef?.VersionTag) ? verDef.VersionTag : "v16xx";
         string prefix = !string.IsNullOrEmpty(prodDef?.Prefix) ? prodDef.Prefix : "Jump";
+        MikroSetupPatterns patterns = verDef?.SetupPatterns ?? new MikroSetupPatterns();
 
         return moduleName.ToUpperInvariant() switch
         {
-            "CLIENT" => $"{prefix}_{versionTag}_Client_Setupx064.exe",
-            "E-DEFTER" => $"{prefix}_{versionTag}_eDefter_Setupx064.exe",
-            "BEYANNAME" => $"{versionTag}_BEYANNAME_Setupx064.exe",
+            "CLIENT" => MikroSetupPatterns.Resolve(patterns.Client, prefix, versionTag),
+            "E-DEFTER" => MikroSetupPatterns.Resolve(patterns.EDefter, prefix, versionTag),
+            "BEYANNAME" => MikroSetupPatterns.Resolve(patterns.Beyanname, prefix, versionTag),
             _ => null
         };
     }
@@ -138,6 +140,7 @@ public sealed class MikroVersionProvider
 
     /// <summary>
     /// Belirtilen ürün ve sürüm için varsayılan modül listesi oluşturur.
+    /// Setup dosya adları JSON'daki pattern'lerden üretilir.
     /// </summary>
     public List<UpdateModule> GetDefaultModules(string productName, string majorVersion)
     {
@@ -150,13 +153,14 @@ public sealed class MikroVersionProvider
         string clientExe = !string.IsNullOrEmpty(prodDef?.ClientExe) ? prodDef.ClientExe : "MikroJump.EXE";
         string eDefterExe = !string.IsNullOrEmpty(prodDef?.EDefterExe) ? prodDef.EDefterExe : "myEDefterStandart.exe";
         string beyannameExe = !string.IsNullOrEmpty(verDef?.BeyannameExe) ? verDef.BeyannameExe : "BEYANNAME.EXE";
+        MikroSetupPatterns patterns = verDef?.SetupPatterns ?? new MikroSetupPatterns();
 
         return
         [
             new UpdateModule
             {
                 Name = "Client",
-                SetupFileName = $"{prefix}_{versionTag}_Client_Setupx064.exe",
+                SetupFileName = MikroSetupPatterns.Resolve(patterns.Client, prefix, versionTag),
                 ExeFileName = clientExe,
                 Enabled = true,
                 SetupArgs = $"/LANG=tr /TYPE=custom /COMPONENTS=\"main,main\\efatura,main\\tuik,main\\kep,{productComponent}\" /TASKS=\"desktopicon\""
@@ -164,14 +168,14 @@ public sealed class MikroVersionProvider
             new UpdateModule
             {
                 Name = "e-Defter",
-                SetupFileName = $"{prefix}_{versionTag}_eDefter_Setupx064.exe",
+                SetupFileName = MikroSetupPatterns.Resolve(patterns.EDefter, prefix, versionTag),
                 ExeFileName = eDefterExe,
                 Enabled = true
             },
             new UpdateModule
             {
                 Name = "Beyanname",
-                SetupFileName = $"{versionTag}_BEYANNAME_Setupx064.exe",
+                SetupFileName = MikroSetupPatterns.Resolve(patterns.Beyanname, prefix, versionTag),
                 ExeFileName = beyannameExe,
                 Enabled = true
             }

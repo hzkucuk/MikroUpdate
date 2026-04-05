@@ -3,6 +3,10 @@
   // V18, C20 vb. yeni sürümler eklemek için bu dosyaya yeni entry eklenmesi yeterlidir.
   // Uygulama yeniden derlenmesi GEREKMEZ.
   // Dosya konumu: ProgramData\MikroUpdate\mikro-versions.json
+  //
+  // Setup pattern placeholder'ları:
+  //   {prefix}     → Ürün prefix'i (Jump, Fly)
+  //   {versionTag} → Sürüm tag'i (v16xx, v17xx)
   "versions": [
     {
       "name": "V16",
@@ -12,6 +16,11 @@
       "defaultServerShare": "\\\\SERVER\\MikroV16xx",
       "defaultLocalPath": "C:\\Mikro\\v16xx",
       "beyannameExe": "BEYANNAME.EXE",
+      "setupPatterns": {
+        "client": "{prefix}_{versionTag}_Client_Setupx064.exe",
+        "eDefter": "{prefix}_{versionTag}_eDefter_Setupx064.exe",
+        "beyanname": "{versionTag}_BEYANNAME_Setupx064.exe"
+      },
       "products": [
         {
           "name": "Jump",
@@ -35,6 +44,11 @@
       "defaultServerShare": "\\\\SERVER\\MikroV17xx",
       "defaultLocalPath": "C:\\Mikro\\v17xx",
       "beyannameExe": "BEYANNAME.EXE",
+      "setupPatterns": {
+        "client": "{prefix}_{versionTag}_Client_Setupx064.exe",
+        "eDefter": "{prefix}_{versionTag}_eDefter_Setupx064.exe",
+        "beyanname": "{versionTag}_BEYANNAME_Setupx064.exe"
+      },
       "products": [
         {
           "name": "Jump",

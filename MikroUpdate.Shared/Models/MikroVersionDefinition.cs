@@ -30,6 +30,13 @@ public sealed class MikroVersionDefinition
     /// <summary>Beyanname EXE dosya adı (ör: "BEYANNAME.EXE"). Tüm ürünlerde ortaktır.</summary>
     public string BeyannameExe { get; set; } = "BEYANNAME.EXE";
 
+    /// <summary>
+    /// Setup dosya adı pattern'leri. Placeholder'lar: {prefix}, {versionTag}.
+    /// JSON'dan derleme gerektirmeden özelleştirilebilir.
+    /// Boş ise varsayılan pattern'ler kullanılır.
+    /// </summary>
+    public MikroSetupPatterns SetupPatterns { get; set; } = new();
+
     /// <summary>Bu sürüm için desteklenen ürün tanımları.</summary>
     public List<MikroProductDefinition> Products { get; set; } = [];
 

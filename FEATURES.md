@@ -1,5 +1,13 @@
 # Özellikler
 
+## v1.30.0
+
+### Setup Dosya Adı Pattern'leri
+- **Setup adlandırması tamamen JSON'dan yönetilir:** `setupPatterns.client`, `setupPatterns.eDefter`, `setupPatterns.beyanname` alanları
+- **Placeholder desteği:** `{prefix}` (ürün: Jump/Fly) ve `{versionTag}` (sürüm: v16xx/v17xx)
+- **Geriye uyumlu:** Pattern boşsa varsayılan format kullanılır
+- **Örnek:** V18 farklı adlandırma kullansa bile derleme GEREKMEZ
+
 ## v1.29.0
 
 ### Dış Sürüm Kataloğu (mikro-versions.json)

@@ -3,6 +3,13 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.30.0] - 2026-07-05
+
+### Eklenen
+- **Setup dosya adı pattern'leri JSON'a taşındı** — `setupPatterns` ile Client, e-Defter ve Beyanname setup dosya adları derleme gerektirmeden özelleştirilebilir
+- `MikroSetupPatterns` model sınıfı: `{prefix}` ve `{versionTag}` placeholder desteği
+- V18+ farklı setup adlandırması kullansa bile sadece JSON güncellenir
+
 ## [1.29.0] - 2026-07-05
 
 ### Eklenen
