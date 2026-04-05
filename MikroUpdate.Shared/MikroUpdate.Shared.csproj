@@ -10,4 +10,8 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="mikro-versions.json" />
+  </ItemGroup>
+
 </Project>

@@ -1,5 +1,14 @@
 # Özellikler
 
+## v1.29.0
+
+### Dış Sürüm Kataloğu (mikro-versions.json)
+- **Derleme gerektirmeden yeni sürüm ekleme:** V18, C20 vb. yeni Mikro sürümleri `ProgramData\MikroUpdate\mikro-versions.json` dosyasına entry eklenerek desteklenir
+- **3 katmanlı yükleme:** Harici JSON → embedded resource → hardcoded fallback sırasıyla güvenli yükleme
+- **CDN URL pattern desteği:** Her sürüm için özelleştirilebilir `cdnUrlPattern` (ör: `{cdnBase}/{cdnFolder}/{cdnCode}/{setupFile}`)
+- **Dinamik sürüm ComboBox:** Ayarlar ekranındaki sürüm listesi JSON'dan otomatik dolduruluyor
+- **Ürün/modül bilgileri JSON'da:** Setup dosya adları, EXE adları, CDN klasörleri tamamı JSON tanımından okunuyor
+
 ## v1.28.0
 
 ### Online Mod Kaldırıldı

@@ -1,14 +1,18 @@
 using System.Text.Json.Serialization;
 
+using MikroUpdate.Shared.Helpers;
+
 namespace MikroUpdate.Shared.Models;
 
 /// <summary>
 /// Mikro ERP güncelleme yapılandırma ayarları.
-/// V16/V17 ana sürüm ve Jump/Fly ürün kombinasyonuna göre çoklu modül desteği sağlar.
+/// Sürüm/ürün bilgileri <see cref="MikroVersionProvider"/> üzerinden JSON'dan okunur.
 /// </summary>
 public sealed class UpdateConfig
 {
-    /// <summary>Ana sürüm: V16 veya V17.</summary>
+    private static readonly MikroVersionProvider VersionProvider = new();
+
+    /// <summary>Ana sürüm (ör: V16, V17). Yeni sürümler mikro-versions.json ile eklenir.</summary>
     public string MajorVersion { get; set; } = "V16";
 
     /// <summary>Ürün adı: Jump veya Fly.</summary>
@@ -52,11 +56,12 @@ public sealed class UpdateConfig
     public IReadOnlyList<UpdateModule> EnabledModules =>
         Modules.Where(m => m.Enabled).ToList();
 
-    /// <summary>Ana ürün EXE dosyası adı (Client modülünden alınır).</summary>
+    /// <summary>Ana ürün EXE dosyası adı (Client modülünden alınır, fallback: JSON tanımından).</summary>
     [JsonIgnore]
     public string ExeFileName =>
         Modules.FirstOrDefault(m => m.Name.Equals("Client", StringComparison.OrdinalIgnoreCase))?.ExeFileName
-        ?? (ProductName.Equals("Fly", StringComparison.OrdinalIgnoreCase) ? "MikroFly.EXE" : "MikroJump.EXE");
+        ?? VersionProvider.GetExeFileName(ProductName, MajorVersion, "Client")
+        ?? "MikroJump.EXE";
 
     /// <summary>Terminal'deki ana EXE tam yolu.</summary>
     [JsonIgnore]
@@ -80,41 +85,13 @@ public sealed class UpdateConfig
 
     /// <summary>
     /// Ürün ve ana sürüme göre varsayılan modül listesi oluşturur.
+    /// Sürüm/ürün bilgileri JSON tanımından okunur.
     /// </summary>
     public static List<UpdateModule> GetDefaultModules(string productName, string majorVersion)
     {
         ArgumentNullException.ThrowIfNull(productName);
         ArgumentNullException.ThrowIfNull(majorVersion);
 
-        bool isFly = productName.Equals("Fly", StringComparison.OrdinalIgnoreCase);
-        string ver = majorVersion.Equals("V17", StringComparison.OrdinalIgnoreCase) ? "v17xx" : "v16xx";
-        string productPrefix = isFly ? "Fly" : "Jump";
-        string productComponent = isFly ? "mikrofly" : "mikrojump";
-
-        return
-        [
-            new UpdateModule
-            {
-                Name = "Client",
-                SetupFileName = $"{productPrefix}_{ver}_Client_Setupx064.exe",
-                ExeFileName = isFly ? "MikroFly.EXE" : "MikroJump.EXE",
-                Enabled = true,
-                SetupArgs = $"/LANG=tr /TYPE=custom /COMPONENTS=\"main,main\\efatura,main\\tuik,main\\kep,{productComponent}\" /TASKS=\"desktopicon\""
-            },
-            new UpdateModule
-            {
-                Name = "e-Defter",
-                SetupFileName = $"{productPrefix}_{ver}_eDefter_Setupx064.exe",
-                ExeFileName = isFly ? "MyeDefter.exe" : "myEDefterStandart.exe",
-                Enabled = true
-            },
-            new UpdateModule
-            {
-                Name = "Beyanname",
-                SetupFileName = $"{ver}_BEYANNAME_Setupx064.exe",
-                ExeFileName = "BEYANNAME.EXE",
-                Enabled = true
-            }
-        ];
+        return VersionProvider.GetDefaultModules(productName, majorVersion);
     }
 }

@@ -16,6 +16,8 @@ public static class CdnHelper
     /// <summary>Probe sırasında ardışık boş minor bulununca durulacak limit.</summary>
     private const int MaxEmptyMinorStreak = 2;
 
+    private static readonly MikroVersionProvider VersionProvider = new();
+
     /// <summary>
     /// Versiyon nesnesinden CDN versiyon kodunu üretir.
     /// </summary>
@@ -71,6 +73,7 @@ public static class CdnHelper
 
     /// <summary>
     /// Belirtilen versiyon için CDN setup indirme URL'sini oluşturur.
+    /// Sürüm tanımındaki CDN klasörü ve URL pattern'i JSON'dan okunur.
     /// </summary>
     /// <param name="cdnBaseUrl">CDN temel URL'si (ör: "https://cdn-mikro.atros.com.tr/mikro").</param>
     /// <param name="majorVersion">Ana sürüm (ör: "V16", "V17").</param>
@@ -84,9 +87,7 @@ public static class CdnHelper
         ArgumentNullException.ThrowIfNull(cdnCode);
         ArgumentNullException.ThrowIfNull(setupFileName);
 
-        string versionFolder = majorVersion.Equals("V17", StringComparison.OrdinalIgnoreCase) ? "v17" : "v16";
-
-        return $"{cdnBaseUrl.TrimEnd('/')}/{versionFolder}/{cdnCode}/{setupFileName}";
+        return VersionProvider.BuildCdnUrl(cdnBaseUrl, majorVersion, cdnCode, setupFileName);
     }
 
     /// <summary>

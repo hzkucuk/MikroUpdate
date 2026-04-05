@@ -3,6 +3,22 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.29.0] - 2026-07-05
+
+### Eklenen
+- **Dış sürüm kataloğu (mikro-versions.json)** — V16/V17 ve gelecek sürümler (V18, C20 vb.) JSON tanımlarından okunur, derleme gerektirmez
+- `MikroVersionProvider` servisi: harici JSON → embedded resource → hardcoded fallback sırasıyla yükleme
+- `MikroVersionDefinition`, `MikroProductDefinition`, `MikroVersionCatalog` model sınıfları
+- CDN URL pattern desteği: sürüm başına özelleştirilebilir `cdnUrlPattern`
+- SettingsForm sürüm ComboBox'ı artık JSON'dan dinamik dolduruluyor
+- Installer `mikro-versions.json` dosyasını ProgramData'ya deploy ediyor
+
+### Değişen
+- `MikroProductMatrix` → `MikroVersionProvider`'a delege ediyor (hardcoded if/else kaldırıldı)
+- `CdnHelper.BuildDownloadUrl` → JSON'daki `cdnFolder`/`cdnUrlPattern` kullanıyor
+- `UpdateConfig.GetDefaultModules` → Provider üzerinden modül listesi oluşturuyor
+- SettingsForm'dan tüm hardcoded V16/V17 referanslar temizlendi
+
 ## [1.28.0] - 2026-03-30
 
 ### Değişen

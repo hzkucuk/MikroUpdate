@@ -13,6 +13,7 @@ namespace MikroUpdate.Win;
 /// </summary>
 public partial class SettingsForm : Form
 {
+    private readonly MikroVersionProvider _versionProvider = new();
     private UpdateConfig _config = new();
     private bool _suppressModuleRefresh;
 
@@ -35,6 +36,7 @@ public partial class SettingsForm : Form
     public SettingsForm()
     {
         InitializeComponent();
+        PopulateVersionComboBox();
 
         _cboMajorVersion.SelectedIndexChanged += OnProductOrVersionChanged;
         _cboProduct.SelectedIndexChanged += OnProductOrVersionChanged;
@@ -42,6 +44,24 @@ public partial class SettingsForm : Form
         _txtServerShare.TextChanged += OnSettingsChanged;
         _txtLocalPath.TextChanged += OnSettingsChanged;
         _txtSetupFilesPath.TextChanged += OnSettingsChanged;
+    }
+
+    /// <summary>
+    /// Sürüm ComboBox'ını JSON tanımlarından dinamik olarak doldurur.
+    /// </summary>
+    private void PopulateVersionComboBox()
+    {
+        _cboMajorVersion.Items.Clear();
+
+        foreach (string name in _versionProvider.GetVersionNames())
+        {
+            _cboMajorVersion.Items.Add(name);
+        }
+
+        if (_cboMajorVersion.Items.Count > 0)
+        {
+            _cboMajorVersion.SelectedIndex = 0;
+        }
     }
 
     private void ApplyConfigToUI()
@@ -72,7 +92,8 @@ public partial class SettingsForm : Form
     {
         return new UpdateConfig
         {
-            MajorVersion = _cboMajorVersion.SelectedItem?.ToString() ?? "V16",
+            MajorVersion = _cboMajorVersion.SelectedItem?.ToString()
+                ?? (_versionProvider.GetVersionNames().Count > 0 ? _versionProvider.GetVersionNames()[0] : "V16"),
             ProductName = _cboProduct.SelectedItem?.ToString() ?? "Jump",
             ServerSharePath = _txtServerShare.Text.Trim(),
             LocalInstallPath = _txtLocalPath.Text.Trim(),
@@ -110,26 +131,58 @@ public partial class SettingsForm : Form
     }
 
     /// <summary>
-    /// V16/V17 geçişlerinde yol alanlarındaki sürüm kısımlarını günceller.
-    /// Örn: \\SERVER\MikroV16xx → \\SERVER\MikroV17xx, C:\Mikro\v16xx → C:\Mikro\v17xx
+    /// Sürüm geçişlerinde yol alanlarındaki sürüm kısımlarını günceller.
+    /// Tüm bilinen sürüm tag'lerini tarayarak mevcut tag'i yenisiyle değiştirir.
     /// </summary>
     private void UpdateVersionPaths(string newVersion)
     {
-        string oldTag = newVersion == "V17" ? "v16xx" : "v17xx";
-        string newTag = newVersion == "V17" ? "v17xx" : "v16xx";
-        string oldMikroTag = newVersion == "V17" ? "MikroV16xx" : "MikroV17xx";
-        string newMikroTag = newVersion == "V17" ? "MikroV17xx" : "MikroV16xx";
+        MikroVersionDefinition? newDef = _versionProvider.GetVersion(newVersion);
 
-        _txtServerShare.Text = _txtServerShare.Text
-            .Replace(oldMikroTag, newMikroTag, StringComparison.OrdinalIgnoreCase)
-            .Replace(oldTag, newTag, StringComparison.OrdinalIgnoreCase);
+        if (newDef is null)
+        {
+            return;
+        }
 
-        _txtLocalPath.Text = _txtLocalPath.Text
-            .Replace(oldTag, newTag, StringComparison.OrdinalIgnoreCase);
+        string newTag = newDef.VersionTag;
+        string newServerShare = newDef.DefaultServerShare;
+        string newMikroFolder = ExtractMikroFolder(newServerShare);
 
-        _txtSetupFilesPath.Text = _txtSetupFilesPath.Text
-            .Replace(oldMikroTag, newMikroTag, StringComparison.OrdinalIgnoreCase)
-            .Replace(oldTag, newTag, StringComparison.OrdinalIgnoreCase);
+        // Tüm bilinen sürümlerin tag'lerini ve klasör adlarını tara, eski olanları yenisiyle değiştir
+        foreach (MikroVersionDefinition ver in _versionProvider.Catalog.Versions)
+        {
+            if (ver.Name.Equals(newVersion, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            string oldTag = ver.VersionTag;
+            string oldMikroFolder = ExtractMikroFolder(ver.DefaultServerShare);
+
+            _txtServerShare.Text = _txtServerShare.Text
+                .Replace(oldMikroFolder, newMikroFolder, StringComparison.OrdinalIgnoreCase)
+                .Replace(oldTag, newTag, StringComparison.OrdinalIgnoreCase);
+
+            _txtLocalPath.Text = _txtLocalPath.Text
+                .Replace(oldTag, newTag, StringComparison.OrdinalIgnoreCase);
+
+            _txtSetupFilesPath.Text = _txtSetupFilesPath.Text
+                .Replace(oldMikroFolder, newMikroFolder, StringComparison.OrdinalIgnoreCase)
+                .Replace(oldTag, newTag, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    /// <summary>
+    /// Sunucu paylaşım yolundan son klasör adını çıkarır (ör: "\\SERVER\MikroV16xx" → "MikroV16xx").
+    /// </summary>
+    private static string ExtractMikroFolder(string serverSharePath)
+    {
+        if (string.IsNullOrEmpty(serverSharePath))
+        {
+            return string.Empty;
+        }
+
+        int lastSep = serverSharePath.LastIndexOfAny(['\\', '/']);
+        return lastSep >= 0 ? serverSharePath[(lastSep + 1)..] : serverSharePath;
     }
 
     /// <summary>
@@ -299,7 +352,7 @@ public partial class SettingsForm : Form
 
     /// <summary>
     /// Tüm ayarları fabrika varsayılanlarına sıfırlar.
-    /// Seçili sürüme (V16/V17) göre yollar ve modüller otomatik oluşturulur.
+    /// Seçili sürüme göre yollar ve modüller JSON tanımlarından otomatik oluşturulur.
     /// </summary>
     private void BtnDefaults_Click(object? sender, EventArgs e)
     {
@@ -317,14 +370,17 @@ public partial class SettingsForm : Form
 
         _suppressModuleRefresh = true;
 
-        string version = _cboMajorVersion.SelectedItem?.ToString() ?? "V16";
-        string ver = version == "V17" ? "v17xx" : "v16xx";
-        string mikro = version == "V17" ? "MikroV17xx" : "MikroV16xx";
+        string version = _cboMajorVersion.SelectedItem?.ToString()
+            ?? (_versionProvider.GetVersionNames().Count > 0 ? _versionProvider.GetVersionNames()[0] : "V16");
+
+        MikroVersionDefinition? verDef = _versionProvider.GetVersion(version);
 
         _cboProduct.SelectedItem = "Jump";
-        _txtServerShare.Text = $@"\\SERVER\{mikro}";
-        _txtLocalPath.Text = $@"C:\Mikro\{ver}";
-        _txtSetupFilesPath.Text = $@"\\SERVER\{mikro}\CLIENT";
+        _txtServerShare.Text = verDef?.DefaultServerShare ?? $@"\\SERVER\Mikro{version}xx";
+        _txtLocalPath.Text = verDef?.DefaultLocalPath ?? $@"C:\Mikro\{version.ToLowerInvariant()}xx";
+        _txtSetupFilesPath.Text = verDef is not null
+            ? $@"{verDef.DefaultServerShare}\CLIENT"
+            : $@"\\SERVER\Mikro{version}xx\CLIENT";
         _nudCheckInterval.Value = 30;
         _chkAutoLaunch.Checked = true;
         _cboUpdateMode.SelectedItem = "Local";

@@ -148,7 +148,6 @@ partial class SettingsForm
         _tlpMain.SetColumnSpan(_cboMajorVersion, 2);
         _cboMajorVersion.DropDownStyle = ComboBoxStyle.DropDownList;
         _cboMajorVersion.FlatStyle = FlatStyle.Flat;
-        _cboMajorVersion.Items.AddRange(new object[] { "V16", "V17" });
         _cboMajorVersion.Location = new Point(153, 19);
         _cboMajorVersion.Name = "_cboMajorVersion";
         _cboMajorVersion.Size = new Size(121, 23);

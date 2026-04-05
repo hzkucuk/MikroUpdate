@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.28.0"
+#define MyAppVersion "1.29.0"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -50,6 +50,9 @@ Source: "..\publish\win\*"; DestDir: "{app}\Win"; Flags: ignoreversion recursesu
 
 ; Windows Servisi
 Source: "..\publish\service\*"; DestDir: "{app}\Service"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+; Sürüm Kataloğu (V18+ eklendiğinde sadece bu dosya güncellenir)
+Source: "..\MikroUpdate.Shared\mikro-versions.json"; DestDir: "{commonappdata}\MikroUpdate"; Flags: ignoreversion
 
 ; ============================================================
 ;  Dizin Yapısı
