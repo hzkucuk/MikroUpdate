@@ -136,3 +136,26 @@ Bu proje [MIT Lisansı](LICENSE) ile lisanslanmıştır.
 
 Bu program, kullanıcı tarafından yapılandırılmadıkça hiçbir bilgiyi ağ üzerinden iletmez.
 Detaylar için [PRIVACY.md](PRIVACY.md) dosyasına bakın.
+
+---
+
+## ⚖️ Yasal Uyarı ve Sorumluluk Reddi
+
+Bu proje bağımsız bir açık kaynak yazılımdır. **Mikro ERP Yazılımları** ile herhangi bir bağlantısı, ortaklığı, sponsorluğu veya onay ilişkisi bulunmamaktadır.
+
+Bu projede adı geçen ürün adları, logolar, markalar ve diğer ticari markalar ilgili ticari marka sahiplerinin mülkiyetindedir.
+
+### Kullanım Sorumluluğu
+
+Bu yazılım **"olduğu gibi" (as-is)** sunulmaktadır; herhangi bir açık veya zımni garanti verilmemektedir. Yazılımın kullanımından doğabilecek:
+
+- Veri kaybı veya bozulması
+- Sistem arızaları veya kesintiler
+- Üçüncü taraf yazılımlarla uyumsuzluk
+- Doğrudan veya dolaylı maddi zararlar
+
+konularında geliştirici hiçbir sorumluluk kabul etmez. **Yazılımı kullanmadan önce yedek almanız önerilir.**
+
+### Lisans
+
+Bu proje [MIT Lisansı](LICENSE) kapsamında dağıtılmaktadır. Lisans koşullarını inceleyerek kullanmanız tavsiye edilir.
