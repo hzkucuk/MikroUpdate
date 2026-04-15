@@ -770,7 +770,8 @@ public partial class Form1 : Form
 
         e.PaintBackground(e.ClipBounds, cellsPaintSelectionBackground: true);
 
-        string prefix = cellText[..(cdnIndex + cdnPrefix.Length)];
+        string güncellPrefix = cellText[..cdnIndex];
+        string cdnLabel = cdnPrefix;
         string cdnVersionStr = cellText[(cdnIndex + cdnPrefix.Length)..];
 
         using Font font = new(e.CellStyle!.Font, FontStyle.Regular);
@@ -779,11 +780,18 @@ public partial class Form1 : Form
         float x = e.CellBounds.X + e.CellStyle.Padding.Left + 3;
         float y = e.CellBounds.Y + ((e.CellBounds.Height - font.GetHeight(e.Graphics!)) / 2);
 
-        // "✔ Güncel  ↑ CDN: " prefix'ini varsayılan renkte yaz
-        using (SolidBrush prefixBrush = new(Color.FromArgb(100, 200, 255)))
+        // "✔ Güncel  " kısmını yeşil yaz
+        using (SolidBrush greenBrush = new(Color.LimeGreen))
         {
-            e.Graphics.DrawString(prefix, font, prefixBrush, x, y);
-            x += e.Graphics.MeasureString(prefix, font).Width - 2;
+            e.Graphics.DrawString(güncellPrefix, font, greenBrush, x, y);
+            x += e.Graphics.MeasureString(güncellPrefix, font).Width - 2;
+        }
+
+        // "↑ CDN: " etiketini cyan yaz
+        using (SolidBrush cyanBrush = new(Color.FromArgb(100, 200, 255)))
+        {
+            e.Graphics.DrawString(cdnLabel, font, cyanBrush, x, y);
+            x += e.Graphics.MeasureString(cdnLabel, font).Width - 2;
         }
 
         // CDN versiyon parçalarını fark renklerinde boya
