@@ -161,7 +161,9 @@ public sealed class OnlineVersionService : IDisposable
             "Web scraping sonucu: en son CDN kodu {Code} ({Date})",
             result.CdnCode, result.ReleaseDate?.ToString("yyyy-MM-dd") ?? "?");
 
-        return result.CdnCode;
+        // Web'den gelen kod zero-padded olmayabilir (ör: "7a" vs "07a").
+        // Decode → Encode ile her zaman zero-padded forma normalize et.
+        return CdnHelper.NormalizeCdnCode(result.CdnCode) ?? result.CdnCode;
     }
 
     /// <summary>

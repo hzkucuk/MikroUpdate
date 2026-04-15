@@ -43,7 +43,7 @@ public static class CdnHelper
     /// <summary>
     /// CDN versiyon kodunu minor ve patch değerlerine çözer.
     /// </summary>
-    /// <param name="cdnCode">CDN versiyon kodu (ör: "39f", "06d").</param>
+    /// <param name="cdnCode">CDN versiyon kodu (ör: "39f", "06d", "7a").</param>
     /// <returns>Minor ve patch değerleri veya geçersiz kodda null.</returns>
     public static (int Minor, int Patch)? DecodeCdnVersion(string cdnCode)
     {
@@ -69,6 +69,25 @@ public static class CdnHelper
         int patch = letter - 'a' + 1;
 
         return (minor, patch);
+    }
+
+    /// <summary>
+    /// CDN kodunu zero-padded standart forma normalize eder.
+    /// Dış kaynaklardan (web scraping vb.) gelen kodlar padded olmayabilir.
+    /// </summary>
+    /// <param name="cdnCode">Giriş kodu (ör: "7a", "06d", "39f").</param>
+    /// <returns>Normalize edilmiş kod (ör: "07a", "06d", "39f") veya geçersizse null.</returns>
+    public static string? NormalizeCdnCode(string cdnCode)
+    {
+        (int Minor, int Patch)? decoded = DecodeCdnVersion(cdnCode);
+
+        if (decoded is null)
+        {
+            return null;
+        }
+
+        char letter = (char)('a' + decoded.Value.Patch - 1);
+        return $"{decoded.Value.Minor:D2}{letter}";
     }
 
     /// <summary>

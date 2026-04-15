@@ -3,6 +3,12 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.32.1] - 2025-07-14
+
+### Düzeltilen
+- **CDN kod normalizasyonu** — Web scraping'den gelen CDN kodları zero-padded olmayabilir (ör: "7a" vs "07a"). `CdnHelper.NormalizeCdnCode()` ile Decode→Encode yaparak her zaman `{minor:D2}{letter}` formatına normalize edilir
+- `OnlineVersionService.ScrapeLatestCdnCodeAsync`: Web'den gelen kodu normalize ederek CDN URL 404 hatasını önler
+
 ## [1.32.0] - 2025-07-14
 
 ### Eklenen
