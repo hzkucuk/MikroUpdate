@@ -372,9 +372,15 @@ public sealed class UpdateWorker : BackgroundService
                 }
 
                 // CDN kodu farklı — Minor veya Build değişikliği var
-                // CDN'den tam FileVersion oku (revision dahil)
-                Version? cdnVer = await GetCdnSetupVersionAsync(module, latestCode, stoppingToken)
-                    .ConfigureAwait(false);
+                // 1. UNC setup'tan FileVersion oku (kesin revision bilgisi)
+                Version? cdnVer = GetUncSetupVersion(module);
+
+                // 2. UNC erişilemezse CDN PE header'ından oku
+                if (cdnVer is null)
+                {
+                    cdnVer = await GetCdnSetupVersionAsync(module, latestCode, stoppingToken)
+                        .ConfigureAwait(false);
+                }
 
                 if (cdnVer is not null)
                 {
@@ -386,7 +392,7 @@ public sealed class UpdateWorker : BackgroundService
                 }
                 else
                 {
-                    // PE okunamazsa CDN kodundan yaklaşık versiyon üret (revision=0)
+                    // PE ve UNC okunamazsa CDN kodundan yaklaşık versiyon üret (revision=0)
                     (int Minor, int Patch)? decoded = CdnHelper.DecodeCdnVersion(latestCode);
 
                     if (decoded is not null)
@@ -414,18 +420,8 @@ public sealed class UpdateWorker : BackgroundService
     private async Task CheckRevisionDifferenceAsync(
         ModuleVersionInfo module, Version localVer, string cdnCode, CancellationToken stoppingToken)
     {
-        // Config'deki modül tanımını bul (SetupFileName için)
-        UpdateModule? configModule = _config.EnabledModules
-            .FirstOrDefault(m => m.Name.Equals(module.ModuleName, StringComparison.OrdinalIgnoreCase));
-
-        if (configModule is null)
-        {
-            return;
-        }
-
         // 1. UNC'den setup FileVersion oku (kesin sonuç)
-        string setupPath = Path.Combine(_config.SetupFilesPath, configModule.SetupFileName);
-        Version? setupVer = _versionService.GetVersion(setupPath);
+        Version? setupVer = GetUncSetupVersion(module);
 
         // 2. UNC erişilemezse CDN PE header'ından oku
         if (setupVer is null)
@@ -489,6 +485,31 @@ public sealed class UpdateWorker : BackgroundService
             .GetCdnFileVersionAsync(cdnUrl, stoppingToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// UNC setup dosyasından FileVersion okur (revision dahil).
+    /// </summary>
+    private Version? GetUncSetupVersion(ModuleVersionInfo module)
+    {
+        UpdateModule? configModule = _config.EnabledModules
+            .FirstOrDefault(m => m.Name.Equals(module.ModuleName, StringComparison.OrdinalIgnoreCase));
+
+        if (configModule is null)
+        {
+            return null;
+        }
+
+        string setupPath = Path.Combine(_config.SetupFilesPath, configModule.SetupFileName);
+        Version? ver = _versionService.GetVersion(setupPath);
+
+        if (ver is not null)
+        {
+            _logger.LogDebug(
+                "{Module}: UNC setup FileVersion: {Version}",
+                module.ModuleName, ver);
+        }
+
+        return ver;
+    }
 
 
     /// <summary>
@@ -497,7 +518,7 @@ public sealed class UpdateWorker : BackgroundService
     /// CDN kodu farklıysa veya aynı olsa bile revision farkı varsa bilgi gösterilir.
     /// </summary>
     /// <remarks>
-    /// UNC erişilemez durumda — revision tespiti CDN PE header'ından yapılır.
+    /// Revision tespiti: önce UNC setup, erişilemezse CDN PE header'ından.
     /// </remarks>
     private async Task EnrichCdnFallbackWithLatestCodeAsync(CancellationToken stoppingToken)
     {
@@ -531,33 +552,35 @@ public sealed class UpdateWorker : BackgroundService
             if (localCode is not null && latestCode.Equals(localCode, StringComparison.OrdinalIgnoreCase))
             {
                 // CDN kodu aynı — revision farkı olabilir.
-                // CDN PE header'ından FileVersion oku.
-                Version? cdnVer = await GetCdnSetupVersionAsync(module, latestCode, stoppingToken)
-                    .ConfigureAwait(false);
+                // 1. UNC setup'tan oku, 2. CDN PE header fallback
+                Version? cdnVer = GetUncSetupVersion(module)
+                    ?? await GetCdnSetupVersionAsync(module, latestCode, stoppingToken)
+                        .ConfigureAwait(false);
 
                 if (cdnVer is not null && cdnVer > localVer)
                 {
-                    module.LatestCdnVersion = cdnVer.ToString();
+                    module.LatestCdnVersion = $"{cdnVer.Major}.{cdnVer.Minor}.{cdnVer.Build}.{cdnVer.Revision}";
 
                     _logger.LogInformation(
                         "{Module}: CDN fallback — Revision farkı tespit edildi: {CdnVersion} (terminal: {LocalVersion})",
-                        module.ModuleName, cdnVer, module.LocalVersion);
+                        module.ModuleName, module.LatestCdnVersion, module.LocalVersion);
                 }
 
                 continue;
             }
 
-            // CDN kodu farklı — CDN'den tam FileVersion oku
-            Version? cdnFullVer = await GetCdnSetupVersionAsync(module, latestCode, stoppingToken)
-                .ConfigureAwait(false);
+            // CDN kodu farklı — 1. UNC, 2. CDN PE, 3. code decode fallback
+            Version? cdnFullVer = GetUncSetupVersion(module)
+                ?? await GetCdnSetupVersionAsync(module, latestCode, stoppingToken)
+                    .ConfigureAwait(false);
 
             if (cdnFullVer is not null)
             {
-                module.LatestCdnVersion = cdnFullVer.ToString();
+                module.LatestCdnVersion = $"{cdnFullVer.Major}.{cdnFullVer.Minor}.{cdnFullVer.Build}.{cdnFullVer.Revision}";
             }
             else
             {
-                // PE okunamazsa CDN kodundan yaklaşık versiyon üret
+                // PE ve UNC okunamazsa CDN kodundan yaklaşık versiyon üret
                 (int Minor, int Patch)? decoded = CdnHelper.DecodeCdnVersion(latestCode);
 
                 if (decoded is not null)
