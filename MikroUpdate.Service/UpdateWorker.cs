@@ -556,6 +556,7 @@ public sealed class UpdateWorker : BackgroundService
                     string fullVer = $"{cdnVer.Major}.{cdnVer.Minor}.{cdnVer.Build}.{cdnVer.Revision}";
                     module.LatestCdnVersion = fullVer;
                     module.ServerVersion = fullVer;
+                    module.UpdateRequired = true;
 
                     _logger.LogInformation(
                         "{Module}: CDN fallback — Revision farkı tespit edildi: {CdnVersion} (terminal: {LocalVersion})",
@@ -591,6 +592,7 @@ public sealed class UpdateWorker : BackgroundService
 
             module.LatestCdnVersion = cdnVersionStr;
             module.ServerVersion = cdnVersionStr;
+            module.UpdateRequired = true;
 
             _logger.LogInformation(
                 "{Module}: CDN fallback — CDN'de daha yeni sürüm: {CdnVersion} (terminal: {LocalVersion})",
