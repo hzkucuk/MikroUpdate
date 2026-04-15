@@ -1,5 +1,22 @@
 # Özellikler
 
+## v1.31.0
+
+### CDN Son Sürüm Bilgisi
+- **GridView'da CDN güncel sürüm göstergesi:** Yerel ve sunucu sürümleri eşleşse bile CDN'de daha yeni sürüm varsa DURUM sütununda `✔ Güncel  ↑ CDN: X.Y.Z` bilgisi cyan renkte gösterilir
+- **Tooltip desteği:** DURUM hücresine hover edildiğinde CDN sürüm detayı görüntülenir
+- **Durum çubuğu entegrasyonu:** CDN'de yeni sürüm tespit edildiğinde alt durum çubuğunda bilgi mesajı
+- **Hybrid mod zenginleştirme:** UNC sunucu erişilebilir olsa bile CDN probe yapılarak en güncel sürüm bilgisi toplanır
+- **Yeni model özelliği:** `ModuleVersionInfo.LatestCdnVersion` — CDN'deki son sürümü bağımsız taşır
+
+### CDN PE Header FileVersion Okuma
+- **HTTP Range ile uzak PE dosyasından FileVersion okuma:** Setup EXE'nin tamamı indirilmeden (213 MB) sadece ~10 KB veri ile PE header'ından tam FileVersion (revision dahil) elde edilir
+- **PE yapısı parse:** DOS Header → PE Signature → COFF Header → Section Table → `.rsrc` section → Resource Directory → `RT_VERSION` → `VS_FIXEDFILEINFO`
+- **Fallback mekanizması:** Resource directory parse başarısızsa `0xFEEF04BD` signature brute-force taraması
+- **Revision-only güncelleme tespiti:** CDN kodu aynı olsa bile (ör: `17.6.4.46126` vs `17.6.4.45000`) revision farkı yakalanır
+- **Çift kaynaklı kontrol:** UNC erişilebilirse setup FileVersion okunur (kesin), erişilemezse CDN PE header'ından okunur
+- **CDN fallback modunda da çalışır:** UNC tamamen erişilemez durumda bile CDN'deki setup EXE'nin revision'ı tespit edilir
+
 ## v1.30.0
 
 ### Setup Dosya Adı Pattern'leri

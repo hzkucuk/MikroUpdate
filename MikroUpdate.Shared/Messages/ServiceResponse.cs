@@ -44,6 +44,9 @@ public sealed class ModuleVersionInfo
     /// <summary>Bu modül için güncelleme gerekli mi.</summary>
     public bool UpdateRequired { get; set; }
 
+    /// <summary>CDN'deki en güncel sürüm (Hybrid modda UNC + CDN birlikte kontrol edildiğinde dolar).</summary>
+    public string? LatestCdnVersion { get; set; }
+
     /// <summary>Kaynak türü: "Yerel" (UNC paylaşım), "CDN" (HTTP), veya boş.</summary>
     public string SourceType { get; set; } = string.Empty;
 

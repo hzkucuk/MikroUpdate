@@ -550,6 +550,12 @@ public partial class Form1 : Form
             LogWarning("Bazı modüllerin sunucu versiyonuna erişilemedi.");
             ShowTrayBalloon("Bağlantı Sorunu", "Sunucu versiyonları okunamadı.", ToolTipIcon.Warning);
         }
+        else if (response.ModuleVersions.Exists(v => !string.IsNullOrEmpty(v.LatestCdnVersion)))
+        {
+            SetStatus("Güncel ↑ CDN yeni sürüm", Color.FromArgb(100, 200, 255));
+            LogSuccess("Tüm modüller güncel.");
+            LogInfo("CDN'de daha yeni sürüm mevcut — detaylar grid'de.");
+        }
         else
         {
             SetStatus("Güncel", Color.LimeGreen);
@@ -560,6 +566,7 @@ public partial class Form1 : Form
     /// <summary>
     /// Modül versiyon bilgilerini DataGridView'da ve log'da gösterir.
     /// Kaynak türü, tooltip'ler ve durum renkleri ile birlikte.
+    /// CDN'de daha yeni sürüm varsa DURUM sütununda bilgi gösterir.
     /// </summary>
     private void DisplayModuleVersions(List<ModuleVersionInfo> moduleVersions)
     {
@@ -567,8 +574,11 @@ public partial class Form1 : Form
 
         foreach (ModuleVersionInfo info in moduleVersions)
         {
+            bool hasCdnNewer = !string.IsNullOrEmpty(info.LatestCdnVersion);
+
             string status = info.UpdateRequired ? "▲ Güncelle"
                 : info.ServerVersion is null ? "— Erişilemiyor"
+                : hasCdnNewer ? $"✔ Güncel  ↑ CDN: {info.LatestCdnVersion}"
                 : "✔ Güncel";
 
             string sourceLabel = info.SourceType switch
@@ -588,9 +598,23 @@ public partial class Form1 : Form
             DataGridViewRow row = _dgvModules.Rows[rowIndex];
 
             // Durum rengi
-            row.Cells[4].Style.ForeColor = info.UpdateRequired ? Color.Red
-                : info.ServerVersion is null ? Color.Orange
-                : Color.LimeGreen;
+            if (info.UpdateRequired)
+            {
+                row.Cells[4].Style.ForeColor = Color.Red;
+            }
+            else if (info.ServerVersion is null)
+            {
+                row.Cells[4].Style.ForeColor = Color.Orange;
+            }
+            else if (hasCdnNewer)
+            {
+                // Yeşil "Güncel" + cyan CDN bilgisi
+                row.Cells[4].Style.ForeColor = Color.FromArgb(100, 200, 255);
+            }
+            else
+            {
+                row.Cells[4].Style.ForeColor = Color.LimeGreen;
+            }
 
             // Kaynak rengi
             row.Cells[3].Style.ForeColor = info.SourceType switch
@@ -617,7 +641,14 @@ public partial class Form1 : Form
                 };
             }
 
-            LogInfo($"  {info.ModuleName}: {info.LocalVersion ?? "-"} → {info.ServerVersion ?? "-"} [{status}] ({info.SourceType})");
+            // Tooltip: CDN son sürüm bilgisi
+            if (hasCdnNewer)
+            {
+                row.Cells[4].ToolTipText = $"CDN'de daha yeni sürüm mevcut: {info.LatestCdnVersion}";
+            }
+
+            string logExtra = hasCdnNewer ? $" [CDN: {info.LatestCdnVersion}]" : "";
+            LogInfo($"  {info.ModuleName}: {info.LocalVersion ?? "-"} → {info.ServerVersion ?? "-"} [{status}] ({info.SourceType}){logExtra}");
         }
     }
 

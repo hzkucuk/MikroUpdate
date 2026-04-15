@@ -3,6 +3,21 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.31.0] - 2025-07-13
+
+### Eklenen
+- **CDN son sürüm bilgisi GridView'da gösteriliyor** — Yerel ve sunucu sürümleri eşleşip "Güncel" olsa bile CDN'de daha yeni sürüm varsa DURUM sütununda `✔ Güncel  ↑ CDN: X.Y.Z` şeklinde cyan renkte gösterilir
+- `ModuleVersionInfo.LatestCdnVersion` özelliği: CDN'deki en güncel sürümü bağımsız taşır
+- `UpdateWorker.EnrichWithCdnLatestVersionAsync()`: Hybrid modda UNC erişilebilir olsa bile CDN probe yaparak bilgilendirme sağlar
+- DURUM hücresinde tooltip ile CDN sürüm detayı
+- Durum çubuğunda "Güncel ↑ CDN yeni sürüm" bilgisi (cyan)
+- **CDN PE header'ından FileVersion okuma** — HTTP Range request ile setup EXE'nin PE header'ından tam FileVersion (revision dahil) okunur (~10 KB veri transferi ile 213 MB dosyadan)
+- `PeVersionReader`: DOS Header → PE Signature → Section Table → `.rsrc` → `VS_FIXEDFILEINFO` parse, signature scan fallback
+- **Revision farkı tespiti** — CDN kodu aynı olsa bile (ör: 17.6.4.46126 vs 17.6.4.45000) revision-only güncellemeler tespit edilir
+- `CheckRevisionDifferenceAsync`: Önce UNC setup FileVersion, başarısızsa CDN PE header fallback
+- `GetCdnSetupVersionAsync`: CDN'deki setup EXE'nin tam versiyonunu HTTP Range ile okur
+- `OnlineVersionService.GetCdnFileVersionAsync`: CDN PE okuma public API'si
+
 ## [1.30.0] - 2026-07-05
 
 ### Eklenen

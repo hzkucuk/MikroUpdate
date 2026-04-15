@@ -258,6 +258,21 @@ public sealed class OnlineVersionService : IDisposable
         return Version.TryParse(versionInfo.FileVersion, out Version? version) ? version : null;
     }
 
+    /// <summary>
+    /// CDN'deki setup EXE dosyasının FileVersion bilgisini HTTP Range request'leri ile okur.
+    /// PE dosyasının tamamını indirmeden yalnızca header ve resource section'ını çeker (~10 KB).
+    /// </summary>
+    /// <param name="cdnUrl">Setup EXE'nin tam CDN URL'si.</param>
+    /// <param name="cancellationToken">İptal token'ı.</param>
+    /// <returns>FileVersion veya okunamazsa null.</returns>
+    public async Task<Version?> GetCdnFileVersionAsync(string cdnUrl, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(cdnUrl);
+
+        PeVersionReader reader = new(_httpClient, _logger);
+        return await reader.GetFileVersionAsync(cdnUrl, cancellationToken).ConfigureAwait(false);
+    }
+
     public void Dispose()
     {
         _httpClient.Dispose();

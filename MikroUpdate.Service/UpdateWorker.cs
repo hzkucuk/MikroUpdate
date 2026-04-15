@@ -4,6 +4,7 @@ using System.Security.Principal;
 
 using MikroUpdate.Service.Services;
 using MikroUpdate.Shared;
+using MikroUpdate.Shared.Helpers;
 using MikroUpdate.Shared.Messages;
 using MikroUpdate.Shared.Models;
 
@@ -260,14 +261,22 @@ public sealed class UpdateWorker : BackgroundService
                         };
                     }
 
-                        _moduleVersions = await _onlineVersionService
-                                .GetOnlineModuleVersionsAsync(_config, stoppingToken).ConfigureAwait(false);
-                        }
-                    }
-                    else
-                    {
-                        _moduleVersions = _versionService.GetModuleVersions(_config);
-                    }
+                    _moduleVersions = await _onlineVersionService
+                        .GetOnlineModuleVersionsAsync(_config, stoppingToken).ConfigureAwait(false);
+
+                    // CDN fallback modunda da CDN son sürüm bilgisini ekle
+                    await EnrichCdnFallbackWithLatestCodeAsync(stoppingToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    // Sunucu erişilebilir — CDN'de daha yeni sürüm var mı bilgi amaçlı kontrol et
+                    await EnrichWithCdnLatestVersionAsync(stoppingToken).ConfigureAwait(false);
+                }
+            }
+            else
+            {
+                _moduleVersions = _versionService.GetModuleVersions(_config);
+            }
 
             _updateRequired = _moduleVersions.Exists(v => v.UpdateRequired);
 
@@ -305,6 +314,262 @@ public sealed class UpdateWorker : BackgroundService
                 Status = ServiceStatus.Error,
                 Message = _statusMessage
             };
+        }
+    }
+
+    /// <summary>
+    /// UNC ile alınan modül versiyon bilgilerine CDN'deki en son sürümü ekler.
+    /// Bilgi amaçlıdır; güncelleme kararını etkilemez.
+    /// CDN'de daha yeni sürüm varsa <see cref="ModuleVersionInfo.LatestCdnVersion"/> doldurulur.
+    /// </summary>
+    /// <remarks>
+    /// CDN probe sonucunu (<see cref="OnlineVersionService.LatestCdnCode"/>) kullanarak
+    /// CDN kodundan sürüm üretir. CDN kodu farklıysa Minor/Build değişikliği vardır.
+    /// CDN kodu aynıysa revision farkı kontrol edilir:
+    /// 1. UNC erişilebilirse setup EXE'nin FileVersion'ı okunur (kesin)
+    /// 2. UNC erişilemezse CDN'deki setup EXE'nin PE header'ından FileVersion okunur (HTTP Range)
+    /// </remarks>
+    private async Task EnrichWithCdnLatestVersionAsync(CancellationToken stoppingToken)
+    {
+        if (_onlineVersionService is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _logger.LogDebug("CDN son sürüm bilgisi sorgulanıyor...");
+
+            // CDN probe'u tetikle — LatestCdnCode güncellensin
+            await _onlineVersionService
+                .GetOnlineModuleVersionsAsync(_config, stoppingToken).ConfigureAwait(false);
+
+            string? latestCode = _onlineVersionService.LatestCdnCode;
+
+            if (latestCode is null)
+            {
+                _logger.LogDebug("CDN probe sonuç döndürmedi.");
+                return;
+            }
+
+            foreach (ModuleVersionInfo module in _moduleVersions)
+            {
+                if (!Version.TryParse(module.LocalVersion, out Version? localVer))
+                {
+                    continue;
+                }
+
+                // Terminal versiyonunun CDN kodu
+                string? localCode = CdnHelper.EncodeCdnVersion(localVer);
+
+                if (localCode is not null && latestCode.Equals(localCode, StringComparison.OrdinalIgnoreCase))
+                {
+                    // CDN kodu aynı — revision farkı olabilir.
+                    // Önce UNC, başarısızsa CDN PE header'ından oku.
+                    await CheckRevisionDifferenceAsync(module, localVer, latestCode, stoppingToken)
+                        .ConfigureAwait(false);
+                    continue;
+                }
+
+                // CDN kodu farklı — Minor veya Build değişikliği var
+                // CDN'den tam FileVersion oku (revision dahil)
+                Version? cdnVer = await GetCdnSetupVersionAsync(module, latestCode, stoppingToken)
+                    .ConfigureAwait(false);
+
+                if (cdnVer is not null)
+                {
+                    module.LatestCdnVersion = cdnVer.ToString();
+
+                    _logger.LogInformation(
+                        "{Module}: CDN'de daha yeni sürüm mevcut: {CdnVersion} (terminal: {LocalVersion})",
+                        module.ModuleName, cdnVer, module.LocalVersion);
+                }
+                else
+                {
+                    // PE okunamazsa CDN kodundan yaklaşık versiyon üret (revision=0)
+                    (int Minor, int Patch)? decoded = CdnHelper.DecodeCdnVersion(latestCode);
+
+                    if (decoded is not null)
+                    {
+                        string cdnVersionStr = $"{localVer.Major}.{decoded.Value.Minor}.{decoded.Value.Patch}.0";
+                        module.LatestCdnVersion = cdnVersionStr;
+
+                        _logger.LogInformation(
+                            "{Module}: CDN'de daha yeni sürüm mevcut: {CdnVersion} (terminal: {LocalVersion})",
+                            module.ModuleName, cdnVersionStr, module.LocalVersion);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning("CDN son sürüm bilgisi alınamadı: {Error}", ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// CDN kodu aynı olduğunda revision farkını kontrol eder.
+    /// Önce UNC setup FileVersion okunur; UNC erişilemezse CDN PE header'ından okunur.
+    /// </summary>
+    private async Task CheckRevisionDifferenceAsync(
+        ModuleVersionInfo module, Version localVer, string cdnCode, CancellationToken stoppingToken)
+    {
+        // Config'deki modül tanımını bul (SetupFileName için)
+        UpdateModule? configModule = _config.EnabledModules
+            .FirstOrDefault(m => m.Name.Equals(module.ModuleName, StringComparison.OrdinalIgnoreCase));
+
+        if (configModule is null)
+        {
+            return;
+        }
+
+        // 1. UNC'den setup FileVersion oku (kesin sonuç)
+        string setupPath = Path.Combine(_config.SetupFilesPath, configModule.SetupFileName);
+        Version? setupVer = _versionService.GetVersion(setupPath);
+
+        // 2. UNC erişilemezse CDN PE header'ından oku
+        if (setupVer is null)
+        {
+            _logger.LogDebug(
+                "{Module}: UNC setup okunamadı, CDN PE header deneniyor...",
+                module.ModuleName);
+
+            setupVer = await GetCdnSetupVersionAsync(module, cdnCode, stoppingToken)
+                .ConfigureAwait(false);
+        }
+
+        if (setupVer is null)
+        {
+            _logger.LogDebug(
+                "{Module}: Revision karşılaştırması yapılamadı (setup FileVersion okunamadı)",
+                module.ModuleName);
+            return;
+        }
+
+        // Tam versiyon karşılaştırması (Major.Minor.Build.Revision)
+        if (setupVer > localVer)
+        {
+            module.LatestCdnVersion = setupVer.ToString();
+
+            _logger.LogInformation(
+                "{Module}: Daha yeni revision mevcut: {SetupVersion} (terminal: {LocalVersion})",
+                module.ModuleName, setupVer, localVer);
+        }
+        else
+        {
+            _logger.LogDebug(
+                "{Module}: Setup ve terminal aynı sürüm: {Version}",
+                module.ModuleName, setupVer);
+        }
+    }
+
+    /// <summary>
+    /// CDN'deki setup EXE'nin FileVersion'ını HTTP Range PE okuma ile alır.
+    /// </summary>
+    private async Task<Version?> GetCdnSetupVersionAsync(
+        ModuleVersionInfo module, string cdnCode, CancellationToken stoppingToken)
+    {
+        if (_onlineVersionService is null)
+        {
+            return null;
+        }
+
+        UpdateModule? configModule = _config.EnabledModules
+            .FirstOrDefault(m => m.Name.Equals(module.ModuleName, StringComparison.OrdinalIgnoreCase));
+
+        if (configModule is null)
+        {
+            return null;
+        }
+
+        string cdnUrl = CdnHelper.BuildDownloadUrl(
+            _config.CdnBaseUrl, _config.MajorVersion, cdnCode, configModule.SetupFileName);
+
+        return await _onlineVersionService
+            .GetCdnFileVersionAsync(cdnUrl, stoppingToken).ConfigureAwait(false);
+    }
+
+
+
+    /// <summary>
+    /// CDN fallback modunda, probe'un bulduğu en son CDN kodunu kullanarak
+    /// güncelleme gerektirmeyen modüllere CDN son sürüm bilgisini ekler.
+    /// CDN kodu farklıysa veya aynı olsa bile revision farkı varsa bilgi gösterilir.
+    /// </summary>
+    /// <remarks>
+    /// UNC erişilemez durumda — revision tespiti CDN PE header'ından yapılır.
+    /// </remarks>
+    private async Task EnrichCdnFallbackWithLatestCodeAsync(CancellationToken stoppingToken)
+    {
+        if (_onlineVersionService is null)
+        {
+            return;
+        }
+
+        string? latestCode = _onlineVersionService.LatestCdnCode;
+
+        if (latestCode is null)
+        {
+            return;
+        }
+
+        foreach (ModuleVersionInfo module in _moduleVersions)
+        {
+            // Zaten güncelleme gereken modüller için CDN bilgisi anlamsız
+            if (module.UpdateRequired)
+            {
+                continue;
+            }
+
+            if (!Version.TryParse(module.LocalVersion, out Version? localVer))
+            {
+                continue;
+            }
+
+            string? localCode = CdnHelper.EncodeCdnVersion(localVer);
+
+            if (localCode is not null && latestCode.Equals(localCode, StringComparison.OrdinalIgnoreCase))
+            {
+                // CDN kodu aynı — revision farkı olabilir.
+                // CDN PE header'ından FileVersion oku.
+                Version? cdnVer = await GetCdnSetupVersionAsync(module, latestCode, stoppingToken)
+                    .ConfigureAwait(false);
+
+                if (cdnVer is not null && cdnVer > localVer)
+                {
+                    module.LatestCdnVersion = cdnVer.ToString();
+
+                    _logger.LogInformation(
+                        "{Module}: CDN fallback — Revision farkı tespit edildi: {CdnVersion} (terminal: {LocalVersion})",
+                        module.ModuleName, cdnVer, module.LocalVersion);
+                }
+
+                continue;
+            }
+
+            // CDN kodu farklı — CDN'den tam FileVersion oku
+            Version? cdnFullVer = await GetCdnSetupVersionAsync(module, latestCode, stoppingToken)
+                .ConfigureAwait(false);
+
+            if (cdnFullVer is not null)
+            {
+                module.LatestCdnVersion = cdnFullVer.ToString();
+            }
+            else
+            {
+                // PE okunamazsa CDN kodundan yaklaşık versiyon üret
+                (int Minor, int Patch)? decoded = CdnHelper.DecodeCdnVersion(latestCode);
+
+                if (decoded is not null)
+                {
+                    string cdnVersionStr = $"{localVer.Major}.{decoded.Value.Minor}.{decoded.Value.Patch}.0";
+                    module.LatestCdnVersion = cdnVersionStr;
+                }
+            }
+
+            _logger.LogInformation(
+                "{Module}: CDN fallback — CDN'de daha yeni sürüm: {CdnVersion} (terminal: {LocalVersion})",
+                module.ModuleName, module.LatestCdnVersion, module.LocalVersion);
         }
     }
 
