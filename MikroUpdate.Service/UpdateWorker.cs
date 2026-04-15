@@ -378,11 +378,11 @@ public sealed class UpdateWorker : BackgroundService
 
                 if (cdnVer is not null)
                 {
-                    module.LatestCdnVersion = cdnVer.ToString();
+                    module.LatestCdnVersion = $"{cdnVer.Major}.{cdnVer.Minor}.{cdnVer.Build}.{cdnVer.Revision}";
 
                     _logger.LogInformation(
                         "{Module}: CDN'de daha yeni sürüm mevcut: {CdnVersion} (terminal: {LocalVersion})",
-                        module.ModuleName, cdnVer, module.LocalVersion);
+                        module.ModuleName, module.LatestCdnVersion, module.LocalVersion);
                 }
                 else
                 {
@@ -449,11 +449,11 @@ public sealed class UpdateWorker : BackgroundService
         // Tam versiyon karşılaştırması (Major.Minor.Build.Revision)
         if (setupVer > localVer)
         {
-            module.LatestCdnVersion = setupVer.ToString();
+            module.LatestCdnVersion = $"{setupVer.Major}.{setupVer.Minor}.{setupVer.Build}.{setupVer.Revision}";
 
             _logger.LogInformation(
                 "{Module}: Daha yeni revision mevcut: {SetupVersion} (terminal: {LocalVersion})",
-                module.ModuleName, setupVer, localVer);
+                module.ModuleName, module.LatestCdnVersion, localVer);
         }
         else
         {

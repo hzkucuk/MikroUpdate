@@ -690,13 +690,12 @@ public partial class Form1 : Form
         }
 
         // DURUM sütunu (col 4): LatestCdnVersion varsa CDN versiyonunu renkli göster
-        if (e.ColumnIndex == 4 && !string.IsNullOrEmpty(info.LatestCdnVersion))
+        if (e.ColumnIndex == 4
+            && !string.IsNullOrEmpty(info.LatestCdnVersion)
+            && Version.TryParse(info.LatestCdnVersion, out Version? cdnVer))
         {
-            if (Version.TryParse(info.LatestCdnVersion, out Version? cdnVer) && localVer != cdnVer)
-            {
-                PaintStatusWithCdnDiff(e, localVer, cdnVer);
-                return;
-            }
+            PaintStatusWithCdnDiff(e, localVer, cdnVer);
+            return;
         }
     }
 
