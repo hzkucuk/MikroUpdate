@@ -674,26 +674,27 @@ public partial class Form1 : Form
             return;
         }
 
-        // SUNUCU sütunu (col 2): ServerVersion vs LocalVersion
-        if (e.ColumnIndex == 2 && info.ServerVersion is not null && info.LocalVersion is not null)
+        if (!Version.TryParse(info.LocalVersion, out Version? localVer))
         {
-            if (Version.TryParse(info.LocalVersion, out Version? localVer) &&
-                Version.TryParse(info.ServerVersion, out Version? serverVer) &&
-                localVer != serverVer)
+            return;
+        }
+
+        // SUNUCU sütunu (col 2): ServerVersion vs LocalVersion
+        if (e.ColumnIndex == 2 && info.ServerVersion is not null)
+        {
+            if (Version.TryParse(info.ServerVersion, out Version? serverVer) && localVer != serverVer)
             {
                 PaintVersionDiff(e, info.ServerVersion, localVer, serverVer);
                 return;
             }
         }
 
-        // DURUM sütunu (col 4): CDN versiyonunu renkli göster
+        // DURUM sütunu (col 4): LatestCdnVersion varsa CDN versiyonunu renkli göster
         if (e.ColumnIndex == 4 && !string.IsNullOrEmpty(info.LatestCdnVersion))
         {
-            if (Version.TryParse(info.LocalVersion, out Version? localVer) &&
-                Version.TryParse(info.LatestCdnVersion, out Version? cdnVer) &&
-                localVer != cdnVer)
+            if (Version.TryParse(info.LatestCdnVersion, out Version? cdnVer) && localVer != cdnVer)
             {
-                PaintStatusWithCdnDiff(e, info, localVer, cdnVer);
+                PaintStatusWithCdnDiff(e, localVer, cdnVer);
                 return;
             }
         }
@@ -755,20 +756,20 @@ public partial class Form1 : Form
     /// </summary>
     private static void PaintStatusWithCdnDiff(
         DataGridViewCellPaintingEventArgs e,
-        ModuleVersionInfo info,
         Version localVer,
         Version cdnVer)
     {
-        e.PaintBackground(e.ClipBounds, cellsPaintSelectionBackground: true);
-
         string cellText = e.FormattedValue?.ToString() ?? "";
         string cdnPrefix = "↑ CDN: ";
         int cdnIndex = cellText.IndexOf(cdnPrefix, StringComparison.Ordinal);
 
         if (cdnIndex < 0)
         {
+            // CDN prefix bulunamadı — varsayılan boyamaya bırak
             return;
         }
+
+        e.PaintBackground(e.ClipBounds, cellsPaintSelectionBackground: true);
 
         string prefix = cellText[..(cdnIndex + cdnPrefix.Length)];
         string cdnVersionStr = cellText[(cdnIndex + cdnPrefix.Length)..];
