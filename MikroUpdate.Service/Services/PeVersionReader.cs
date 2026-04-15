@@ -82,6 +82,9 @@ internal sealed class PeVersionReader
             // Section table starts after Optional Header
             int sectionTableOffset = peOffset + 24 + sizeOfOptionalHeader;
 
+            _logger.LogDebug("PE parse: peOffset={PeOffset}, sections={Sections}, optHdrSize={OptSize}, sectionTableAt={SecTable}",
+                peOffset, numberOfSections, sizeOfOptionalHeader, sectionTableOffset);
+
             // Her section entry 40 byte — .rsrc section'ı bul
             int rsrcVirtualAddress = 0;
             int rsrcFileOffset = 0;
@@ -126,6 +129,9 @@ internal sealed class PeVersionReader
                 return null;
             }
 
+            _logger.LogDebug(".rsrc section bulundu: VA=0x{VA:X}, fileOffset=0x{FO:X}, size={Size}",
+                rsrcVirtualAddress, rsrcFileOffset, rsrcSize);
+
             // 2. .rsrc section'ın başından yeterli miktarda oku
             // RT_VERSION resource genellikle .rsrc section'ın başlarında bulunur
             // İlk 8 KB genellikle yeterli (version info küçük bir resource)
@@ -139,13 +145,18 @@ internal sealed class PeVersionReader
                 return null;
             }
 
+            _logger.LogDebug(".rsrc okundu: {BytesRead} byte", rsrcBytes.Length);
+
             // 3. Resource directory'den RT_VERSION resource'unun offset'ini bul
             int? versionOffset = FindVersionResourceOffset(rsrcBytes, rsrcVirtualAddress, rsrcFileOffset);
 
             if (versionOffset is null)
             {
                 // Fallback: VS_FIXEDFILEINFO signature'ı brute-force ara
-                return FindVersionBySignatureScan(rsrcBytes);
+                _logger.LogDebug("RT_VERSION resource bulunamadı, signature scan deneniyor...");
+                Version? scanResult = FindVersionBySignatureScan(rsrcBytes);
+                _logger.LogDebug("Signature scan sonucu: {Result}", scanResult?.ToString() ?? "null");
+                return scanResult;
             }
 
             int localOffset = versionOffset.Value - rsrcFileOffset;
@@ -369,6 +380,9 @@ internal sealed class PeVersionReader
         }
 
         byte[] data = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+
+        _logger.LogDebug("HTTP Range yanıt: status={Status}, istenen={Requested}, alınan={Received}, url={Url}",
+            response.StatusCode, length, data.Length, url);
 
         // OK (200) döndüyse sunucu Range desteklemiyor — tüm dosyayı göndermiş olabilir
         // Bu durumda çok büyük veri gelirse iptal et

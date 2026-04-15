@@ -392,7 +392,7 @@ public sealed class UpdateWorker : BackgroundService
                 }
                 else
                 {
-                    // PE ve UNC okunamazsa CDN kodundan yaklaşık versiyon üret (revision=0)
+                    // UNC ve PE okunamazsa CDN kodundan yaklaşık versiyon üret (revision=0)
                     (int Minor, int Patch)? decoded = CdnHelper.DecodeCdnVersion(latestCode);
 
                     if (decoded is not null)
@@ -481,8 +481,18 @@ public sealed class UpdateWorker : BackgroundService
         string cdnUrl = CdnHelper.BuildDownloadUrl(
             _config.CdnBaseUrl, _config.MajorVersion, cdnCode, configModule.SetupFileName);
 
-        return await _onlineVersionService
+        _logger.LogDebug(
+            "{Module}: CDN PE version okuma — URL: {Url}",
+            module.ModuleName, cdnUrl);
+
+        Version? peResult = await _onlineVersionService
             .GetCdnFileVersionAsync(cdnUrl, stoppingToken).ConfigureAwait(false);
+
+        _logger.LogDebug(
+            "{Module}: CDN PE version sonucu: {Result}",
+            module.ModuleName, peResult?.ToString() ?? "null");
+
+        return peResult;
     }
 
     /// <summary>
@@ -579,7 +589,7 @@ public sealed class UpdateWorker : BackgroundService
             }
             else
             {
-                // PE ve UNC okunamazsa CDN kodundan yaklaşık versiyon üret
+                // UNC ve PE okunamazsa CDN kodundan yaklaşık versiyon üret (revision bilinmez)
                 (int Minor, int Patch)? decoded = CdnHelper.DecodeCdnVersion(latestCode);
 
                 if (decoded is null)

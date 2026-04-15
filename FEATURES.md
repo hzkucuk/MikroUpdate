@@ -1,5 +1,18 @@
 # Özellikler
 
+## v1.32.0
+
+### Web Scraping ile CDN Sürüm Tespiti
+- **mikro.com.tr sürüm güncellemeleri sayfasından otomatik parse:** Tek HTTP GET isteği ile en son CDN kodu tespit edilir
+- **HEAD probe'a göre avantajları:** Tek istek (vs. onlarca HEAD), güvenilir (site yapısına bağlı), tarih bilgisi dahil
+- **Fallback mekanizması:** Web scraping başarısızsa mevcut HEAD probe devreye girer
+- **JSON yapılandırılabilir:** `releaseNotesUrl` alanı `mikro-versions.json`'dan derleme gerektirmeden değiştirilebilir
+- **`GeneratedRegex` performansı:** Derleme zamanında optimize edilmiş regex ile hızlı parse
+
+### CDN Zero-Padded Kod Düzeltmesi
+- **Zero-padded minor format:** CDN klasör adları `06d` (tek haneli minor için) şeklinde zero-padded. `EncodeCdnVersion` ve `GenerateProbeCandidates` düzeltildi
+- PE reader artık doğru URL'lerle çalışıyor
+
 ## v1.31.0
 
 ### CDN Son Sürüm Bilgisi

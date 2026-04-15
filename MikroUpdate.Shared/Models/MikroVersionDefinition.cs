@@ -21,6 +21,13 @@ public sealed class MikroVersionDefinition
     /// </summary>
     public string CdnUrlPattern { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Mikro sürüm güncellemeleri sayfası URL'si.
+    /// En son CDN kodunu web scraping ile tespit etmek için kullanılır.
+    /// Boş ise HEAD probe'a fallback yapılır.
+    /// </summary>
+    public string ReleaseNotesUrl { get; set; } = string.Empty;
+
     /// <summary>Varsayılan sunucu paylaşım yolu (ör: "\\\\SERVER\\MikroV16xx").</summary>
     public string DefaultServerShare { get; set; } = string.Empty;
 

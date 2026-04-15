@@ -7,14 +7,16 @@ using MikroUpdate.Shared.Models;
 namespace MikroUpdate.Service.Services;
 
 /// <summary>
-/// CDN üzerinden HTTP HEAD istekleriyle Mikro ERP versiyon kontrolü yapar.
-/// Her modül için mevcut versiyondan başlayarak ileriye doğru probe eder ve
-/// en güncel CDN versiyon kodunu tespit eder.
+/// CDN üzerinden Mikro ERP versiyon kontrolü yapar.
+/// Öncelik sırası:
+/// 1. mikro.com.tr sürüm güncellemeleri sayfasından web scraping (hızlı, tek istek)
+/// 2. CDN HEAD probe (fallback — mevcut versiyondan ileriye doğru tarar)
 /// </summary>
 public sealed class OnlineVersionService : IDisposable
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger _logger;
+    private readonly MikroWebVersionParser _webParser;
 
     /// <summary>Probe sırasında bir minor'da hiçbir aday bulunamazsa boş streak sayacı artar.</summary>
     private const int MaxEmptyMinorStreak = 2;
@@ -35,6 +37,8 @@ public sealed class OnlineVersionService : IDisposable
             timeoutSeconds,
             defaultTimeoutSeconds: 15,
             connectTimeoutSeconds: 10);
+
+        _webParser = new MikroWebVersionParser(_httpClient, logger);
     }
 
     /// <summary>
@@ -63,9 +67,16 @@ public sealed class OnlineVersionService : IDisposable
         string localExePath = Path.Combine(config.LocalInstallPath, clientModule.ExeFileName);
         Version? localClientVersion = GetLocalVersion(localExePath);
 
-        // CDN'de en güncel versiyon kodunu bul
-        string? latestCdnCode = await ProbeLatestCdnVersionAsync(
-            config, clientModule, localClientVersion, cancellationToken).ConfigureAwait(false);
+        // Önce web scraping ile en son CDN kodunu bul (hızlı, tek istek)
+        string? latestCdnCode = await ScrapeLatestCdnCodeAsync(
+            config.MajorVersion, cancellationToken).ConfigureAwait(false);
+
+        // Web scraping başarısız olduysa HEAD probe'a fallback yap
+        if (latestCdnCode is null)
+        {
+            latestCdnCode = await ProbeLatestCdnVersionAsync(
+                config, clientModule, localClientVersion, cancellationToken).ConfigureAwait(false);
+        }
 
         // Son probe sonucunu sakla (DownloadService için)
         LatestCdnCode = latestCdnCode;
@@ -118,6 +129,39 @@ public sealed class OnlineVersionService : IDisposable
         }
 
         return results;
+    }
+
+    /// <summary>
+    /// mikro.com.tr sürüm güncellemeleri sayfasından en son CDN kodunu çeker.
+    /// Tek HTTP GET isteği ile sonuç alınır; HEAD probe'a göre çok daha hızlıdır.
+    /// </summary>
+    /// <returns>En son CDN kodu (ör: "06d", "40b") veya alınamazsa null.</returns>
+    private async Task<string?> ScrapeLatestCdnCodeAsync(
+        string majorVersion, CancellationToken cancellationToken)
+    {
+        MikroVersionProvider provider = new();
+        MikroVersionDefinition? def = provider.GetVersion(majorVersion);
+
+        if (def is null || string.IsNullOrWhiteSpace(def.ReleaseNotesUrl))
+        {
+            _logger.LogDebug(
+                "Web scraping yapılamıyor: {Version} için releaseNotesUrl tanımsız.", majorVersion);
+            return null;
+        }
+
+        WebVersionResult? result = await _webParser
+            .GetLatestVersionAsync(def.ReleaseNotesUrl, cancellationToken).ConfigureAwait(false);
+
+        if (result is null)
+        {
+            return null;
+        }
+
+        _logger.LogDebug(
+            "Web scraping sonucu: en son CDN kodu {Code} ({Date})",
+            result.CdnCode, result.ReleaseDate?.ToString("yyyy-MM-dd") ?? "?");
+
+        return result.CdnCode;
     }
 
     /// <summary>

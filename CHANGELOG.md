@@ -3,6 +3,21 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.32.0] - 2025-07-14
+
+### Eklenen
+- **mikro.com.tr web scraping ile CDN sürüm tespiti** — Sürüm güncellemeleri sayfasından en son CDN kodunu tek HTTP isteği ile parse eder; HEAD probe'a göre çok daha hızlı ve güvenilir
+- `MikroWebVersionParser`: Regex tabanlı web scraper (`GeneratedRegex`), tarih bilgisi dahil parse
+- `WebVersionResult` record: CDN kodu + yayın tarihi
+- `OnlineVersionService.ScrapeLatestCdnCodeAsync()`: Web scraping birincil kaynak, HEAD probe fallback
+- `MikroVersionDefinition.ReleaseNotesUrl`: Sürüm tanımında güncellemeler sayfası URL'si
+- `mikro-versions.json`: V16 ve V17 için `releaseNotesUrl` alanları eklendi
+
+### Düzeltilen
+- **CDN zero-padded kod düzeltmesi** — CDN klasör adları zero-padded minor kullanıyor (ör: `06d`, `39f`). `EncodeCdnVersion` ve `GenerateProbeCandidates` artık `{minor:D2}` format kullanıyor
+- PE reader CDN URL'leri artık doğru zero-padded kodlarla oluşturuluyor
+- `GetCdnSetupVersionAsync` tanısal logları Debug seviyesine indirildi
+
 ## [1.31.0] - 2025-07-13
 
 ### Eklenen

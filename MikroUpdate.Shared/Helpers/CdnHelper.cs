@@ -3,9 +3,9 @@ namespace MikroUpdate.Shared.Helpers;
 /// <summary>
 /// Mikro ERP CDN versiyon kodlama ve URL oluşturma yardımcısı.
 /// <para>
-/// CDN versiyon kodu formatı: {minor}{harf}
-/// Patch 1→a, 2→b, ..., 6→f, 7→g, ..., 10→j
-/// Örnek: 16.39.6 → "39f", 16.40.1 → "40a"
+/// CDN versiyon kodu formatı: {minor:D2}{harf}
+/// Minor 2 haneye zero-padded, Patch 1→a, 2→b, ..., 6→f, 7→g, ..., 10→j
+/// Örnek: 16.39.6 → "39f", 17.6.4 → "06d", 16.40.1 → "40a"
 /// </para>
 /// </summary>
 public static class CdnHelper
@@ -22,7 +22,7 @@ public static class CdnHelper
     /// Versiyon nesnesinden CDN versiyon kodunu üretir.
     /// </summary>
     /// <param name="version">Mikro ERP versiyonu (ör: 16.39.6.46086).</param>
-    /// <returns>CDN versiyon kodu (ör: "39f") veya patch geçersizse null.</returns>
+    /// <returns>CDN versiyon kodu (ör: "39f", "06d") veya patch geçersizse null.</returns>
     public static string? EncodeCdnVersion(Version version)
     {
         ArgumentNullException.ThrowIfNull(version);
@@ -37,13 +37,13 @@ public static class CdnHelper
 
         char letter = (char)('a' + patch - 1);
 
-        return $"{minor}{letter}";
+        return $"{minor:D2}{letter}";
     }
 
     /// <summary>
     /// CDN versiyon kodunu minor ve patch değerlerine çözer.
     /// </summary>
-    /// <param name="cdnCode">CDN versiyon kodu (ör: "39f").</param>
+    /// <param name="cdnCode">CDN versiyon kodu (ör: "39f", "06d").</param>
     /// <returns>Minor ve patch değerleri veya geçersiz kodda null.</returns>
     public static (int Minor, int Patch)? DecodeCdnVersion(string cdnCode)
     {
@@ -107,7 +107,7 @@ public static class CdnHelper
         // Mevcut minor'daki kalan patch'leri dene
         for (int p = patch + 1; p <= MaxPatchPerMinor; p++)
         {
-            yield return $"{minor}{(char)('a' + p - 1)}";
+            yield return $"{minor:D2}{(char)('a' + p - 1)}";
         }
 
         // Sonraki minor'lara geç
@@ -117,7 +117,7 @@ public static class CdnHelper
 
             for (int p = 1; p <= MaxPatchPerMinor; p++)
             {
-                string candidate = $"{m}{(char)('a' + p - 1)}";
+                string candidate = $"{m:D2}{(char)('a' + p - 1)}";
 
                 yield return candidate;
                 anyFound = true;
