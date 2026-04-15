@@ -597,6 +597,9 @@ public partial class Form1 : Form
 
             DataGridViewRow row = _dgvModules.Rows[rowIndex];
 
+            // CellPainting'de versiyon karşılaştırması için ModuleVersionInfo'yu sakla
+            row.Tag = info;
+
             // Durum rengi
             if (info.UpdateRequired)
             {
@@ -651,6 +654,196 @@ public partial class Form1 : Form
             LogInfo($"  {info.ModuleName}: {info.LocalVersion ?? "-"} → {info.ServerVersion ?? "-"} [{status}] ({info.SourceType}){logExtra}");
         }
     }
+
+    /// <summary>
+    /// SUNUCU ve DURUM sütunlarındaki versiyon parçalarını (Major.Minor.Build.Revision)
+    /// terminaldeki versiyonla karşılaştırarak farklı parçaları renkli boyar.
+    /// </summary>
+    private void DgvModules_CellPainting(object? sender, DataGridViewCellPaintingEventArgs e)
+    {
+        // Header satırını ve geçersiz indeksleri atla
+        if (e.RowIndex < 0 || e.ColumnIndex < 0)
+        {
+            return;
+        }
+
+        DataGridViewRow row = _dgvModules.Rows[e.RowIndex];
+
+        if (row.Tag is not ModuleVersionInfo info)
+        {
+            return;
+        }
+
+        // SUNUCU sütunu (col 2): ServerVersion vs LocalVersion
+        if (e.ColumnIndex == 2 && info.ServerVersion is not null && info.LocalVersion is not null)
+        {
+            if (Version.TryParse(info.LocalVersion, out Version? localVer) &&
+                Version.TryParse(info.ServerVersion, out Version? serverVer) &&
+                localVer != serverVer)
+            {
+                PaintVersionDiff(e, info.ServerVersion, localVer, serverVer);
+                return;
+            }
+        }
+
+        // DURUM sütunu (col 4): CDN versiyonunu renkli göster
+        if (e.ColumnIndex == 4 && !string.IsNullOrEmpty(info.LatestCdnVersion))
+        {
+            if (Version.TryParse(info.LocalVersion, out Version? localVer) &&
+                Version.TryParse(info.LatestCdnVersion, out Version? cdnVer) &&
+                localVer != cdnVer)
+            {
+                PaintStatusWithCdnDiff(e, info, localVer, cdnVer);
+                return;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Versiyon string'ini parça parça boyar — terminalle farklı parçalar vurgulanır.
+    /// </summary>
+    private static void PaintVersionDiff(
+        DataGridViewCellPaintingEventArgs e,
+        string versionStr,
+        Version localVer,
+        Version targetVer)
+    {
+        e.PaintBackground(e.ClipBounds, cellsPaintSelectionBackground: true);
+
+        string[] parts = versionStr.Split('.');
+        int[] localParts = [localVer.Major, localVer.Minor, localVer.Build, localVer.Revision];
+        int[] targetParts = [targetVer.Major, targetVer.Minor, targetVer.Build, targetVer.Revision];
+
+        // Fark seviyesini bul (en yüksek seviyedeki fark rengi belirler)
+        int diffLevel = GetDiffLevel(localParts, targetParts);
+
+        using Font font = new(e.CellStyle!.Font, FontStyle.Regular);
+        using Font boldFont = new(e.CellStyle.Font, FontStyle.Bold);
+
+        float x = e.CellBounds.X + e.CellStyle.Padding.Left + 3;
+        float y = e.CellBounds.Y + ((e.CellBounds.Height - font.GetHeight(e.Graphics!)) / 2);
+
+        for (int i = 0; i < parts.Length; i++)
+        {
+            bool isDiff = i < localParts.Length && i < targetParts.Length && localParts[i] != targetParts[i];
+
+            // Fark seviyesinden itibaren tüm alt parçaları da vurgula
+            bool isHighlighted = i >= diffLevel && diffLevel < 4;
+
+            Color partColor = isHighlighted ? GetDiffColor(diffLevel) : Color.FromArgb(140, 140, 140);
+            Font partFont = isDiff ? boldFont : font;
+
+            using SolidBrush brush = new(partColor);
+            e.Graphics.DrawString(parts[i], partFont, brush, x, y);
+            x += e.Graphics.MeasureString(parts[i], partFont).Width - 2;
+
+            // Nokta ayırıcı
+            if (i < parts.Length - 1)
+            {
+                using SolidBrush dotBrush = new(Color.FromArgb(80, 80, 80));
+                e.Graphics.DrawString(".", font, dotBrush, x, y);
+                x += e.Graphics.MeasureString(".", font).Width - 2;
+            }
+        }
+
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// DURUM sütunundaki "✔ Güncel  ↑ CDN: X.Y.Z" metnini parçalayarak
+    /// prefix'i düz, CDN versiyonunu ise fark renklerinde boyar.
+    /// </summary>
+    private static void PaintStatusWithCdnDiff(
+        DataGridViewCellPaintingEventArgs e,
+        ModuleVersionInfo info,
+        Version localVer,
+        Version cdnVer)
+    {
+        e.PaintBackground(e.ClipBounds, cellsPaintSelectionBackground: true);
+
+        string cellText = e.FormattedValue?.ToString() ?? "";
+        string cdnPrefix = "↑ CDN: ";
+        int cdnIndex = cellText.IndexOf(cdnPrefix, StringComparison.Ordinal);
+
+        if (cdnIndex < 0)
+        {
+            return;
+        }
+
+        string prefix = cellText[..(cdnIndex + cdnPrefix.Length)];
+        string cdnVersionStr = cellText[(cdnIndex + cdnPrefix.Length)..];
+
+        using Font font = new(e.CellStyle!.Font, FontStyle.Regular);
+        using Font boldFont = new(e.CellStyle.Font, FontStyle.Bold);
+
+        float x = e.CellBounds.X + e.CellStyle.Padding.Left + 3;
+        float y = e.CellBounds.Y + ((e.CellBounds.Height - font.GetHeight(e.Graphics!)) / 2);
+
+        // "✔ Güncel  ↑ CDN: " prefix'ini varsayılan renkte yaz
+        using (SolidBrush prefixBrush = new(Color.FromArgb(100, 200, 255)))
+        {
+            e.Graphics.DrawString(prefix, font, prefixBrush, x, y);
+            x += e.Graphics.MeasureString(prefix, font).Width - 2;
+        }
+
+        // CDN versiyon parçalarını fark renklerinde boya
+        string[] parts = cdnVersionStr.Split('.');
+        int[] localParts = [localVer.Major, localVer.Minor, localVer.Build, localVer.Revision];
+        int[] cdnParts = [cdnVer.Major, cdnVer.Minor, cdnVer.Build, cdnVer.Revision];
+
+        int diffLevel = GetDiffLevel(localParts, cdnParts);
+
+        for (int i = 0; i < parts.Length; i++)
+        {
+            bool isDiff = i < localParts.Length && i < cdnParts.Length && localParts[i] != cdnParts[i];
+            bool isHighlighted = i >= diffLevel && diffLevel < 4;
+
+            Color partColor = isHighlighted ? GetDiffColor(diffLevel) : Color.FromArgb(140, 140, 140);
+            Font partFont = isDiff ? boldFont : font;
+
+            using SolidBrush brush = new(partColor);
+            e.Graphics.DrawString(parts[i], partFont, brush, x, y);
+            x += e.Graphics.MeasureString(parts[i], partFont).Width - 2;
+
+            if (i < parts.Length - 1)
+            {
+                using SolidBrush dotBrush = new(Color.FromArgb(80, 80, 80));
+                e.Graphics.DrawString(".", font, dotBrush, x, y);
+                x += e.Graphics.MeasureString(".", font).Width - 2;
+            }
+        }
+
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// İki versiyon dizisi arasındaki ilk fark seviyesini döndürür.
+    /// 0=Major, 1=Minor, 2=Build, 3=Revision, 4=Aynı.
+    /// </summary>
+    private static int GetDiffLevel(int[] localParts, int[] targetParts)
+    {
+        for (int i = 0; i < Math.Min(localParts.Length, targetParts.Length); i++)
+        {
+            if (localParts[i] != targetParts[i])
+            {
+                return i;
+            }
+        }
+
+        return 4; // Aynı
+    }
+
+    /// <summary>
+    /// Fark seviyesine göre vurgu rengi döndürür.
+    /// </summary>
+    private static Color GetDiffColor(int diffLevel) => diffLevel switch
+    {
+        0 => Color.FromArgb(255, 100, 100),  // Major farkı — kırmızı
+        1 => Color.FromArgb(255, 180, 80),   // Minor farkı — turuncu
+        2 => Color.FromArgb(255, 220, 100),  // Build farkı — sarı
+        3 => Color.FromArgb(100, 200, 255),  // Revision farkı — cyan
+        _ => Color.FromArgb(210, 210, 210)   // Varsayılan
+    };
 
     private void SetStatus(string text, Color color)
     {

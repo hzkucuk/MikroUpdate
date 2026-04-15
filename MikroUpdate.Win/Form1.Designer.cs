@@ -211,6 +211,7 @@ partial class Form1
         _dgvModules.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
         _dgvModules.Margin = new Padding(0, 0, 0, 4);
         _dgvModules.Name = "_dgvModules";
+        _dgvModules.CellPainting += DgvModules_CellPainting;
         _dgvModules.Columns.AddRange(new DataGridViewColumn[] { _colModuleName, _colLocalVersion, _colServerVersion, _colSource, _colStatus });
 
         _colModuleName.HeaderText = "MODÜL";
