@@ -576,7 +576,9 @@ public partial class Form1 : Form
         {
             bool hasCdnNewer = !string.IsNullOrEmpty(info.LatestCdnVersion);
 
-            string status = info.UpdateRequired ? "▲ Güncelle"
+            string status = info.UpdateRequired && hasCdnNewer
+                ? $"▲ Güncelle  ↑ CDN: {info.LatestCdnVersion}"
+                : info.UpdateRequired ? "▲ Güncelle"
                 : info.ServerVersion is null ? "— Erişilemiyor"
                 : hasCdnNewer ? $"✔ Güncel  ↑ CDN: {info.LatestCdnVersion}"
                 : "✔ Güncel";
@@ -601,8 +603,13 @@ public partial class Form1 : Form
             row.Tag = info;
 
             // Durum rengi
-            if (info.UpdateRequired)
+            if (info.UpdateRequired && !hasCdnNewer)
             {
+                row.Cells[4].Style.ForeColor = Color.Red;
+            }
+            else if (info.UpdateRequired && hasCdnNewer)
+            {
+                // CellPainting ile renklendirilecek
                 row.Cells[4].Style.ForeColor = Color.Red;
             }
             else if (info.ServerVersion is null)
@@ -780,10 +787,11 @@ public partial class Form1 : Form
         float x = e.CellBounds.X + e.CellStyle.Padding.Left + 3;
         float y = e.CellBounds.Y + ((e.CellBounds.Height - font.GetHeight(e.Graphics!)) / 2);
 
-        // "✔ Güncel  " kısmını yeşil yaz
-        using (SolidBrush greenBrush = new(Color.LimeGreen))
+        // Prefix'i uygun renkte yaz (Güncelle=kırmızı, Güncel=yeşil)
+        Color prefixColor = güncellPrefix.Contains('▲') ? Color.Red : Color.LimeGreen;
+        using (SolidBrush prefixBrush = new(prefixColor))
         {
-            e.Graphics.DrawString(güncellPrefix, font, greenBrush, x, y);
+            e.Graphics.DrawString(güncellPrefix, font, prefixBrush, x, y);
             x += e.Graphics.MeasureString(güncellPrefix, font).Width - 2;
         }
 

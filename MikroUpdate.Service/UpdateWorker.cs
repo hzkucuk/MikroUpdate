@@ -514,7 +514,7 @@ public sealed class UpdateWorker : BackgroundService
 
     /// <summary>
     /// CDN fallback modunda, probe'un bulduğu en son CDN kodunu kullanarak
-    /// güncelleme gerektirmeyen modüllere CDN son sürüm bilgisini ekler.
+    /// modüllere CDN son sürüm bilgisini ekler ve ServerVersion'a tam revision yazar.
     /// CDN kodu farklıysa veya aynı olsa bile revision farkı varsa bilgi gösterilir.
     /// </summary>
     /// <remarks>
@@ -536,12 +536,6 @@ public sealed class UpdateWorker : BackgroundService
 
         foreach (ModuleVersionInfo module in _moduleVersions)
         {
-            // Zaten güncelleme gereken modüller için CDN bilgisi anlamsız
-            if (module.UpdateRequired)
-            {
-                continue;
-            }
-
             if (!Version.TryParse(module.LocalVersion, out Version? localVer))
             {
                 continue;
@@ -559,11 +553,13 @@ public sealed class UpdateWorker : BackgroundService
 
                 if (cdnVer is not null && cdnVer > localVer)
                 {
-                    module.LatestCdnVersion = $"{cdnVer.Major}.{cdnVer.Minor}.{cdnVer.Build}.{cdnVer.Revision}";
+                    string fullVer = $"{cdnVer.Major}.{cdnVer.Minor}.{cdnVer.Build}.{cdnVer.Revision}";
+                    module.LatestCdnVersion = fullVer;
+                    module.ServerVersion = fullVer;
 
                     _logger.LogInformation(
                         "{Module}: CDN fallback — Revision farkı tespit edildi: {CdnVersion} (terminal: {LocalVersion})",
-                        module.ModuleName, module.LatestCdnVersion, module.LocalVersion);
+                        module.ModuleName, fullVer, module.LocalVersion);
                 }
 
                 continue;
@@ -574,25 +570,31 @@ public sealed class UpdateWorker : BackgroundService
                 ?? await GetCdnSetupVersionAsync(module, latestCode, stoppingToken)
                     .ConfigureAwait(false);
 
+            string cdnVersionStr;
+
             if (cdnFullVer is not null)
             {
-                module.LatestCdnVersion = $"{cdnFullVer.Major}.{cdnFullVer.Minor}.{cdnFullVer.Build}.{cdnFullVer.Revision}";
+                cdnVersionStr = $"{cdnFullVer.Major}.{cdnFullVer.Minor}.{cdnFullVer.Build}.{cdnFullVer.Revision}";
             }
             else
             {
                 // PE ve UNC okunamazsa CDN kodundan yaklaşık versiyon üret
                 (int Minor, int Patch)? decoded = CdnHelper.DecodeCdnVersion(latestCode);
 
-                if (decoded is not null)
+                if (decoded is null)
                 {
-                    string cdnVersionStr = $"{localVer.Major}.{decoded.Value.Minor}.{decoded.Value.Patch}.0";
-                    module.LatestCdnVersion = cdnVersionStr;
+                    continue;
                 }
+
+                cdnVersionStr = $"{localVer.Major}.{decoded.Value.Minor}.{decoded.Value.Patch}.0";
             }
+
+            module.LatestCdnVersion = cdnVersionStr;
+            module.ServerVersion = cdnVersionStr;
 
             _logger.LogInformation(
                 "{Module}: CDN fallback — CDN'de daha yeni sürüm: {CdnVersion} (terminal: {LocalVersion})",
-                module.ModuleName, module.LatestCdnVersion, module.LocalVersion);
+                module.ModuleName, cdnVersionStr, module.LocalVersion);
         }
     }
 
