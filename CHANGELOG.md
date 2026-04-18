@@ -3,6 +3,12 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.33.2] - 2025-07-16
+
+### Düzeltilen
+- **Servis çalışırken "çalışmıyor" uyarısı** — Installer sonrası servis process çalışıyor ancak Named Pipe henüz hazır olmadığında yanlış uyarı veriliyordu. Artık pipe başarısız olursa ServiceController ile servis durumu kontrol edilir ve pipe hazır olana kadar 3 kez yeniden denenir
+  - Etkilenen dosya: `MikroUpdate.Win/Form1.cs` — `WaitForServicePipeAsync` metodu eklendi
+
 ## [1.33.1] - 2025-07-16
 
 ### Düzeltilen

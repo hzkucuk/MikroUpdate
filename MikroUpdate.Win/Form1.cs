@@ -73,7 +73,7 @@ public partial class Form1 : Form
 
         try
         {
-            _serviceAvailable = await _pipeClient.IsServiceRunningAsync();
+            _serviceAvailable = await WaitForServicePipeAsync();
             UpdateServiceStatus();
             _trayIconManager.Start();
 
@@ -201,6 +201,62 @@ public partial class Form1 : Form
     #region Service Control
 
     private const string ServiceName = "MikroUpdateService";
+    private const int PipeRetryCount = 3;
+    private const int PipeRetryDelayMs = 3000;
+
+    /// <summary>
+    /// Servis process çalışıyorsa pipe hazır olana kadar yeniden dener.
+    /// Installer sonrası servis henüz pipe açmadan app başlayabilir.
+    /// </summary>
+    private async Task<bool> WaitForServicePipeAsync()
+    {
+        if (await _pipeClient.IsServiceRunningAsync())
+        {
+            return true;
+        }
+
+        // Pipe başarısız — servis process gerçekten çalışıyor mu kontrol et
+        if (!IsServiceProcessRunning())
+        {
+            return false;
+        }
+
+        // Servis çalışıyor ama pipe henüz hazır değil — yeniden dene
+        LogInfo("Servis başlatılıyor, pipe bağlantısı bekleniyor...");
+
+        for (int i = 0; i < PipeRetryCount; i++)
+        {
+            await Task.Delay(PipeRetryDelayMs);
+
+            if (await _pipeClient.IsServiceRunningAsync())
+            {
+                return true;
+            }
+        }
+
+        LogWarning("Servis çalışıyor ancak pipe bağlantısı kurulamadı.");
+
+        return false;
+    }
+
+    /// <summary>
+    /// ServiceController ile servisin çalışıp çalışmadığını kontrol eder.
+    /// </summary>
+    private static bool IsServiceProcessRunning()
+    {
+        try
+        {
+            using ServiceController sc = new(ServiceName);
+            sc.Refresh();
+
+            return sc.Status == ServiceControllerStatus.Running
+                || sc.Status == ServiceControllerStatus.StartPending;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 
     /// <summary>
     /// Servis durumunu sorgular ve tray menüsünü günceller.
