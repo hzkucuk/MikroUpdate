@@ -384,11 +384,27 @@ public sealed class UpdateWorker : BackgroundService
 
                 if (cdnVer is not null)
                 {
-                    module.LatestCdnVersion = $"{cdnVer.Major}.{cdnVer.Minor}.{cdnVer.Build}.{cdnVer.Revision}";
+                    string fullVer = $"{cdnVer.Major}.{cdnVer.Minor}.{cdnVer.Build}.{cdnVer.Revision}";
+                    module.LatestCdnVersion = fullVer;
 
-                    _logger.LogInformation(
-                        "{Module}: CDN'de daha yeni sürüm mevcut: {CdnVersion} (terminal: {LocalVersion})",
-                        module.ModuleName, module.LatestCdnVersion, module.LocalVersion);
+                    // Hybrid: UNC zaten güncelleme gerektiriyorsa kaynak UNC kalır
+                    // UNC gerektirmiyorsa ve CDN > Local ise → CDN'den güncelle
+                    if (!module.UpdateRequired && cdnVer > localVer)
+                    {
+                        module.ServerVersion = fullVer;
+                        module.UpdateRequired = true;
+                        module.SourceType = "CDN";
+
+                        _logger.LogInformation(
+                            "{Module}: CDN'de daha yeni sürüm → güncelleme kaynağı CDN: {CdnVersion} (terminal: {LocalVersion})",
+                            module.ModuleName, fullVer, module.LocalVersion);
+                    }
+                    else
+                    {
+                        _logger.LogInformation(
+                            "{Module}: CDN'de daha yeni sürüm mevcut: {CdnVersion} (terminal: {LocalVersion})",
+                            module.ModuleName, fullVer, module.LocalVersion);
+                    }
                 }
                 else
                 {
@@ -400,9 +416,22 @@ public sealed class UpdateWorker : BackgroundService
                         string cdnVersionStr = $"{localVer.Major}.{decoded.Value.Minor}.{decoded.Value.Patch}.0";
                         module.LatestCdnVersion = cdnVersionStr;
 
-                        _logger.LogInformation(
-                            "{Module}: CDN'de daha yeni sürüm mevcut: {CdnVersion} (terminal: {LocalVersion})",
-                            module.ModuleName, cdnVersionStr, module.LocalVersion);
+                        if (!module.UpdateRequired)
+                        {
+                            module.ServerVersion = cdnVersionStr;
+                            module.UpdateRequired = true;
+                            module.SourceType = "CDN";
+
+                            _logger.LogInformation(
+                                "{Module}: CDN'de daha yeni sürüm → güncelleme kaynağı CDN: {CdnVersion} (terminal: {LocalVersion})",
+                                module.ModuleName, cdnVersionStr, module.LocalVersion);
+                        }
+                        else
+                        {
+                            _logger.LogInformation(
+                                "{Module}: CDN'de daha yeni sürüm mevcut: {CdnVersion} (terminal: {LocalVersion})",
+                                module.ModuleName, cdnVersionStr, module.LocalVersion);
+                        }
                     }
                 }
             }
@@ -445,11 +474,26 @@ public sealed class UpdateWorker : BackgroundService
         // Tam versiyon karşılaştırması (Major.Minor.Build.Revision)
         if (setupVer > localVer)
         {
-            module.LatestCdnVersion = $"{setupVer.Major}.{setupVer.Minor}.{setupVer.Build}.{setupVer.Revision}";
+            string fullVer = $"{setupVer.Major}.{setupVer.Minor}.{setupVer.Build}.{setupVer.Revision}";
+            module.LatestCdnVersion = fullVer;
 
-            _logger.LogInformation(
-                "{Module}: Daha yeni revision mevcut: {SetupVersion} (terminal: {LocalVersion})",
-                module.ModuleName, module.LatestCdnVersion, localVer);
+            // Hybrid: CDN revision büyükse → CDN'den güncelle
+            if (!module.UpdateRequired)
+            {
+                module.ServerVersion = fullVer;
+                module.UpdateRequired = true;
+                module.SourceType = "CDN";
+
+                _logger.LogInformation(
+                    "{Module}: CDN revision farkı → güncelleme kaynağı CDN: {CdnVersion} (terminal: {LocalVersion})",
+                    module.ModuleName, fullVer, localVer);
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "{Module}: Daha yeni revision mevcut: {SetupVersion} (terminal: {LocalVersion})",
+                    module.ModuleName, fullVer, localVer);
+            }
         }
         else
         {
@@ -658,6 +702,23 @@ public sealed class UpdateWorker : BackgroundService
 
             foreach (UpdateModule module in modulesToUpdate)
             {
+                // Hybrid modda SourceType'a göre kaynak seç
+                ModuleVersionInfo? moduleInfo = _moduleVersions
+                    .Find(v => v.ModuleName == module.Name);
+                bool useCdn = _config.UpdateMode == UpdateMode.Hybrid
+                    && moduleInfo?.SourceType == "CDN";
+
+                if (useCdn)
+                {
+                    // CDN revision farkı — bu modülün CDN'den indirilmesi gerekir
+                    // HandleDownloadUpdateAsync üzerinden yapılmalı, burada atla
+                    _logger.LogInformation(
+                        "[Hybrid] {Module} CDN revision farkı tespit edildi — CDN indirme gerekli.", module.Name);
+                    failCount++;
+
+                    continue;
+                }
+
                 string serverSetupPath = Path.Combine(_config.SetupFilesPath, module.SetupFileName);
 
                 _currentStatus = ServiceStatus.CopyingSetup;
@@ -856,9 +917,15 @@ public sealed class UpdateWorker : BackgroundService
             {
                 string? setupPath = null;
 
-                // Hybrid: önce yerel sunucudan kopyala
-                if (isHybrid)
+                // Modülün güncelleme kaynağını belirle
+                ModuleVersionInfo? moduleInfo = _moduleVersions
+                    .Find(v => v.ModuleName == module.Name);
+                bool useCdn = moduleInfo?.SourceType == "CDN";
+
+                // Hybrid: SourceType'a göre kaynak seç
+                if (isHybrid && !useCdn)
                 {
+                    // UNC'den güncelle (minor/build farkı)
                     string serverSetupPath = Path.Combine(_config.SetupFilesPath, module.SetupFileName);
                     await SendProgressAsync(pipeServer,
                         $"{module.Name} yerel sunucudan deneniyor...", stoppingToken);
@@ -873,6 +940,11 @@ public sealed class UpdateWorker : BackgroundService
                     {
                         _logger.LogInformation("[Hybrid] {Module} yerel sunucuda bulunamadı, CDN'e geçiliyor...", module.Name);
                     }
+                }
+                else if (isHybrid && useCdn)
+                {
+                    // CDN revision farkı — doğrudan CDN'den indir
+                    _logger.LogInformation("[Hybrid] {Module} CDN revision farkı → CDN'den indiriliyor.", module.Name);
                 }
 
                 // Online veya Hybrid fallback: CDN'den indir

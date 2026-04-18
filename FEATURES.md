@@ -1,5 +1,13 @@
 # Özellikler
 
+## v1.33.0
+
+### Hybrid Mod — UNC Referans + CDN Revision Güncelleme
+- **UNC ana referans:** Minor/Build karşılaştırması UNC versiyonuna göre yapılır
+- **CDN revision kontrolü:** CDN'deki revision > local revision ise doğrudan CDN'den güncelleme tetiklenir
+- **SourceType yönlendirmesi:** Her modül için güncelleme kaynağı `SourceType` alanına göre belirlenir ("Yerel" = UNC, "CDN" = CDN)
+- **Akıllı kaynak seçimi:** UNC zaten güncelleme gerektiriyorsa CDN bilgi amaçlı kalır; UNC güncel ama CDN revision büyükse CDN devreye girer
+
 ## v1.32.0
 
 ### Web Scraping ile CDN Sürüm Tespiti

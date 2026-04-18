@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.32.1"
+#define MyAppVersion "1.33.0"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"

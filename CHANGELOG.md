@@ -3,6 +3,15 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.33.0] - 2025-07-16
+
+### Eklenen
+- **Hybrid mod: UNC referans + CDN revision güncelleme** — UNC versiyonu ana referans olarak minor/build karşılaştırması yapar; CDN'de sadece revision büyükse doğrudan CDN'den günceller
+  - `SourceType` alanına göre güncelleme kaynağı yönlendirmesi (UNC="Yerel", CDN="CDN")
+  - `CheckRevisionDifferenceAsync`: CDN revision > local ise `UpdateRequired=true`, `SourceType="CDN"`
+  - `HandleDownloadUpdateAsync`: `SourceType`'a göre UNC veya CDN'den indirme
+  - `HandleRunUpdateAsync`: CDN revision farkı olan modüller UNC güncelleme döngüsünden atlanır
+
 ## [1.32.1] - 2025-07-14
 
 ### Düzeltilen
