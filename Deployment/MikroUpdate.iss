@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.33.2"
+#define MyAppVersion "1.33.3"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -725,10 +725,11 @@ end;
 
 procedure WriteConfigFile;
 var
-  ConfigDir, ConfigPath, JsonContent: String;
+  ConfigDir, ConfigPath, BackupPath, JsonContent: String;
 begin
   ConfigDir := ExpandConstant('{commonappdata}\MikroUpdate');
   ConfigPath := ConfigDir + '\config.json';
+  BackupPath := ConfigDir + '\config.backup.json';
 
   { Dizin zaten [Dirs] bölümünde oluşturuluyor }
   if not DirExists(ConfigDir) then
@@ -739,6 +740,13 @@ begin
   begin
     Log('Sessiz kurulum: Mevcut config.json korunuyor, üzerine yazılmıyor.');
     Exit;
+  end;
+
+  { Mevcut config varsa yedekle }
+  if FileExists(ConfigPath) then
+  begin
+    CopyFile(ConfigPath, BackupPath, False);
+    Log('Mevcut config.json yedeklendi: config.backup.json');
   end;
 
   { İnteraktif kurulumda kullanıcının seçtiği ayarları yaz }

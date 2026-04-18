@@ -3,6 +3,13 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.33.3] - 2025-07-16
+
+### Düzeltilen
+- **Config backup/restore mekanizması** — Ayar dosyası her kaydedilmeden önce `config.backup.json` olarak yedeklenir. Dosya bozuk veya kayıpsa backup'tan otomatik geri yüklenir
+  - Win ve Service ConfigService: `TryLoadFromFile` + backup fallback
+  - Installer: İnteraktif kurulumda config yazılmadan önce mevcut dosya yedeklenir
+
 ## [1.33.2] - 2025-07-16
 
 ### Düzeltilen

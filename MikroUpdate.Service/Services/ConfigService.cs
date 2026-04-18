@@ -15,6 +15,7 @@ public sealed class ConfigService
         "MikroUpdate");
 
     private static readonly string ConfigFilePath = Path.Combine(ConfigDirectory, "config.json");
+    private static readonly string BackupFilePath = Path.Combine(ConfigDirectory, "config.backup.json");
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -23,62 +24,81 @@ public sealed class ConfigService
     };
 
     /// <summary>
-    /// Yapılandırma dosyasını yükler. Dosya yoksa varsayılan ayarlarla döner.
-    /// JSON hatası varsa backslash escape sorununu tamir edip yeniden dener.
+    /// Yapılandırma dosyasını yükler. Dosya yoksa veya bozuksa backup'tan geri yükler.
+    /// Hiçbiri yoksa varsayılan ayarlarla döner.
     /// </summary>
     public UpdateConfig Load()
     {
-        if (!File.Exists(ConfigFilePath))
+        UpdateConfig? config = TryLoadFromFile(ConfigFilePath);
+
+        if (config is not null)
         {
-            return new UpdateConfig();
+            return config;
         }
 
-        string json = File.ReadAllText(ConfigFilePath);
+        // Ana dosya okunamadı — backup'tan dene
+        config = TryLoadFromFile(BackupFilePath);
+
+        if (config is not null)
+        {
+            // Backup'tan başarıyla yüklendi — ana dosyayı geri yaz
+            WriteFile(ConfigFilePath, config);
+
+            return config;
+        }
+
+        return new UpdateConfig();
+    }
+
+    /// <summary>
+    /// Belirtilen dosyadan config okumayı dener. Başarısızsa null döner.
+    /// </summary>
+    private static UpdateConfig? TryLoadFromFile(string filePath)
+    {
+        if (!File.Exists(filePath))
+        {
+            return null;
+        }
+
+        string json = File.ReadAllText(filePath);
 
         try
         {
-            return JsonSerializer.Deserialize<UpdateConfig>(json, JsonOptions) ?? new UpdateConfig();
+            return JsonSerializer.Deserialize<UpdateConfig>(json, JsonOptions);
         }
         catch (JsonException)
         {
-            // ISS installer yol değerlerindeki backslash'ları JSON-escape etmeden yazmış olabilir.
-            // Tüm \ karakterlerini \\ ile değiştirerek tamir et.
-            // Bu yalnızca deserialize başarısız olduğunda çalışır, zaten geçerli JSON'ları etkilemez.
             string repaired = json.Replace(@"\", @"\\");
 
             try
             {
-                UpdateConfig config = JsonSerializer.Deserialize<UpdateConfig>(repaired, JsonOptions)
-                    ?? new UpdateConfig();
+                UpdateConfig? config = JsonSerializer.Deserialize<UpdateConfig>(repaired, JsonOptions);
 
-                // Tamir edilen config'i kalıcı olarak düzgün JSON formatında kaydet
-                SaveRepaired(config);
+                if (config is not null)
+                {
+                    WriteFile(filePath, config);
+                }
 
                 return config;
             }
             catch (JsonException)
             {
-                // Tamir de başarısız — varsayılan config ile devam et
-                return new UpdateConfig();
+                return null;
             }
         }
     }
 
-    /// <summary>
-    /// Tamir edilen config'i System.Text.Json ile düzgün formatta geri yazar.
-    /// Böylece bir sonraki okumada sorun tekrarlamaz.
-    /// </summary>
-    private static void SaveRepaired(UpdateConfig config)
+    private static void WriteFile(string filePath, UpdateConfig config)
     {
         try
         {
-            Directory.CreateDirectory(ConfigDirectory);
+            Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
             string json = JsonSerializer.Serialize(config, JsonOptions);
-            File.WriteAllText(ConfigFilePath, json);
+            File.WriteAllText(filePath, json);
         }
         catch
         {
-            // Yazma hatası — sessizce geç, en azından config bellekte doğru
+            // Yazma hatası — sessizce geç
         }
     }
 }
