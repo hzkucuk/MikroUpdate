@@ -3,6 +3,12 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.33.1] - 2025-07-16
+
+### Düzeltilen
+- **Self-update sonrası config sıfırlanma hatası** — Sessiz kurulumda (self-update) installer mevcut `config.json` dosyasını varsayılan değerlerle üzerine yazıyordu. Artık sessiz modda mevcut config korunuyor, sadece interaktif kurulumda kullanıcı seçimleri yazılıyor
+  - Etkilenen dosya: `Deployment/MikroUpdate.iss` — `WriteConfigFile` prosedürü
+
 ## [1.33.0] - 2025-07-16
 
 ### Eklenen

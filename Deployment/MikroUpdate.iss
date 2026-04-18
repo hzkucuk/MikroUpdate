@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.33.0"
+#define MyAppVersion "1.33.1"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -734,7 +734,14 @@ begin
   if not DirExists(ConfigDir) then
     ForceDirectories(ConfigDir);
 
-  { Kullanıcının kurulum sırasında seçtiği ayarları her zaman yaz }
+  { Sessiz kurulumda (self-update) mevcut config korunur — üzerine yazılmaz }
+  if WizardSilent and FileExists(ConfigPath) then
+  begin
+    Log('Sessiz kurulum: Mevcut config.json korunuyor, üzerine yazılmıyor.');
+    Exit;
+  end;
+
+  { İnteraktif kurulumda kullanıcının seçtiği ayarları yaz }
   JsonContent := GenerateConfigJson;
   SaveStringToFile(ConfigPath, JsonContent, False);
 end;
