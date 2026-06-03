@@ -2,8 +2,7 @@ param(
 	[Parameter(Mandatory = $true)]
 	[string]$ShareName,
 
-	[Parameter(Mandatory = $true)]
-	[string]$Account,
+	[string]$Account = "$($env:USERDOMAIN)\Domain Computers",
 
 	[switch]$CreateLocalUserIfMissing,
 	[string]$LocalUserPasswordPlain = "DegistirBeni!123"
@@ -11,6 +10,10 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+if ([string]::IsNullOrWhiteSpace($Account)) {
+	throw "Account boş olamaz."
+}
 
 function Resolve-Account {
 	param([string]$Identity)

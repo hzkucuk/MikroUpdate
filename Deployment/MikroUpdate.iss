@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.34.0"
+#define MyAppVersion "1.34.1"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -53,6 +53,9 @@ Source: "..\publish\service\*"; DestDir: "{app}\Service"; Flags: ignoreversion r
 
 ; SÃ¼rÃ¼m KataloÄŸu (V18+ eklendiÄŸinde sadece bu dosya gÃ¼ncellenir)
 Source: "..\MikroUpdate.Shared\mikro-versions.json"; DestDir: "{commonappdata}\MikroUpdate"; Flags: ignoreversion
+
+; Ana makinede share izin otomasyonu scripti
+Source: "..\Deployment\Scripts\Configure-MikroShareAccess.ps1"; DestDir: "{app}\Scripts"; Flags: ignoreversion
 
 ; ============================================================
 ;  Dizin YapÄ±sÄ±
@@ -859,7 +862,7 @@ begin
         'Kurulum tamamlandı.' + #13#10 + #13#10 +
         'Sonraki adımlar:' + #13#10 +
         '1) Ana makinede paylaşım izinlerini ayarlayın:' + #13#10 +
-        '   Deployment\\Scripts\\Configure-MikroShareAccess.ps1' + #13#10 +
+        '   {app}\\Scripts\\Configure-MikroShareAccess.ps1' + #13#10 +
         '2) Terminalde Ayarlar ekranında ağ erişim modunu seçin:' + #13#10 +
         '   Direct (domain/gMSA) veya Credential (workgroup).' + #13#10 +
         '3) Versiyon Kontrol ile bağlantıyı doğrulayın.' + #13#10 + #13#10 +

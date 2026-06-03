@@ -3,6 +3,16 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.34.1] - 2026-06-03
+
+### Değişen
+- **Installer script paketi genişletildi** — `Deployment\Scripts\Configure-MikroShareAccess.ps1` artık Inno Setup ile `{app}\Scripts\` altına kopyalanır
+- **Kurulum özeti script yolu güncellendi** — post-install bilgilendirme ekranındaki script yolu kurulum dizinine (`{app}\Scripts\Configure-MikroShareAccess.ps1`) göre düzeltildi
+- **Domain varsayılanı iyileştirildi** — izin scriptinde `-Account` parametresi verilmezse varsayılan olarak `DOMAIN\Domain Computers` kullanılır
+
+### Dokümantasyon
+- `README.md` ve `INSTALL.md` scriptin varsayılan `Domain Computers` davranışı ve override örnekleri ile güncellendi
+
 ## [1.34.0] - 2026-06-03
 
 ### Eklenen

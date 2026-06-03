@@ -1,5 +1,15 @@
 # Özellikler
 
+## v1.34.1
+
+### Installer Script Entegrasyonu
+- **Share izin scripti paket içinde:** `Configure-MikroShareAccess.ps1` artık installer ile `{app}\Scripts\` altına kopyalanır
+- **Domain varsayılanı:** Scriptte `-Account` verilmezse varsayılan hedef `DOMAIN\Domain Computers`
+- **Kurulum özeti yolu güncellemesi:** Post-install bilgilendirme ekranı scriptin kurulum dizini yolunu gösterir
+
+### Dokümantasyon Güncellemesi
+- README ve INSTALL dosyaları installer sonrası script yolu ve varsayılan kullanım örnekleriyle senkronize edildi
+
 ## v1.34.0
 
 ### Ana Makine Erişim Otomasyonu

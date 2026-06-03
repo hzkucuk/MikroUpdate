@@ -29,10 +29,10 @@ Script otomatik olarak:
 
 ```powershell
 # Standart kurulum (UI ile — özel yapılandırma sayfası dahil)
-.\installer\MikroUpdate_Setup_1.34.0.exe
+.\installer\MikroUpdate_Setup_1.34.1.exe
 
 # Sessiz kurulum
-.\installer\MikroUpdate_Setup_1.34.0.exe /VERYSILENT /SUPPRESSMSGBOXES
+.\installer\MikroUpdate_Setup_1.34.1.exe /VERYSILENT /SUPPRESSMSGBOXES
 
 # Sessiz kaldırma
 .\installer\unins000.exe /VERYSILENT
@@ -151,7 +151,9 @@ Notlar:
 
 ### Ana Makinede Kullanıcı/İzin Otomasyonu
 
-Kurulum sonrası paylaşım erişimi için `Deployment\Scripts\Configure-MikroShareAccess.ps1` scriptini kullanın.
+Kurulum sonrası paylaşım erişimi için scripti kurulum dizininden kullanın: `{app}\Scripts\Configure-MikroShareAccess.ps1`.
+
+Kaynak kod üzerinden çalıştırmak isterseniz: `Deployment\Scripts\Configure-MikroShareAccess.ps1`.
 
 Script özellikleri:
 
@@ -160,6 +162,15 @@ Script özellikleri:
 - İstenirse workgroup senaryosunda local kullanıcıyı oluşturur
 
 Domain örneği:
+
+```powershell
+cd Deployment\Scripts
+.\Configure-MikroShareAccess.ps1 -ShareName "MikroV17xx"
+```
+
+`-Account` verilmezse script varsayılan olarak `DOMAIN\Domain Computers` hesabına izin ekler.
+
+Özel bir domain hesabı vermek isterseniz:
 
 ```powershell
 cd Deployment\Scripts

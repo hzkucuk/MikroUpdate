@@ -1,6 +1,6 @@
 # MikroUpdate
 
-![Version](https://img.shields.io/badge/version-1.34.0-blue)
+![Version](https://img.shields.io/badge/version-1.34.1-blue)
 ![.NET](https://img.shields.io/badge/.NET-10.0-purple)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 
@@ -50,10 +50,10 @@ cd Deployment
 .\Build-Setup.ps1
 
 # Kurulum (UI ile)
-.\installer\MikroUpdate_Setup_1.34.0.exe
+.\installer\MikroUpdate_Setup_1.34.1.exe
 
 # Sessiz kurulum
-.\installer\MikroUpdate_Setup_1.34.0.exe /VERYSILENT /SUPPRESSMSGBOXES
+.\installer\MikroUpdate_Setup_1.34.1.exe /VERYSILENT /SUPPRESSMSGBOXES
 ```
 
 Installer otomatik olarak: dosya kopyalama, servis kaydı, kısayollar, ProgramData dizinleri ve ilk yapılandırma oluşturur.
@@ -66,7 +66,10 @@ Kurulumdan sonra sunucu paylaşımında gerekli izinleri hızlıca ayarlamak iç
 # Dosya sunucusunda (Yönetici PowerShell)
 cd Deployment\Scripts
 
-# Domain hesabı için mevcut share'e Read + NTFS ReadAndExecute ver
+# Varsayılan: DOMAIN\Domain Computers için mevcut share'e Read + NTFS ReadAndExecute ver
+.\Configure-MikroShareAccess.ps1 -ShareName "MikroV17xx"
+
+# İsteğe bağlı: özel bir domain hesabı için izin ver
 .\Configure-MikroShareAccess.ps1 -ShareName "MikroV17xx" -Account "MARMARALASTIK\mikroupdate_ro"
 
 # Workgroup/local kullanıcı için (yoksa oluştur) ardından izin ver
@@ -74,6 +77,7 @@ cd Deployment\Scripts
 ```
 
 Script yalnızca **mevcut share** üzerinde izin ekler, paylaşımı yeniden oluşturmaz.
+Installer ile kurulumdan sonra scripti `{app}\Scripts\Configure-MikroShareAccess.ps1` altında bulabilirsiniz.
 
 > **Not:** Installer şu anda imzasız dağıtılmaktadır. SmartScreen uyarısı için [docs/CODE_SIGNING.md](docs/CODE_SIGNING.md) dosyasına bakın.
 
