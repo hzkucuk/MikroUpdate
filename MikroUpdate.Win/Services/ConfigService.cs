@@ -33,6 +33,7 @@ public sealed class ConfigService
 
         if (config is not null)
         {
+            NormalizeNetworkSettings(config);
             return config;
         }
 
@@ -43,6 +44,7 @@ public sealed class ConfigService
         {
             // Backup'tan başarıyla yüklendi — ana dosyayı geri yaz
             WriteFile(ConfigFilePath, config);
+            NormalizeNetworkSettings(config);
 
             return config;
         }
@@ -56,6 +58,8 @@ public sealed class ConfigService
     public void Save(UpdateConfig config)
     {
         ArgumentNullException.ThrowIfNull(config);
+
+        NormalizeNetworkSettings(config);
 
         Directory.CreateDirectory(ConfigDirectory);
 
@@ -73,6 +77,17 @@ public sealed class ConfigService
         }
 
         WriteFile(ConfigFilePath, config);
+    }
+
+    /// <summary>
+    /// Ağ erişim ayarlarını geri uyumluluk için normalize eder.
+    /// </summary>
+    private static void NormalizeNetworkSettings(UpdateConfig config)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+
+        config.ServerUsername = config.ServerUsername?.Trim() ?? string.Empty;
+        config.EncryptedServerPassword = config.EncryptedServerPassword?.Trim() ?? string.Empty;
     }
 
     /// <summary>

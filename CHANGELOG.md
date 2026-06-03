@@ -3,6 +3,20 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.33.4] - 2026-06-03
+
+### Eklenen
+- **Domain/Workgroup ağ erişim modeli** — `NetworkAccessMode` ile `Direct` (servis kimliği) ve `Credential` (kullanıcı/parola) seçenekleri eklendi
+- **Credential güvenliği** — Sunucu parolası DPAPI (`LocalMachine`) ile şifrelenerek saklanır
+- **Kimlikli UNC erişim scope'u** — Servis tarafında credential modunda paylaşım bağlantısı açılıp işlem sonunda kapatılır
+
+### Değişen
+- Ayarlar ekranına ağ erişim modu, sunucu kullanıcı adı ve parola alanları eklendi
+- Servis versiyon/setup erişim logları ağ modu ve sunucu yolu bilgisini içerecek şekilde zenginleştirildi
+
+### Dokümantasyon
+- `INSTALL.md` içine Domain/Workgroup erişim modu ve DPAPI notları eklendi
+
 ## [1.33.3] - 2025-07-16
 
 ### Düzeltilen

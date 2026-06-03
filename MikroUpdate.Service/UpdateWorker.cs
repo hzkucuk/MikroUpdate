@@ -247,7 +247,10 @@ public sealed class UpdateWorker : BackgroundService
 
                 if (!serverReachable)
                 {
-                    _logger.LogInformation("Yerel sunucu erişilemedi, CDN probe'a geçiliyor...");
+                    _logger.LogInformation(
+                        "Yerel sunucu erişilemedi, CDN probe'a geçiliyor... (AğModu: {NetworkMode}, Sunucu: {ServerPath})",
+                        _config.NetworkAccessMode,
+                        _config.ServerSharePath);
 
                     if (_onlineVersionService is null)
                     {
@@ -553,7 +556,7 @@ public sealed class UpdateWorker : BackgroundService
         }
 
         string setupPath = Path.Combine(_config.SetupFilesPath, configModule.SetupFileName);
-        Version? ver = _versionService.GetVersion(setupPath);
+        Version? ver = _versionService.GetVersion(_config, setupPath);
 
         if (ver is not null)
         {
@@ -723,11 +726,15 @@ public sealed class UpdateWorker : BackgroundService
 
                 _currentStatus = ServiceStatus.CopyingSetup;
                 _statusMessage = $"{module.Name} setup kopyalanıyor...";
-                string? setupPath = _updateService.CopySetupFromServer(serverSetupPath);
+                string? setupPath = _updateService.CopySetupFromServer(_config, serverSetupPath);
 
                 if (string.IsNullOrEmpty(setupPath))
                 {
-                    _logger.LogError("{Module} setup bulunamadı: {Path}", module.Name, serverSetupPath);
+                    _logger.LogError(
+                        "{Module} setup bulunamadı veya erişim reddedildi: {Path} (AğModu: {NetworkMode})",
+                        module.Name,
+                        serverSetupPath,
+                        _config.NetworkAccessMode);
                     failCount++;
 
                     continue;

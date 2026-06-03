@@ -2,6 +2,7 @@ using System.ComponentModel;
 
 using MikroUpdate.Shared.Helpers;
 using MikroUpdate.Shared.Models;
+using MikroUpdate.Shared.Security;
 
 
 namespace MikroUpdate.Win;
@@ -16,6 +17,15 @@ public partial class SettingsForm : Form
     private readonly MikroVersionProvider _versionProvider = new();
     private UpdateConfig _config = new();
     private bool _suppressModuleRefresh;
+    private bool _suppressPasswordTracking;
+    private bool _serverPasswordDirty;
+    private string _encryptedServerPassword = string.Empty;
+    private readonly Label _lblNetworkAccessMode = new();
+    private readonly ComboBox _cboNetworkAccessMode = new();
+    private readonly Label _lblServerUsername = new();
+    private readonly TextBox _txtServerUsername = new();
+    private readonly Label _lblServerPassword = new();
+    private readonly TextBox _txtServerPassword = new();
 
     /// <summary>
     /// Formda düzenlenen yapılandırma nesnesi.
@@ -36,14 +46,81 @@ public partial class SettingsForm : Form
     public SettingsForm()
     {
         InitializeComponent();
+        InitializeNetworkAccessControls();
         PopulateVersionComboBox();
 
         _cboMajorVersion.SelectedIndexChanged += OnProductOrVersionChanged;
         _cboProduct.SelectedIndexChanged += OnProductOrVersionChanged;
         _cboUpdateMode.SelectedIndexChanged += OnUpdateModeChanged;
+        _cboNetworkAccessMode.SelectedIndexChanged += OnNetworkAccessModeChanged;
         _txtServerShare.TextChanged += OnSettingsChanged;
         _txtLocalPath.TextChanged += OnSettingsChanged;
         _txtSetupFilesPath.TextChanged += OnSettingsChanged;
+        _txtServerUsername.TextChanged += OnSettingsChanged;
+        _txtServerPassword.TextChanged += OnServerPasswordChanged;
+    }
+
+    /// <summary>
+    /// Workgroup/domain ağ erişim seçenekleri için dinamik alanları yerleştirir.
+    /// </summary>
+    private void InitializeNetworkAccessControls()
+    {
+        const int insertAtRow = 5;
+        const int insertedRows = 3;
+
+        foreach (Control control in _tlpMain.Controls)
+        {
+            int row = _tlpMain.GetRow(control);
+
+            if (row >= insertAtRow)
+            {
+                _tlpMain.SetRow(control, row + insertedRows);
+            }
+        }
+
+        _tlpMain.RowCount += insertedRows;
+        _tlpMain.RowStyles.Add(new RowStyle());
+        _tlpMain.RowStyles.Add(new RowStyle());
+        _tlpMain.RowStyles.Add(new RowStyle());
+
+        _lblNetworkAccessMode.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _lblNetworkAccessMode.AutoSize = true;
+        _lblNetworkAccessMode.ForeColor = SystemColors.GrayText;
+        _lblNetworkAccessMode.Text = "Ağ Erişim Modu";
+
+        _cboNetworkAccessMode.Anchor = AnchorStyles.Left;
+        _cboNetworkAccessMode.DropDownStyle = ComboBoxStyle.DropDownList;
+        _cboNetworkAccessMode.FlatStyle = FlatStyle.Flat;
+        _cboNetworkAccessMode.Items.AddRange(["Direct", "Credential"]);
+        _cboNetworkAccessMode.Size = new Size(140, 23);
+
+        _lblServerUsername.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _lblServerUsername.AutoSize = true;
+        _lblServerUsername.ForeColor = SystemColors.GrayText;
+        _lblServerUsername.Text = "Sunucu Kullanıcı";
+
+        _txtServerUsername.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+
+        _lblServerPassword.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _lblServerPassword.AutoSize = true;
+        _lblServerPassword.ForeColor = SystemColors.GrayText;
+        _lblServerPassword.Text = "Sunucu Parola";
+
+        _txtServerPassword.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+        _txtServerPassword.UseSystemPasswordChar = true;
+        _txtServerPassword.PlaceholderText = "Parolayı değiştirmek için girin";
+
+        _tlpMain.Controls.Add(_lblNetworkAccessMode, 0, insertAtRow);
+        _tlpMain.Controls.Add(_cboNetworkAccessMode, 1, insertAtRow);
+        _tlpMain.SetColumnSpan(_cboNetworkAccessMode, 2);
+
+        _tlpMain.Controls.Add(_lblServerUsername, 0, insertAtRow + 1);
+        _tlpMain.Controls.Add(_txtServerUsername, 1, insertAtRow + 1);
+        _tlpMain.SetColumnSpan(_txtServerUsername, 2);
+
+        _tlpMain.Controls.Add(_lblServerPassword, 0, insertAtRow + 2);
+        _tlpMain.Controls.Add(_txtServerPassword, 1, insertAtRow + 2);
+        _tlpMain.SetColumnSpan(_txtServerPassword, 2);
     }
 
     /// <summary>
@@ -73,6 +150,13 @@ public partial class SettingsForm : Form
         _txtServerShare.Text = _config.ServerSharePath;
         _txtLocalPath.Text = _config.LocalInstallPath;
         _txtSetupFilesPath.Text = _config.SetupFilesPath;
+        _cboNetworkAccessMode.SelectedItem = _config.NetworkAccessMode.ToString();
+        _txtServerUsername.Text = _config.ServerUsername;
+        _encryptedServerPassword = _config.EncryptedServerPassword ?? string.Empty;
+        _suppressPasswordTracking = true;
+        _txtServerPassword.Text = string.Empty;
+        _suppressPasswordTracking = false;
+        _serverPasswordDirty = false;
         _nudCheckInterval.Value = Math.Clamp(_config.CheckIntervalMinutes, 1, 1440);
         _chkAutoLaunch.Checked = _config.AutoLaunchAfterUpdate;
         _chkAutoSelfUpdate.Checked = _config.AutoSelfUpdate;
@@ -85,17 +169,28 @@ public partial class SettingsForm : Form
 
         RefreshModuleGrid(_config.Modules);
         UpdateComputedPaths();
+        UpdateNetworkCredentialFieldsVisibility();
         UpdateOnlineFieldsVisibility();
     }
 
     private UpdateConfig ReadConfigFromUI()
     {
+        NetworkAccessMode networkMode = Enum.TryParse<NetworkAccessMode>(
+            _cboNetworkAccessMode.SelectedItem?.ToString(), out NetworkAccessMode parsedNetworkMode)
+            ? parsedNetworkMode
+            : NetworkAccessMode.Direct;
+
         return new UpdateConfig
         {
             MajorVersion = _cboMajorVersion.SelectedItem?.ToString()
                 ?? (_versionProvider.GetVersionNames().Count > 0 ? _versionProvider.GetVersionNames()[0] : "V16"),
             ProductName = _cboProduct.SelectedItem?.ToString() ?? "Jump",
             ServerSharePath = _txtServerShare.Text.Trim(),
+            NetworkAccessMode = networkMode,
+            ServerUsername = _txtServerUsername.Text.Trim(),
+            EncryptedServerPassword = _serverPasswordDirty
+                ? NetworkCredentialProtector.Protect(_txtServerPassword.Text)
+                : _encryptedServerPassword,
             LocalInstallPath = _txtLocalPath.Text.Trim(),
             SetupFilesPath = _txtSetupFilesPath.Text.Trim(),
             CheckIntervalMinutes = (int)_nudCheckInterval.Value,
@@ -193,6 +288,19 @@ public partial class SettingsForm : Form
         UpdateComputedPaths();
     }
 
+    /// <summary>
+    /// Sunucu parolası alanı değiştiğinde yeni değer kaydedilmek üzere işaretlenir.
+    /// </summary>
+    private void OnServerPasswordChanged(object? sender, EventArgs e)
+    {
+        if (_suppressPasswordTracking)
+        {
+            return;
+        }
+
+        _serverPasswordDirty = true;
+    }
+
     private void UpdateComputedPaths()
     {
         string version = _cboMajorVersion.SelectedItem?.ToString() ?? "V16";
@@ -203,6 +311,7 @@ public partial class SettingsForm : Form
 
         _lblComputedPaths.Text =
             $"{version} {product}  •  {modules.Count} modül ({enabledCount} aktif)\n" +
+            $"Ağ Erişimi: {_cboNetworkAccessMode.SelectedItem?.ToString() ?? "Direct"}\n" +
             $"Sunucu: {_txtServerShare.Text.Trim()}\n" +
             $"Terminal: {_txtLocalPath.Text.Trim()}\n" +
             $"Setup: {setupFilesPath}";
@@ -334,6 +443,28 @@ public partial class SettingsForm : Form
     }
 
     /// <summary>
+    /// Ağ erişim modu değiştiğinde kimlik alanlarının görünürlüğünü ayarlar.
+    /// </summary>
+    private void OnNetworkAccessModeChanged(object? sender, EventArgs e)
+    {
+        UpdateNetworkCredentialFieldsVisibility();
+        UpdateComputedPaths();
+    }
+
+    /// <summary>
+    /// NetworkAccessMode değerine göre kullanıcı/şifre alanlarını gösterir veya gizler.
+    /// </summary>
+    private void UpdateNetworkCredentialFieldsVisibility()
+    {
+        bool useCredentials = _cboNetworkAccessMode.SelectedItem?.ToString() is "Credential";
+
+        _lblServerUsername.Visible = useCredentials;
+        _txtServerUsername.Visible = useCredentials;
+        _lblServerPassword.Visible = useCredentials;
+        _txtServerPassword.Visible = useCredentials;
+    }
+
+    /// <summary>
     /// UpdateMode'a göre CDN URL alanının ve yerel yol alanlarının görünürlüğünü ayarlar.
     /// </summary>
     private void UpdateOnlineFieldsVisibility()
@@ -381,6 +512,13 @@ public partial class SettingsForm : Form
         _txtSetupFilesPath.Text = verDef is not null
             ? $@"{verDef.DefaultServerShare}\CLIENT"
             : $@"\\SERVER\Mikro{version}xx\CLIENT";
+        _cboNetworkAccessMode.SelectedItem = "Direct";
+        _txtServerUsername.Text = string.Empty;
+        _encryptedServerPassword = string.Empty;
+        _suppressPasswordTracking = true;
+        _txtServerPassword.Text = string.Empty;
+        _suppressPasswordTracking = false;
+        _serverPasswordDirty = false;
         _nudCheckInterval.Value = 30;
         _chkAutoLaunch.Checked = true;
         _cboUpdateMode.SelectedItem = "Local";

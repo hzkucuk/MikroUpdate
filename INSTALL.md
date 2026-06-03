@@ -29,10 +29,10 @@ Script otomatik olarak:
 
 ```powershell
 # Standart kurulum (UI ile — özel yapılandırma sayfası dahil)
-.\installer\MikroUpdate_Setup_1.9.0.exe
+.\installer\MikroUpdate_Setup_1.33.4.exe
 
 # Sessiz kurulum
-.\installer\MikroUpdate_Setup_1.9.0.exe /VERYSILENT /SUPPRESSMSGBOXES
+.\installer\MikroUpdate_Setup_1.33.4.exe /VERYSILENT /SUPPRESSMSGBOXES
 
 # Sessiz kaldırma
 .\installer\unins000.exe /VERYSILENT
@@ -132,6 +132,22 @@ Konum: `%ProgramData%\MikroUpdate\config.json`
 İlk çalıştırmada otomatik oluşturulur. Manuel düzenleme yerine uygulama içindeki
 Ayarlar formunu kullanmanız önerilir. Ayar değişikliklerinde servis otomatik olarak
 yeni yapılandırmayı yükler (`ReloadConfig` komutu).
+
+### Ağ Erişim Modu (Domain / Workgroup)
+
+Yerel UNC güncelleme kaynağı için iki erişim modeli desteklenir:
+
+- `NetworkAccessMode: "Direct"` (varsayılan)
+  - Servis mevcut kimliğiyle paylaşım erişimi yapar.
+  - Domain/gMSA ortamları için önerilir.
+- `NetworkAccessMode: "Credential"`
+  - Workgroup veya ayrı kimlik gerektiren ortamlarda kullanılır.
+  - `ServerUsername` ve DPAPI ile korunan `EncryptedServerPassword` alanları kullanılır.
+
+Notlar:
+
+- `EncryptedServerPassword` yalnızca şifrenin kaydedildiği makinede çözülebilir (DPAPI LocalMachine).
+- Sunucu tarafında hem Share hem NTFS izinleri doğru ayarlanmalıdır.
 
 ## Log Dosyaları
 

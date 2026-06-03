@@ -21,6 +21,23 @@ public sealed class UpdateConfig
     /// <summary>Sunucu paylaşım yolu (ör: \\SERVER\MikroV16xx).</summary>
     public string ServerSharePath { get; set; } = @"\\SERVER\MikroV16xx";
 
+    /// <summary>
+    /// Yerel ağ (UNC) erişim modu.
+    /// Direct: Servis hesabının mevcut kimliğiyle erişir (domain/gMSA).
+    /// Credential: Kaydedilen kullanıcı bilgisiyle erişir (workgroup senaryosu).
+    /// </summary>
+    public NetworkAccessMode NetworkAccessMode { get; set; } = NetworkAccessMode.Direct;
+
+    /// <summary>
+    /// Credential modunda UNC erişimi için kullanıcı adı (ör: SERVER\mikroupdate_ro).
+    /// </summary>
+    public string ServerUsername { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Credential modunda UNC erişimi için DPAPI ile korunmuş parola (Base64).
+    /// </summary>
+    public string EncryptedServerPassword { get; set; } = string.Empty;
+
     /// <summary>Terminal kurulum yolu (ör: C:\Mikro\v16xx).</summary>
     public string LocalInstallPath { get; set; } = @"C:\Mikro\v16xx";
 

@@ -36,6 +36,19 @@ public sealed class VersionService
     }
 
     /// <summary>
+    /// Belirtilen EXE dosyasının versiyonunu config'e göre ağ kimliği kullanarak okur.
+    /// </summary>
+    public Version? GetVersion(UpdateConfig config, string exePath)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        ArgumentNullException.ThrowIfNull(exePath);
+
+        using NetworkShareAccessScope _ = NetworkShareAccessScope.OpenIfRequired(config, exePath);
+
+        return GetVersion(exePath);
+    }
+
+    /// <summary>
     /// Tüm aktif modüller için versiyon bilgilerini toplar.
     /// </summary>
     public List<ModuleVersionInfo> GetModuleVersions(UpdateConfig config)
@@ -50,7 +63,7 @@ public sealed class VersionService
             string serverPath = Path.Combine(config.ServerSharePath, module.ExeFileName);
 
             Version? localVersion = GetVersion(localPath);
-            Version? serverVersion = GetVersion(serverPath);
+            Version? serverVersion = GetVersion(config, serverPath);
 
             bool updateRequired = serverVersion is not null
                 && (localVersion is null || localVersion < serverVersion);

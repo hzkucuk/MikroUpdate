@@ -1,5 +1,14 @@
 # Özellikler
 
+## v1.33.4
+
+### Domain / Workgroup Erişim Desteği
+- **Ağ erişim modeli seçimi:** `Direct` (domain/gMSA) ve `Credential` (workgroup/ayrı hesap) seçenekleri
+- **Kimlikli UNC erişim:** Credential modunda servis, paylaşım erişimi öncesi geçici ağ oturumu açar
+- **Güvenli parola saklama:** Sunucu parolası DPAPI LocalMachine ile şifrelenerek tutulur
+- **Ayar ekranı genişletmesi:** Ağ erişim modu, sunucu kullanıcı adı ve parola alanları eklendi
+- **Tanısal log iyileştirmesi:** Yerel sunucu erişim fallback logları ağ modu bilgisini içerir
+
 ## v1.33.0
 
 ### Hybrid Mod — UNC Referans + CDN Revision Güncelleme

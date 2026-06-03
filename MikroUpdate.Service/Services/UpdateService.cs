@@ -1,5 +1,7 @@
 using System.Diagnostics;
 
+using MikroUpdate.Shared.Models;
+
 namespace MikroUpdate.Service.Services;
 
 /// <summary>
@@ -63,6 +65,20 @@ public sealed class UpdateService
         File.Copy(serverSetupPath, tempFile, overwrite: true);
 
         return tempFile;
+    }
+
+    /// <summary>
+    /// Setup dosyasını config'e göre ağ kimliği kullanarak sunucu paylaşımından geçici dizine kopyalar.
+    /// </summary>
+    /// <returns>Kopyalanan dosyanın geçici yolu veya sunucuda bulunamazsa null.</returns>
+    public string? CopySetupFromServer(UpdateConfig config, string serverSetupPath)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        ArgumentNullException.ThrowIfNull(serverSetupPath);
+
+        using NetworkShareAccessScope _ = NetworkShareAccessScope.OpenIfRequired(config, serverSetupPath);
+
+        return CopySetupFromServer(serverSetupPath);
     }
 
     /// <summary>

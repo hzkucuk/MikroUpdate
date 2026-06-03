@@ -1,10 +1,10 @@
-; ============================================================
-;  MikroUpdate — Inno Setup Kurulum Scripti
-;  Mikro ERP otomatik güncelleme sistemi
+﻿; ============================================================
+;  MikroUpdate â€” Inno Setup Kurulum Scripti
+;  Mikro ERP otomatik gÃ¼ncelleme sistemi
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.33.3"
+#define MyAppVersion "1.33.4"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -27,7 +27,7 @@ PrivilegesRequired=admin
 MinVersion=10.0
 WizardStyle=modern
 CloseApplications=force
-RestartApplications=no
+RestartApplications=yes
 SetupIconFile=..\MikroUpdate.Win\app.ico
 UninstallDisplayIcon={app}\Win\{#MyAppExeName}
 
@@ -36,26 +36,26 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
 
 ; ============================================================
-;  Özel Sayfa Parametreleri
+;  Ã–zel Sayfa Parametreleri
 ; ============================================================
 [Messages]
-turkish.WelcomeLabel2=Bu sihirbaz bilgisayarınıza {#MyAppName} {#MyAppVersion} kurulumunu yapacaktır.%n%nMikro ERP (Jump / Fly) otomatik güncelleme sistemi.
+turkish.WelcomeLabel2=Bu sihirbaz bilgisayarÄ±nÄ±za {#MyAppName} {#MyAppVersion} kurulumunu yapacaktÄ±r.%n%nMikro ERP (Jump / Fly) otomatik gÃ¼ncelleme sistemi.
 
 ; ============================================================
-;  Kurulum Dosyaları
+;  Kurulum DosyalarÄ±
 ; ============================================================
 [Files]
-; Win Tray Uygulaması
+; Win Tray UygulamasÄ±
 Source: "..\publish\win\*"; DestDir: "{app}\Win"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; Windows Servisi
 Source: "..\publish\service\*"; DestDir: "{app}\Service"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; Sürüm Kataloğu (V18+ eklendiğinde sadece bu dosya güncellenir)
+; SÃ¼rÃ¼m KataloÄŸu (V18+ eklendiÄŸinde sadece bu dosya gÃ¼ncellenir)
 Source: "..\MikroUpdate.Shared\mikro-versions.json"; DestDir: "{commonappdata}\MikroUpdate"; Flags: ignoreversion
 
 ; ============================================================
-;  Dizin Yapısı
+;  Dizin YapÄ±sÄ±
 ; ============================================================
 [Dirs]
 Name: "{commonappdata}\MikroUpdate"; Permissions: everyone-modify
@@ -63,39 +63,39 @@ Name: "{commonappdata}\MikroUpdate\logs"; Permissions: everyone-modify
 Name: "{commonappdata}\MikroUpdate\Updates"; Permissions: everyone-modify
 
 ; ============================================================
-;  Simgeler / Kısayollar
+;  Simgeler / KÄ±sayollar
 ; ============================================================
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\Win\{#MyAppExeName}"; WorkingDir: "{app}\Win"
-Name: "{group}\{#MyAppName} Kaldır"; Filename: "{uninstallexe}"
+Name: "{group}\{#MyAppName} KaldÄ±r"; Filename: "{uninstallexe}"
 Name: "{commonstartup}\{#MyAppName}"; Filename: "{app}\Win\{#MyAppExeName}"; Parameters: "/auto"; WorkingDir: "{app}\Win"; Tasks: startuptask
 
 ; ============================================================
-;  Görevler (Tasks)
+;  GÃ¶revler (Tasks)
 ; ============================================================
 [Tasks]
-Name: "startuptask"; Description: "Windows başlangıcında otomatik çalıştır"; GroupDescription: "Ek görevler:"; Flags: checkedonce
+Name: "startuptask"; Description: "Windows baÅŸlangÄ±cÄ±nda otomatik Ã§alÄ±ÅŸtÄ±r"; GroupDescription: "Ek gÃ¶revler:"; Flags: checkedonce
 
 ; ============================================================
-;  Kurulum Sonrası: Uygulama Başlatma
+;  Kurulum SonrasÄ±: Uygulama BaÅŸlatma
 ; ============================================================
 [Run]
-; Servis kurulumu CurStepChanged(ssPostInstall) içinde yapılır (zorunlu, her kurulumda)
+; Servis kurulumu CurStepChanged(ssPostInstall) iÃ§inde yapÄ±lÄ±r (zorunlu, her kurulumda)
 
-; Kurulum sonrası uygulamayı başlat (interaktif kurulum — kullanıcı seçer)
-Filename: "{app}\Win\{#MyAppExeName}"; Description: "MikroUpdate'i şimdi başlat"; Flags: nowait postinstall skipifsilent unchecked
+; Kurulum sonrasÄ± uygulamayÄ± baÅŸlat (interaktif kurulum â€” kullanÄ±cÄ± seÃ§er)
+Filename: "{app}\Win\{#MyAppExeName}"; Description: "MikroUpdate'i ÅŸimdi baÅŸlat"; Flags: nowait postinstall skipifsilent unchecked
 
-; Sessiz kurulum sonrası uygulamayı otomatik başlat (self-update için)
-; /NOPOSTLAUNCH=1 parametresi verildiğinde atlanır (servis kendisi başlatır)
+; Sessiz kurulum sonrasÄ± uygulamayÄ± otomatik baÅŸlat (self-update iÃ§in)
+; /NOPOSTLAUNCH=1 parametresi verildiÄŸinde atlanÄ±r (servis kendisi baÅŸlatÄ±r)
 Filename: "{app}\Win\{#MyAppExeName}"; Flags: nowait postinstall skipifnotsilent runasoriginaluser; Check: ShouldPostInstallLaunch
 
 ; ============================================================
-;  Kaldırma: Süreç ve Servis Temizliği
+;  KaldÄ±rma: SÃ¼reÃ§ ve Servis TemizliÄŸi
 ; ============================================================
 [UninstallRun]
-; Önce tray uygulamasını kapat
+; Ã–nce tray uygulamasÄ±nÄ± kapat
 Filename: "taskkill.exe"; Parameters: "/F /IM MikroUpdate.exe"; Flags: runhidden waituntilterminated; RunOnceId: "KillTrayApp"
-; Servisi durdur, bekleme sonrası sil
+; Servisi durdur, bekleme sonrasÄ± sil
 Filename: "sc.exe"; Parameters: "stop MikroUpdateService"; Flags: runhidden waituntilterminated; RunOnceId: "StopService"
 Filename: "cmd.exe"; Parameters: "/C timeout /T 3 /NOBREAK >nul"; Flags: runhidden waituntilterminated; RunOnceId: "WaitAfterStop"
 Filename: "sc.exe"; Parameters: "delete MikroUpdateService"; Flags: runhidden waituntilterminated; RunOnceId: "DeleteService"
@@ -107,7 +107,7 @@ Filename: "sc.exe"; Parameters: "delete MikroUpdateService"; Flags: runhidden wa
 Root: HKLM; Subkey: "Software\MikroUpdate"; ValueType: string; ValueName: "InstallDir"; ValueData: "{app}"; Flags: uninsdeletekey
 
 ; ============================================================
-;  Pascal Script — Özel Sayfa: Ürün ve Sunucu Ayarları
+;  Pascal Script â€” Ã–zel Sayfa: ÃœrÃ¼n ve Sunucu AyarlarÄ±
 ; ============================================================
 [Code]
 
@@ -131,12 +131,12 @@ var
   ExistingProxyAddress: String;
   ExistingHttpTimeout: Integer;
   ExistingConfigLoaded: Boolean;
-  { Modül bazlı ek kurulum argümanları }
+  { ModÃ¼l bazlÄ± ek kurulum argÃ¼manlarÄ± }
   ExistingEDefterSetupArgs: String;
   ExistingBeyannameSetupArgs: String;
 
 { ============================================================ }
-{  JSON Yardımcı Fonksiyonları (basit anahtar-değer çıkarma)    }
+{  JSON YardÄ±mcÄ± FonksiyonlarÄ± (basit anahtar-deÄŸer Ã§Ä±karma)    }
 { ============================================================ }
 
 function GetJsonStringValue(const Json, Key: String): String;
@@ -151,19 +151,19 @@ begin
     Exit;
 
   Sub := Copy(Json, StartPos + Length(SearchKey), Length(Json));
-  { ':' karakterini ve boşlukları atla }
+  { ':' karakterini ve boÅŸluklarÄ± atla }
   StartPos := Pos(':', Sub);
   if StartPos = 0 then
     Exit;
   Sub := Copy(Sub, StartPos + 1, Length(Sub));
 
-  { Baştaki boşlukları atla }
+  { BaÅŸtaki boÅŸluklarÄ± atla }
   while (Length(Sub) > 0) and ((Sub[1] = ' ') or (Sub[1] = #9)) do
     Sub := Copy(Sub, 2, Length(Sub));
 
   if (Length(Sub) > 0) and (Sub[1] = '"') then
   begin
-    { String değer }
+    { String deÄŸer }
     Sub := Copy(Sub, 2, Length(Sub));
     EndPos := Pos('"', Sub);
     if EndPos > 0 then
@@ -206,11 +206,11 @@ begin
     Exit;
   Sub := Copy(Sub, StartPos + 1, Length(Sub));
 
-  { Baştaki boşlukları atla }
+  { BaÅŸtaki boÅŸluklarÄ± atla }
   while (Length(Sub) > 0) and ((Sub[1] = ' ') or (Sub[1] = #9)) do
     Sub := Copy(Sub, 2, Length(Sub));
 
-  { Sayıyı oku }
+  { SayÄ±yÄ± oku }
   NumStr := '';
   for I := 1 to Length(Sub) do
   begin
@@ -235,7 +235,7 @@ begin
   if StartPos = 0 then
     Exit;
 
-  { Modül bloğunun geri kalanından Enabled değerini oku }
+  { ModÃ¼l bloÄŸunun geri kalanÄ±ndan Enabled deÄŸerini oku }
   Sub := Copy(Json, StartPos, 200);
   EnabledPos := Pos('"Enabled"', Sub);
   if EnabledPos = 0 then
@@ -309,18 +309,18 @@ begin
     NewMikro := 'MikroV16xx';
   end;
 
-  { Sunucu yolunu güncelle }
+  { Sunucu yolunu gÃ¼ncelle }
   Tmp := ServerPathEdit.Text;
   StringChangeEx(Tmp, OldMikro, NewMikro, True);
   StringChangeEx(Tmp, OldTag, NewTag, True);
   ServerPathEdit.Text := Tmp;
 
-  { Terminal yolunu güncelle }
+  { Terminal yolunu gÃ¼ncelle }
   Tmp := LocalPathEdit.Text;
   StringChangeEx(Tmp, OldTag, NewTag, True);
   LocalPathEdit.Text := Tmp;
 
-  { Setup dosyaları yolunu güncelle }
+  { Setup dosyalarÄ± yolunu gÃ¼ncelle }
   Tmp := SetupFilesPathEdit.Text;
   StringChangeEx(Tmp, OldMikro, NewMikro, True);
   StringChangeEx(Tmp, OldTag, NewTag, True);
@@ -350,14 +350,14 @@ begin
   UpdateClientSetupArgs;
 end;
 
-{ JSON string değerlerinde backslash'ları escape eder: \ → \\ }
+{ JSON string deÄŸerlerinde backslash'larÄ± escape eder: \ â†’ \\ }
 function JsonEscapeStr(const Value: String): String;
 begin
   Result := Value;
   StringChangeEx(Result, '\', '\\', True);
 end;
 
-{ JSON string değerlerinde escape'leri geri alır: \\ → \ }
+{ JSON string deÄŸerlerinde escape'leri geri alÄ±r: \\ â†’ \ }
 function JsonUnescapeStr(const Value: String): String;
 begin
   Result := Value;
@@ -392,21 +392,21 @@ begin
   ConfigPath := ExpandConstant('{commonappdata}\MikroUpdate\config.json');
   if not FileExists(ConfigPath) then
   begin
-    Log('Mevcut config.json bulunamadı — varsayılan ayarlar kullanılacak.');
+    Log('Mevcut config.json bulunamadÄ± â€” varsayÄ±lan ayarlar kullanÄ±lacak.');
     Exit;
   end;
 
   if not LoadStringFromFile(ConfigPath, RawJson) then
   begin
-    Log('config.json okunamadı — varsayılan ayarlar kullanılacak.');
+    Log('config.json okunamadÄ± â€” varsayÄ±lan ayarlar kullanÄ±lacak.');
     Exit;
   end;
 
   Json := String(RawJson);
-  Log('Mevcut config.json okundu — UI senkronize ediliyor...');
+  Log('Mevcut config.json okundu â€” UI senkronize ediliyor...');
   ExistingConfigLoaded := True;
 
-  { UI alanlarını mevcut config ile doldur }
+  { UI alanlarÄ±nÄ± mevcut config ile doldur }
   Val := GetJsonStringValue(Json, 'MajorVersion');
   if Length(Val) > 0 then
     SetComboByValue(MajorVersionCombo, Val);
@@ -431,11 +431,11 @@ begin
   if Length(Val) > 0 then
     SetupFilesPathEdit.Text := Val;
 
-  { Modül durumlarını yükle }
+  { ModÃ¼l durumlarÄ±nÄ± yÃ¼kle }
   ChkEDefter.Checked := IsModuleEnabled(Json, 'e-Defter');
   ChkBeyanname.Checked := IsModuleEnabled(Json, 'Beyanname');
 
-  { UI'da olmayan alanları koru }
+  { UI'da olmayan alanlarÄ± koru }
   ExistingAutoLaunch := GetJsonBoolValue(Json, 'AutoLaunchAfterUpdate', True);
   ExistingAutoSelfUpdate := GetJsonBoolValue(Json, 'AutoSelfUpdate', True);
   ExistingCheckInterval := GetJsonIntValue(Json, 'CheckIntervalMinutes', 30);
@@ -450,7 +450,7 @@ begin
 
   ExistingHttpTimeout := GetJsonIntValue(Json, 'HttpTimeoutSeconds', 0);
 
-  { Modül bazlı SetupArgs değerlerini oku }
+  { ModÃ¼l bazlÄ± SetupArgs deÄŸerlerini oku }
   ExistingEDefterSetupArgs := JsonUnescapeStr(GetModuleSetupArgs(Json, 'e-Defter'));
   ExistingBeyannameSetupArgs := JsonUnescapeStr(GetModuleSetupArgs(Json, 'Beyanname'));
 
@@ -458,7 +458,7 @@ begin
   if Length(Val) > 0 then
     ClientSetupArgsEdit.Text := Val;
 
-  Log(Format('Config yüklendi: %s %s, Modüller: e-Defter=%s Beyanname=%s', [MajorVersionCombo.Items[MajorVersionCombo.ItemIndex], ProductCombo.Items[ProductCombo.ItemIndex], BoolToStr(ChkEDefter.Checked), BoolToStr(ChkBeyanname.Checked)]));
+  Log(Format('Config yÃ¼klendi: %s %s, ModÃ¼ller: e-Defter=%s Beyanname=%s', [MajorVersionCombo.Items[MajorVersionCombo.ItemIndex], ProductCombo.Items[ProductCombo.ItemIndex], BoolToStr(ChkEDefter.Checked), BoolToStr(ChkBeyanname.Checked)]));
 end;
 
 procedure InitializeWizard;
@@ -468,15 +468,15 @@ var
 begin
   ConfigPage := CreateCustomPage(
     wpSelectTasks,
-    'Mikro ERP Yapılandırması',
-    'Güncelleme için sürüm, ürün ve sunucu bilgilerini girin.');
+    'Mikro ERP YapÄ±landÄ±rmasÄ±',
+    'GÃ¼ncelleme iÃ§in sÃ¼rÃ¼m, Ã¼rÃ¼n ve sunucu bilgilerini girin.');
 
   TopPos := 4;
 
-  { Ana Sürüm Seçimi }
+  { Ana SÃ¼rÃ¼m SeÃ§imi }
   LabelMajorVersion := TNewStaticText.Create(ConfigPage);
   LabelMajorVersion.Parent := ConfigPage.Surface;
-  LabelMajorVersion.Caption := 'Ana Sürüm:';
+  LabelMajorVersion.Caption := 'Ana SÃ¼rÃ¼m:';
   LabelMajorVersion.Top := TopPos;
   LabelMajorVersion.Left := 0;
 
@@ -491,10 +491,10 @@ begin
   MajorVersionCombo.ItemIndex := 0;
   MajorVersionCombo.OnChange := @OnMajorVersionChange;
 
-  { Ürün Seçimi (sürüm yanında) }
+  { ÃœrÃ¼n SeÃ§imi (sÃ¼rÃ¼m yanÄ±nda) }
   LabelProduct := TNewStaticText.Create(ConfigPage);
   LabelProduct.Parent := ConfigPage.Surface;
-  LabelProduct.Caption := 'Ürün:';
+  LabelProduct.Caption := 'ÃœrÃ¼n:';
   LabelProduct.Top := TopPos;
   LabelProduct.Left := (ConfigPage.SurfaceWidth div 2) + 12;
 
@@ -511,11 +511,11 @@ begin
 
   TopPos := TopPos + 42;
 
-  { Güncelleme Modu Seçimi }
+  { GÃ¼ncelleme Modu SeÃ§imi }
   with TNewStaticText.Create(ConfigPage) do
   begin
     Parent := ConfigPage.Surface;
-    Caption := 'Güncelleme Modu:';
+    Caption := 'GÃ¼ncelleme Modu:';
     Top := TopPos;
     Left := 0;
   end;
@@ -528,14 +528,14 @@ begin
   UpdateModeCombo.Style := csDropDownList;
   UpdateModeCombo.Items.Add('Local');
   UpdateModeCombo.Items.Add('Hybrid');
-  UpdateModeCombo.ItemIndex := 0;  { Varsayılan: Local }
+  UpdateModeCombo.ItemIndex := 0;  { VarsayÄ±lan: Local }
 
   TopPos := TopPos + 42;
 
-  { Sunucu Paylaşım Yolu }
+  { Sunucu PaylaÅŸÄ±m Yolu }
   LabelServer := TNewStaticText.Create(ConfigPage);
   LabelServer.Parent := ConfigPage.Surface;
-  LabelServer.Caption := 'Sunucu Paylaşım Yolu (ör: \\SERVER\MikroV16xx):';
+  LabelServer.Caption := 'Sunucu PaylaÅŸÄ±m Yolu (Ã¶r: \\SERVER\MikroV16xx):';
   LabelServer.Top := TopPos;
   LabelServer.Left := 0;
 
@@ -551,7 +551,7 @@ begin
   { Terminal Kurulum Yolu }
   LabelLocal := TNewStaticText.Create(ConfigPage);
   LabelLocal.Parent := ConfigPage.Surface;
-  LabelLocal.Caption := 'Terminal Kurulum Yolu (ör: C:\Mikro\v16xx):';
+  LabelLocal.Caption := 'Terminal Kurulum Yolu (Ã¶r: C:\Mikro\v16xx):';
   LabelLocal.Top := TopPos;
   LabelLocal.Left := 0;
 
@@ -564,10 +564,10 @@ begin
 
   TopPos := TopPos + 42;
 
-  { Setup Dosyaları Yolu }
+  { Setup DosyalarÄ± Yolu }
   LabelSetupPath := TNewStaticText.Create(ConfigPage);
   LabelSetupPath.Parent := ConfigPage.Surface;
-  LabelSetupPath.Caption := 'Setup Dosyaları Yolu (ör: \\SERVER\MikroV16xx\CLIENT):';
+  LabelSetupPath.Caption := 'Setup DosyalarÄ± Yolu (Ã¶r: \\SERVER\MikroV16xx\CLIENT):';
   LabelSetupPath.Top := TopPos;
   LabelSetupPath.Left := 0;
 
@@ -580,11 +580,11 @@ begin
 
   TopPos := TopPos + 42;
 
-  { Modül Seçimi }
+  { ModÃ¼l SeÃ§imi }
   with TNewStaticText.Create(ConfigPage) do
   begin
     Parent := ConfigPage.Surface;
-    Caption := 'Güncellenecek Modüller:';
+    Caption := 'GÃ¼ncellenecek ModÃ¼ller:';
     Top := TopPos;
     Left := 0;
   end;
@@ -598,7 +598,7 @@ begin
   ChkClient.Width := ConfigPage.SurfaceWidth div 3;
   ChkClient.Caption := 'Client';
   ChkClient.Checked := True;
-  ChkClient.Enabled := False;  { Client zorunlu modül }
+  ChkClient.Enabled := False;  { Client zorunlu modÃ¼l }
 
   ChkEDefter := TNewCheckBox.Create(ConfigPage);
   ChkEDefter.Parent := ConfigPage.Surface;
@@ -618,11 +618,11 @@ begin
 
   TopPos := TopPos + 26;
 
-  { Client Setup Ek Argümanlar }
+  { Client Setup Ek ArgÃ¼manlar }
   with TNewStaticText.Create(ConfigPage) do
   begin
     Parent := ConfigPage.Surface;
-    Caption := 'Client Setup Argümanları (Inno Setup opsiyonları):';
+    Caption := 'Client Setup ArgÃ¼manlarÄ± (Inno Setup opsiyonlarÄ±):';
     Top := TopPos;
     Left := 0;
   end;
@@ -632,7 +632,7 @@ begin
   ClientSetupArgsEdit.Top := TopPos + 16;
   ClientSetupArgsEdit.Left := 0;
   ClientSetupArgsEdit.Width := ConfigPage.SurfaceWidth;
-  { Varsayılan olarak ürüne uygun argümanlar }
+  { VarsayÄ±lan olarak Ã¼rÃ¼ne uygun argÃ¼manlar }
   UpdateClientSetupArgs;
 
   { Mevcut config.json varsa UI'yi senkronize et }
@@ -697,7 +697,7 @@ var
 begin
   UpdateMode := UpdateModeCombo.Items[UpdateModeCombo.ItemIndex];
 
-  { ProxyAddress boş değilse JSON'a ekle }
+  { ProxyAddress boÅŸ deÄŸilse JSON'a ekle }
   if Length(ExistingProxyAddress) > 0 then
     ProxyLine := '  "ProxyAddress": "' + JsonEscapeStr(ExistingProxyAddress) + '",' + #13#10
   else
@@ -731,7 +731,7 @@ begin
   ConfigPath := ConfigDir + '\config.json';
   BackupPath := ConfigDir + '\config.backup.json';
 
-  { Dizin zaten [Dirs] bölümünde oluşturuluyor }
+  { Dizin zaten [Dirs] bÃ¶lÃ¼mÃ¼nde oluÅŸturuluyor }
   if not DirExists(ConfigDir) then
     ForceDirectories(ConfigDir);
 
@@ -773,78 +773,78 @@ begin
 
   if IsServiceInstalled then
   begin
-    { Upgrade: servisi durdur, sil, yeniden oluştur (dosyalar güncellenmiş olabilir) }
-    Log('MikroUpdateService zaten mevcut — yeniden oluşturuluyor...');
+    { Upgrade: servisi durdur, sil, yeniden oluÅŸtur (dosyalar gÃ¼ncellenmiÅŸ olabilir) }
+    Log('MikroUpdateService zaten mevcut â€” yeniden oluÅŸturuluyor...');
     Exec('sc.exe', 'stop MikroUpdateService', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-    Log(Format('sc stop sonuç: %d', [ResultCode]));
+    Log(Format('sc stop sonuÃ§: %d', [ResultCode]));
     Sleep(2000);
     Exec('sc.exe', 'delete MikroUpdateService', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-    Log(Format('sc delete sonuç: %d', [ResultCode]));
+    Log(Format('sc delete sonuÃ§: %d', [ResultCode]));
 
     { Servis tamamen silinene kadar bekle (max 10 saniye) }
     RetryCount := 0;
     while IsServiceInstalled and (RetryCount < 10) do
     begin
-      Log(Format('Servis hâlâ mevcut, bekleniyor... (%d/10)', [RetryCount + 1]));
+      Log(Format('Servis hÃ¢lÃ¢ mevcut, bekleniyor... (%d/10)', [RetryCount + 1]));
       Sleep(1000);
       RetryCount := RetryCount + 1;
     end;
 
     if IsServiceInstalled then
-      Log('UYARI: Servis 10 saniye sonra hâlâ silinmemiş!');
+      Log('UYARI: Servis 10 saniye sonra hÃ¢lÃ¢ silinmemiÅŸ!');
   end;
 
-  { Servisi oluştur }
+  { Servisi oluÅŸtur }
   if not Exec('sc.exe',
-    Format('create MikroUpdateService binPath= "%s" start= auto DisplayName= "MikroUpdate Güncelleme Servisi"', [BinPath]),
+    Format('create MikroUpdateService binPath= "%s" start= auto DisplayName= "MikroUpdate GÃ¼ncelleme Servisi"', [BinPath]),
     '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
   begin
-    Log(Format('sc create BAŞARISIZ (Exec hata): %d', [ResultCode]));
+    Log(Format('sc create BAÅARISIZ (Exec hata): %d', [ResultCode]));
   end
   else
   begin
-    Log(Format('sc create sonuç: %d', [ResultCode]));
+    Log(Format('sc create sonuÃ§: %d', [ResultCode]));
   end;
 
-  { Açıklamasını ayarla }
+  { AÃ§Ä±klamasÄ±nÄ± ayarla }
   Exec('sc.exe',
-    'description MikroUpdateService "Mikro ERP otomatik güncelleme servisi"',
+    'description MikroUpdateService "Mikro ERP otomatik gÃ¼ncelleme servisi"',
     '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
-  { Normal kullanıcıların servisi başlatıp durdurabilmesi için ACL ayarla }
+  { Normal kullanÄ±cÄ±larÄ±n servisi baÅŸlatÄ±p durdurabilmesi iÃ§in ACL ayarla }
   { SDDL: SY=SYSTEM full, BA=Admins full, AU=Authenticated Users start/stop/query/interrogate }
   if Exec('sc.exe',
     'sdset MikroUpdateService D:(A;;CCLCSWRPWPDTLOCRRC;;;SY)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCLCSWRPWPDTLOCRRC;;;AU)',
     '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
   begin
-    Log(Format('sc sdset sonuç: %d', [ResultCode]));
+    Log(Format('sc sdset sonuÃ§: %d', [ResultCode]));
   end
   else
   begin
-    Log(Format('sc sdset BAŞARISIZ: %d', [ResultCode]));
+    Log(Format('sc sdset BAÅARISIZ: %d', [ResultCode]));
   end;
 
-  { Çökme durumunda otomatik yeniden başlatma: 5sn / 10sn / 30sn }
+  { Ã‡Ã¶kme durumunda otomatik yeniden baÅŸlatma: 5sn / 10sn / 30sn }
   Exec('sc.exe',
     'failure MikroUpdateService reset= 60 actions= restart/5000/restart/10000/restart/30000',
     '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  Log(Format('sc failure sonuç: %d', [ResultCode]));
+  Log(Format('sc failure sonuÃ§: %d', [ResultCode]));
 
-  { Servisi başlat }
+  { Servisi baÅŸlat }
   if not Exec('sc.exe', 'start MikroUpdateService', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
   begin
-    Log(Format('sc start BAŞARISIZ (Exec hata): %d', [ResultCode]));
+    Log(Format('sc start BAÅARISIZ (Exec hata): %d', [ResultCode]));
   end
   else
   begin
-    Log(Format('sc start sonuç: %d', [ResultCode]));
+    Log(Format('sc start sonuÃ§: %d', [ResultCode]));
   end;
 
-  { Kurulum doğrulama }
+  { Kurulum doÄŸrulama }
   if IsServiceInstalled then
-    Log('MikroUpdateService başarıyla kuruldu ve başlatıldı.')
+    Log('MikroUpdateService baÅŸarÄ±yla kuruldu ve baÅŸlatÄ±ldÄ±.')
   else
-    Log('UYARI: MikroUpdateService kurulumu doğrulanamadı!');
+    Log('UYARI: MikroUpdateService kurulumu doÄŸrulanamadÄ±!');
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
@@ -857,8 +857,8 @@ begin
 end;
 
 { ============================================================ }
-{  /NOPOSTLAUNCH=1: Servis üzerinden self-update yapıldığında       }
-{  installer'dan app başlatmayı engeller (servis kendisi başlatır)  }
+{  /NOPOSTLAUNCH=1: Servis Ã¼zerinden self-update yapÄ±ldÄ±ÄŸÄ±nda       }
+{  installer'dan app baÅŸlatmayÄ± engeller (servis kendisi baÅŸlatÄ±r)  }
 { ============================================================ }
 
 function ShouldPostInstallLaunch: Boolean;
@@ -867,7 +867,7 @@ begin
 end;
 
 { ============================================================ }
-{  .NET 10 Desktop Runtime Kontrolü ve Otomatik Kurulumu        }
+{  .NET 10 Desktop Runtime KontrolÃ¼ ve Otomatik Kurulumu        }
 { ============================================================ }
 
 function IsDotNet10DesktopInstalled: Boolean;
@@ -896,9 +896,9 @@ end;
 function OnDownloadProgress(const Url, FileName: String; const Progress, ProgressMax: Int64): Boolean;
 begin
   if ProgressMax <> 0 then
-    Log(Format('  %s — %d / %d bayt (%d%%)', [FileName, Progress, ProgressMax, Progress * 100 div ProgressMax]))
+    Log(Format('  %s â€” %d / %d bayt (%d%%)', [FileName, Progress, ProgressMax, Progress * 100 div ProgressMax]))
   else
-    Log(Format('  %s — %d bayt indiriliyor...', [FileName, Progress]));
+    Log(Format('  %s â€” %d bayt indiriliyor...', [FileName, Progress]));
   Result := True;
 end;
 
@@ -909,26 +909,26 @@ var
 begin
   Result := '';
 
-  { Upgrade: Servisi durdur — dosyalar kilitli kalmasın }
+  { Upgrade: Servisi durdur â€” dosyalar kilitli kalmasÄ±n }
   if IsServiceInstalled then
   begin
     Log('PrepareToInstall: MikroUpdateService durduruluyor...');
     Exec('sc.exe', 'stop MikroUpdateService', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
     Sleep(3000);
-    Log(Format('PrepareToInstall: sc stop sonuç: %d', [ResultCode]));
+    Log(Format('PrepareToInstall: sc stop sonuÃ§: %d', [ResultCode]));
   end;
 
   if IsDotNet10DesktopInstalled then
   begin
-    Log('.NET 10 Desktop Runtime zaten yüklü.');
+    Log('.NET 10 Desktop Runtime zaten yÃ¼klÃ¼.');
     Exit;
   end;
 
-  Log('.NET 10 Desktop Runtime bulunamadı — indirme başlatılıyor...');
+  Log('.NET 10 Desktop Runtime bulunamadÄ± â€” indirme baÅŸlatÄ±lÄ±yor...');
 
   DownloadPage := CreateDownloadPage(
     '.NET 10 Desktop Runtime Gerekli',
-    '.NET 10 Desktop Runtime indiriliyor, lütfen bekleyin...',
+    '.NET 10 Desktop Runtime indiriliyor, lÃ¼tfen bekleyin...',
     @OnDownloadProgress);
   DownloadPage.Clear;
   DownloadPage.Add(
@@ -941,28 +941,28 @@ begin
       DownloadPage.Download;
     except
       Result := '.NET 10 Desktop Runtime indirilemedi: ' + GetExceptionMessage + #13#10 +
-                'Lütfen internet bağlantınızı kontrol edip tekrar deneyin veya ' +
-                'runtime''ı elle kurun: https://dotnet.microsoft.com/download/dotnet/10.0';
+                'LÃ¼tfen internet baÄŸlantÄ±nÄ±zÄ± kontrol edip tekrar deneyin veya ' +
+                'runtime''Ä± elle kurun: https://dotnet.microsoft.com/download/dotnet/10.0';
       Exit;
     end;
   finally
     DownloadPage.Hide;
   end;
 
-  Log('.NET 10 Desktop Runtime sessiz kurulumu başlatılıyor...');
+  Log('.NET 10 Desktop Runtime sessiz kurulumu baÅŸlatÄ±lÄ±yor...');
 
   if not Exec(
     ExpandConstant('{tmp}\windowsdesktop-runtime-win-x64.exe'),
     '/install /quiet /norestart', '',
     SW_HIDE, ewWaitUntilTerminated, ResultCode) then
   begin
-    Result := '.NET 10 Desktop Runtime başlatılamadı. Lütfen elle kurun: ' +
+    Result := '.NET 10 Desktop Runtime baÅŸlatÄ±lamadÄ±. LÃ¼tfen elle kurun: ' +
               'https://dotnet.microsoft.com/download/dotnet/10.0';
   end
   else if (ResultCode <> 0) and (ResultCode <> 3010) then
   begin
-    Result := '.NET 10 Desktop Runtime kurulumu başarısız oldu (çıkış kodu: ' +
-              IntToStr(ResultCode) + '). Lütfen elle kurun: ' +
+    Result := '.NET 10 Desktop Runtime kurulumu baÅŸarÄ±sÄ±z oldu (Ã§Ä±kÄ±ÅŸ kodu: ' +
+              IntToStr(ResultCode) + '). LÃ¼tfen elle kurun: ' +
               'https://dotnet.microsoft.com/download/dotnet/10.0';
   end
   else
@@ -970,22 +970,24 @@ begin
     if ResultCode = 3010 then
     begin
       NeedsRestart := True;
-      Log('.NET 10 Desktop Runtime kuruldu — yeniden başlatma gerekiyor.');
+      Log('.NET 10 Desktop Runtime kuruldu â€” yeniden baÅŸlatma gerekiyor.');
     end
     else
-      Log('.NET 10 Desktop Runtime başarıyla kuruldu.');
+      Log('.NET 10 Desktop Runtime baÅŸarÄ±yla kuruldu.');
   end;
 end;
 
-{ Kaldırma sonrası ProgramData temizliği (opsiyonel) }
+{ KaldÄ±rma sonrasÄ± ProgramData temizliÄŸi (opsiyonel) }
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
   if CurUninstallStep = usPostUninstall then
   begin
-    if MsgBox('Yapılandırma ve log dosyaları kaldırılsın mı?'#13#10 +
-              '(config.json ve log dosyaları)', mbConfirmation, MB_YESNO) = IDYES then
+    if MsgBox('YapÄ±landÄ±rma ve log dosyalarÄ± kaldÄ±rÄ±lsÄ±n mÄ±?'#13#10 +
+              '(config.json ve log dosyalarÄ±)', mbConfirmation, MB_YESNO) = IDYES then
     begin
       DelTree(ExpandConstant('{commonappdata}\MikroUpdate'), True, True, True);
     end;
   end;
 end;
+
+
