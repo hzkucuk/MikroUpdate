@@ -4,7 +4,7 @@
 ; ============================================================
 
 #define MyAppName "MikroUpdate"
-#define MyAppVersion "1.33.4"
+#define MyAppVersion "1.34.0"
 #define MyAppPublisher "MikroUpdate"
 #define MyAppURL "https://github.com/hzkucuk/MikroUpdate"
 #define MyAppExeName "MikroUpdate.exe"
@@ -853,6 +853,19 @@ begin
   begin
     WriteConfigFile;
     InstallAndStartService;
+
+    if not WizardSilent then
+      MsgBox(
+        'Kurulum tamamlandı.' + #13#10 + #13#10 +
+        'Sonraki adımlar:' + #13#10 +
+        '1) Ana makinede paylaşım izinlerini ayarlayın:' + #13#10 +
+        '   Deployment\\Scripts\\Configure-MikroShareAccess.ps1' + #13#10 +
+        '2) Terminalde Ayarlar ekranında ağ erişim modunu seçin:' + #13#10 +
+        '   Direct (domain/gMSA) veya Credential (workgroup).' + #13#10 +
+        '3) Versiyon Kontrol ile bağlantıyı doğrulayın.' + #13#10 + #13#10 +
+        'Detaylar: INSTALL.md',
+        mbInformation,
+        MB_OK);
   end;
 end;
 

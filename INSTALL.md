@@ -29,10 +29,10 @@ Script otomatik olarak:
 
 ```powershell
 # Standart kurulum (UI ile — özel yapılandırma sayfası dahil)
-.\installer\MikroUpdate_Setup_1.33.4.exe
+.\installer\MikroUpdate_Setup_1.34.0.exe
 
 # Sessiz kurulum
-.\installer\MikroUpdate_Setup_1.33.4.exe /VERYSILENT /SUPPRESSMSGBOXES
+.\installer\MikroUpdate_Setup_1.34.0.exe /VERYSILENT /SUPPRESSMSGBOXES
 
 # Sessiz kaldırma
 .\installer\unins000.exe /VERYSILENT
@@ -148,6 +148,37 @@ Notlar:
 
 - `EncryptedServerPassword` yalnızca şifrenin kaydedildiği makinede çözülebilir (DPAPI LocalMachine).
 - Sunucu tarafında hem Share hem NTFS izinleri doğru ayarlanmalıdır.
+
+### Ana Makinede Kullanıcı/İzin Otomasyonu
+
+Kurulum sonrası paylaşım erişimi için `Deployment\Scripts\Configure-MikroShareAccess.ps1` scriptini kullanın.
+
+Script özellikleri:
+
+- Mevcut share üzerinde hesap için **Share Read** izni ekler
+- Share klasörüne **NTFS ReadAndExecute** izni ekler
+- İstenirse workgroup senaryosunda local kullanıcıyı oluşturur
+
+Domain örneği:
+
+```powershell
+cd Deployment\Scripts
+.\Configure-MikroShareAccess.ps1 -ShareName "MikroV17xx" -Account "MARMARALASTIK\mikroupdate_ro"
+```
+
+Workgroup örneği:
+
+```powershell
+cd Deployment\Scripts
+.\Configure-MikroShareAccess.ps1 -ShareName "MikroV17xx" -Account "MARMARASRV\mikroupdate_ro" -CreateLocalUserIfMissing -LocalUserPasswordPlain "GucluSifre!123"
+```
+
+Doğrulama:
+
+```powershell
+Get-SmbShareAccess -Name MikroV17xx
+icacls "D:\MARMARADATA\MIKRO\v17xx"
+```
 
 ## Log Dosyaları
 

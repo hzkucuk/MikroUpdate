@@ -1,5 +1,15 @@
 # Özellikler
 
+## v1.34.0
+
+### Ana Makine Erişim Otomasyonu
+- **Share/NTFS izin scripti:** `Deployment\Scripts\Configure-MikroShareAccess.ps1` ile mevcut paylaşıma hesap bazlı izinler tek komutla eklenebilir
+- **Domain + Workgroup desteği:** Domain hesabına doğrudan izin verme ve workgroup için opsiyonel local kullanıcı oluşturma akışı eklendi
+- **Kurulum sonrası operasyon özeti:** İnteraktif kurulum sonunda kullanıcıya yapılacak adımları gösteren bilgi penceresi eklendi
+
+### Dokümantasyon Güncellemesi
+- INSTALL ve README dosyalarına ana makinede kullanıcı/izin hazırlığı adımları ve script örnekleri eklendi
+
 ## v1.33.4
 
 ### Domain / Workgroup Erişim Desteği

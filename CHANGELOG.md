@@ -3,6 +3,15 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format: [Semantic Versioning](https://semver.org/lang/tr/)
 
+## [1.34.0] - 2026-06-03
+
+### Eklenen
+- **Ana makine izin otomasyon scripti** — `Deployment\Scripts\Configure-MikroShareAccess.ps1` eklendi; mevcut share için Share Read ve NTFS ReadAndExecute izinlerini domain/workgroup hesaplarına uygulayabilir
+- **Kurulum sonrası bilgilendirme penceresi** — İnteraktif installer sonunda kullanıcıya script yolu, ağ erişim modu seçimi ve doğrulama adımlarını özetleyen mesaj kutusu eklendi
+
+### Dokümantasyon
+- `INSTALL.md` ve `README.md` dosyalarına ana makinede kullanıcı/izin hazırlığı adımları ve örnek komutlar eklendi
+
 ## [1.33.4] - 2026-06-03
 
 ### Eklenen
